@@ -5,10 +5,9 @@
 #include "generated/ifccBaseVisitor.h"
 
 
-class CodeGenVisitor : public ifccBaseVisitor {
+class VariableVisitor : public ifccBaseVisitor {
 	public:
         virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override ;
         virtual std::any visitReturn_const(ifccParser::Return_constContext *ctx) override;
 
 };
-

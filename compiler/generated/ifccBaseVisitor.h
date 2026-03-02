@@ -23,7 +23,51 @@ public:
     return visitChildren(ctx);
   }
 
-  virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override {
+  virtual std::any visitBloc(ifccParser::BlocContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAffectation_statement(ifccParser::Affectation_statementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDefinition_statement(ifccParser::Definition_statementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDefinition_affectation_statement(ifccParser::Definition_affectation_statementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitReturn_statement(ifccParser::Return_statementContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitReturn_const(ifccParser::Return_constContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitReturn_var(ifccParser::Return_varContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAffectation_var(ifccParser::Affectation_varContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAffectation_const(ifccParser::Affectation_constContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDefinition_affectation_const(ifccParser::Definition_affectation_constContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDefinition_affectation_var(ifccParser::Definition_affectation_varContext *ctx) override {
     return visitChildren(ctx);
   }
 

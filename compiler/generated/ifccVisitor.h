@@ -23,7 +23,29 @@ public:
 
     virtual std::any visitProg(ifccParser::ProgContext *context) = 0;
 
-    virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *context) = 0;
+    virtual std::any visitBloc(ifccParser::BlocContext *context) = 0;
+
+    virtual std::any visitAffectation_statement(ifccParser::Affectation_statementContext *context) = 0;
+
+    virtual std::any visitDefinition_statement(ifccParser::Definition_statementContext *context) = 0;
+
+    virtual std::any visitDefinition_affectation_statement(ifccParser::Definition_affectation_statementContext *context) = 0;
+
+    virtual std::any visitReturn_statement(ifccParser::Return_statementContext *context) = 0;
+
+    virtual std::any visitReturn_const(ifccParser::Return_constContext *context) = 0;
+
+    virtual std::any visitReturn_var(ifccParser::Return_varContext *context) = 0;
+
+    virtual std::any visitAffectation_var(ifccParser::Affectation_varContext *context) = 0;
+
+    virtual std::any visitAffectation_const(ifccParser::Affectation_constContext *context) = 0;
+
+    virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *context) = 0;
+
+    virtual std::any visitDefinition_affectation_const(ifccParser::Definition_affectation_constContext *context) = 0;
+
+    virtual std::any visitDefinition_affectation_var(ifccParser::Definition_affectation_varContext *context) = 0;
 
 
 };

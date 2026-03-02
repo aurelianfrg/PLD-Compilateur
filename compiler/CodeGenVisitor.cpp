@@ -1,5 +1,8 @@
 #include "CodeGenVisitor.h"
 
+using namespace std;
+
+
 antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) 
 {
     #ifdef __APPLE__
@@ -10,7 +13,17 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
     std::cout<< " main: \n" ;
     #endif
 
-    this->visit( ctx->return_stmt() );
+    //prologue 
+    cout << "    # prologue\n";
+    cout << "    pushq %rbp\n";
+    cout << "    movq %rsp, %rbp\n";
+    cout << "\n";
+
+    this->visit( ctx->bloc() );
+
+    cout << "\n";
+    cout << "    # epilogue\n";
+    cout << "    popq %rbp\n";
     
     std::cout << "    ret\n";
 
@@ -18,7 +31,7 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 }
 
 
-antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
+antlrcpp::Any CodeGenVisitor::visitReturn_const(ifccParser::Return_constContext *ctx)
 {
     int retval = stoi(ctx->CONST()->getText());
 

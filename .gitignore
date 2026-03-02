@@ -6,4 +6,6 @@ compiler/build/
 compiler/ifcc
 bin/
 
+generated/
+
 .vscode
