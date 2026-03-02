@@ -5,7 +5,9 @@ compiler/config.mk
 compiler/build/
 compiler/ifcc
 bin/
+compiler/bin
 
-generated/
+#generated code
+compiler/generated/
 
 .vscode
