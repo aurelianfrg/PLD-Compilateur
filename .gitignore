@@ -1,0 +1,8 @@
+# makefile personal config
+compiler/config.mk
+
+# compiled files
+compiler/build/
+compiler/ifcc
+
+.vscode
