@@ -31,7 +31,7 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 }
 
 
-antlrcpp::Any CodeGenVisitor::visitReturn_const(ifccParser::Return_constContext *ctx)
+antlrcpp::Any CodeGenVisitor::visitReturn_stmt_const(ifccParser::Return_stmt_constContext *ctx)
 {
     int retval = stoi(ctx->CONST()->getText());
 

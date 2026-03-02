@@ -7,28 +7,28 @@ prog : 'int' 'main' '(' ')' bloc ;
 bloc : '{' instruction* '}' ;
 
 instruction : 
-    aff_stmt #affectation_statement
-    |def_stmt #definition_statement
-    |def_aff_stmt #definition_affectation_statement
-    |return_stmt #return_statement
+    aff_stmt #instruction_aff_stmt
+    |def_stmt #instruction_def_stmt
+    |def_aff_stmt #instruction_def_aff_stmt
+    |return_stmt #instruction_return_stmt
 ;
 
 return_stmt : 
-    RETURN CONST ';' #return_const
-    |RETURN VAR ';' #return_var
+    RETURN CONST ';' #return_stmt_const
+    |RETURN VAR ';' #return_stmt_var
 ;
 
 aff_stmt : 
-    VAR '=' VAR ';' #affectation_var
-    |VAR '=' CONST ';' #affectation_const
+    VAR '=' VAR ';' #aff_stmt_var
+    |VAR '=' CONST ';' #aff_stmt_const
 ;
 
 def_stmt :
     TYPE VAR ';' ;
 
 def_aff_stmt : 
-    TYPE VAR '=' CONST ';' #definition_affectation_const
-    |TYPE VAR '=' VAR ';'  #definition_affectation_var
+    TYPE VAR '=' CONST ';' #def_aff_stmt_const
+    |TYPE VAR '=' VAR ';'  #def_aff_stmt_var
 ;
 
 TYPE : 'int' ;

@@ -233,32 +233,32 @@ public class ifccParser extends Parser {
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Definition_affectation_statementContext extends InstructionContext {
-		public Def_aff_stmtContext def_aff_stmt() {
-			return getRuleContext(Def_aff_stmtContext.class,0);
-		}
-		public Definition_affectation_statementContext(InstructionContext ctx) { copyFrom(ctx); }
-	}
-	@SuppressWarnings("CheckReturnValue")
-	public static class Definition_statementContext extends InstructionContext {
-		public Def_stmtContext def_stmt() {
-			return getRuleContext(Def_stmtContext.class,0);
-		}
-		public Definition_statementContext(InstructionContext ctx) { copyFrom(ctx); }
-	}
-	@SuppressWarnings("CheckReturnValue")
-	public static class Affectation_statementContext extends InstructionContext {
+	public static class Instruction_aff_stmtContext extends InstructionContext {
 		public Aff_stmtContext aff_stmt() {
 			return getRuleContext(Aff_stmtContext.class,0);
 		}
-		public Affectation_statementContext(InstructionContext ctx) { copyFrom(ctx); }
+		public Instruction_aff_stmtContext(InstructionContext ctx) { copyFrom(ctx); }
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Return_statementContext extends InstructionContext {
+	public static class Instruction_return_stmtContext extends InstructionContext {
 		public Return_stmtContext return_stmt() {
 			return getRuleContext(Return_stmtContext.class,0);
 		}
-		public Return_statementContext(InstructionContext ctx) { copyFrom(ctx); }
+		public Instruction_return_stmtContext(InstructionContext ctx) { copyFrom(ctx); }
+	}
+	@SuppressWarnings("CheckReturnValue")
+	public static class Instruction_def_aff_stmtContext extends InstructionContext {
+		public Def_aff_stmtContext def_aff_stmt() {
+			return getRuleContext(Def_aff_stmtContext.class,0);
+		}
+		public Instruction_def_aff_stmtContext(InstructionContext ctx) { copyFrom(ctx); }
+	}
+	@SuppressWarnings("CheckReturnValue")
+	public static class Instruction_def_stmtContext extends InstructionContext {
+		public Def_stmtContext def_stmt() {
+			return getRuleContext(Def_stmtContext.class,0);
+		}
+		public Instruction_def_stmtContext(InstructionContext ctx) { copyFrom(ctx); }
 	}
 
 	public final InstructionContext instruction() throws RecognitionException {
@@ -269,7 +269,7 @@ public class ifccParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,1,_ctx) ) {
 			case 1:
-				_localctx = new Affectation_statementContext(_localctx);
+				_localctx = new Instruction_aff_stmtContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(34);
@@ -277,7 +277,7 @@ public class ifccParser extends Parser {
 				}
 				break;
 			case 2:
-				_localctx = new Definition_statementContext(_localctx);
+				_localctx = new Instruction_def_stmtContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(35);
@@ -285,7 +285,7 @@ public class ifccParser extends Parser {
 				}
 				break;
 			case 3:
-				_localctx = new Definition_affectation_statementContext(_localctx);
+				_localctx = new Instruction_def_aff_stmtContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
 				setState(36);
@@ -293,7 +293,7 @@ public class ifccParser extends Parser {
 				}
 				break;
 			case 4:
-				_localctx = new Return_statementContext(_localctx);
+				_localctx = new Instruction_return_stmtContext(_localctx);
 				enterOuterAlt(_localctx, 4);
 				{
 				setState(37);
@@ -326,16 +326,16 @@ public class ifccParser extends Parser {
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Return_varContext extends Return_stmtContext {
+	public static class Return_stmt_varContext extends Return_stmtContext {
 		public TerminalNode RETURN() { return getToken(ifccParser.RETURN, 0); }
 		public TerminalNode VAR() { return getToken(ifccParser.VAR, 0); }
-		public Return_varContext(Return_stmtContext ctx) { copyFrom(ctx); }
+		public Return_stmt_varContext(Return_stmtContext ctx) { copyFrom(ctx); }
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Return_constContext extends Return_stmtContext {
+	public static class Return_stmt_constContext extends Return_stmtContext {
 		public TerminalNode RETURN() { return getToken(ifccParser.RETURN, 0); }
 		public TerminalNode CONST() { return getToken(ifccParser.CONST, 0); }
-		public Return_constContext(Return_stmtContext ctx) { copyFrom(ctx); }
+		public Return_stmt_constContext(Return_stmtContext ctx) { copyFrom(ctx); }
 	}
 
 	public final Return_stmtContext return_stmt() throws RecognitionException {
@@ -346,7 +346,7 @@ public class ifccParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,2,_ctx) ) {
 			case 1:
-				_localctx = new Return_constContext(_localctx);
+				_localctx = new Return_stmt_constContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(40);
@@ -358,7 +358,7 @@ public class ifccParser extends Parser {
 				}
 				break;
 			case 2:
-				_localctx = new Return_varContext(_localctx);
+				_localctx = new Return_stmt_varContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(43);
@@ -395,18 +395,18 @@ public class ifccParser extends Parser {
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Affectation_constContext extends Aff_stmtContext {
+	public static class Aff_stmt_constContext extends Aff_stmtContext {
 		public TerminalNode VAR() { return getToken(ifccParser.VAR, 0); }
 		public TerminalNode CONST() { return getToken(ifccParser.CONST, 0); }
-		public Affectation_constContext(Aff_stmtContext ctx) { copyFrom(ctx); }
+		public Aff_stmt_constContext(Aff_stmtContext ctx) { copyFrom(ctx); }
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Affectation_varContext extends Aff_stmtContext {
+	public static class Aff_stmt_varContext extends Aff_stmtContext {
 		public List<TerminalNode> VAR() { return getTokens(ifccParser.VAR); }
 		public TerminalNode VAR(int i) {
 			return getToken(ifccParser.VAR, i);
 		}
-		public Affectation_varContext(Aff_stmtContext ctx) { copyFrom(ctx); }
+		public Aff_stmt_varContext(Aff_stmtContext ctx) { copyFrom(ctx); }
 	}
 
 	public final Aff_stmtContext aff_stmt() throws RecognitionException {
@@ -417,7 +417,7 @@ public class ifccParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,3,_ctx) ) {
 			case 1:
-				_localctx = new Affectation_varContext(_localctx);
+				_localctx = new Aff_stmt_varContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(48);
@@ -431,7 +431,7 @@ public class ifccParser extends Parser {
 				}
 				break;
 			case 2:
-				_localctx = new Affectation_constContext(_localctx);
+				_localctx = new Aff_stmt_constContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(52);
@@ -505,20 +505,20 @@ public class ifccParser extends Parser {
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Definition_affectation_constContext extends Def_aff_stmtContext {
+	public static class Def_aff_stmt_constContext extends Def_aff_stmtContext {
 		public TerminalNode TYPE() { return getToken(ifccParser.TYPE, 0); }
 		public TerminalNode VAR() { return getToken(ifccParser.VAR, 0); }
 		public TerminalNode CONST() { return getToken(ifccParser.CONST, 0); }
-		public Definition_affectation_constContext(Def_aff_stmtContext ctx) { copyFrom(ctx); }
+		public Def_aff_stmt_constContext(Def_aff_stmtContext ctx) { copyFrom(ctx); }
 	}
 	@SuppressWarnings("CheckReturnValue")
-	public static class Definition_affectation_varContext extends Def_aff_stmtContext {
+	public static class Def_aff_stmt_varContext extends Def_aff_stmtContext {
 		public TerminalNode TYPE() { return getToken(ifccParser.TYPE, 0); }
 		public List<TerminalNode> VAR() { return getTokens(ifccParser.VAR); }
 		public TerminalNode VAR(int i) {
 			return getToken(ifccParser.VAR, i);
 		}
-		public Definition_affectation_varContext(Def_aff_stmtContext ctx) { copyFrom(ctx); }
+		public Def_aff_stmt_varContext(Def_aff_stmtContext ctx) { copyFrom(ctx); }
 	}
 
 	public final Def_aff_stmtContext def_aff_stmt() throws RecognitionException {
@@ -529,7 +529,7 @@ public class ifccParser extends Parser {
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,4,_ctx) ) {
 			case 1:
-				_localctx = new Definition_affectation_constContext(_localctx);
+				_localctx = new Def_aff_stmt_constContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(62);
@@ -545,7 +545,7 @@ public class ifccParser extends Parser {
 				}
 				break;
 			case 2:
-				_localctx = new Definition_affectation_varContext(_localctx);
+				_localctx = new Def_aff_stmt_varContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(67);
