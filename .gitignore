@@ -4,5 +4,6 @@ compiler/config.mk
 # compiled files
 compiler/build/
 compiler/ifcc
+bin/
 
 .vscode

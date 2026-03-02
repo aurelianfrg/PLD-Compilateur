@@ -67,5 +67,15 @@ gui:
 ##########################################
 # delete all machine-generated files
 clean:
-	rm -rf build generated
+	rm -rf build generated bin
 	rm -f ifcc
+
+
+##########################################
+# compilation, linking and assembly pipeline
+bin/%: ../testfiles/%.c
+	@mkdir -p bin
+	./ifcc $< > tmp.s
+	as tmp.s -o tmp.o
+	gcc tmp.o -o $@
+	rm tmp.s tmp.o
