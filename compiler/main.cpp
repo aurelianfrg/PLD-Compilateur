@@ -9,7 +9,6 @@
 #include "generated/ifccBaseVisitor.h"
 
 #include "CodeGenVisitor.h"
-#include "VariableVisitor.h"
 
 using namespace antlr4;
 using namespace std;
@@ -49,10 +48,11 @@ int main(int argn, const char **argv)
         exit(1);
     }
 
-    clog << "Analyse des variables : " << endl;
+    // clog << "Analyse des variables : " << endl;
 
-    VariableVisitor vv;
-    vv.visit(tree);
+    // VariableVisitor vv;
+    // vv.visit(tree);
+    // vv.anyUnused();
 
     clog << endl << "Sortie : " << endl;
     

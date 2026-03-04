@@ -14,21 +14,26 @@ instruction :
 ;
 
 return_stmt : 
-    RETURN CONST ';' #return_stmt_const
-    |RETURN VAR ';' #return_stmt_var
+    RETURN expr ';' 
+;
+
+expr :
+    expr '+' expr #expr_add
+    |expr '-' expr #expr_sub
+    |expr '*' expr #expr_mult
+    |CONST #expr_const
+    |VAR #expr_var
 ;
 
 aff_stmt : 
-    VAR '=' VAR ';' #aff_stmt_var
-    |VAR '=' CONST ';' #aff_stmt_const
+    VAR '=' expr ';'
 ;
 
 def_stmt :
     TYPE VAR ';' ;
 
 def_aff_stmt : 
-    TYPE VAR '=' CONST ';' #def_aff_stmt_const
-    |TYPE VAR '=' VAR ';'  #def_aff_stmt_var
+    TYPE VAR '=' expr ';'
 ;
 
 TYPE : 'int' ;

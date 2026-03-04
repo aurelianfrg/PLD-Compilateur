@@ -12,33 +12,38 @@ class VariableVisitor : public ifccBaseVisitor {
         virtual std::any visitAff_stmt_var(ifccParser::Aff_stmt_varContext *ctx) override {
             string var1 = ctx->VAR().at(0)->getText();
             string var2 = ctx->VAR().at(1)->getText();
-            clog << "aff " << var1 << " = " << var2 << endl;
+            //clog << "aff " << var1 << " = " << var2 << endl;
 
             if (!exists(var2)) {
                 undeclaredVariableError(var2);
             }
             use(var2);
+            if (!initialized(var2)) {
+                uninitializedVariableError(var2);
+            }
             if (!exists(var1)) {
                 undeclaredVariableError(var1);
             }
+            initialize(var1);
 
             return visitChildren(ctx);
         }
 
         virtual std::any visitAff_stmt_const(ifccParser::Aff_stmt_constContext *ctx) override {
             string var = ctx->VAR()->getText();
-            clog << "def " << var << " = " << ctx->CONST()->getText() << endl;
+            //clog << "def " << var << " = " << ctx->CONST()->getText() << endl;
 
             if (!exists(var)) {
                 undeclaredVariableError(var);
             }
+            initialize(var);
 
             return visitChildren(ctx);
         }
 
         virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override {
             string var = ctx->VAR()->getText();
-            clog << "def " << var << endl;
+            //clog << "def " << var << endl;
 
             if (exists(var)) {
                 redeclarationError(var);
@@ -50,11 +55,12 @@ class VariableVisitor : public ifccBaseVisitor {
 
         virtual std::any visitDef_aff_stmt_const(ifccParser::Def_aff_stmt_constContext *ctx) override {
             string var = ctx->VAR()->getText();
-            clog << "def aff const " << var << " = " << ctx->CONST()->getText() << endl;
+            //clog << "def aff const " << var << " = " << ctx->CONST()->getText() << endl;
             if (exists(var)) {
                 redeclarationError(var);
             }
             add(var);
+            initialize(var);
 
             return visitChildren(ctx);
         }
@@ -62,16 +68,20 @@ class VariableVisitor : public ifccBaseVisitor {
         virtual std::any visitDef_aff_stmt_var(ifccParser::Def_aff_stmt_varContext *ctx) override {
             string var1 = ctx->VAR().at(0)->getText();
             string var2 = ctx->VAR().at(1)->getText();
-            clog << "def aff var " << var1 << " = " << var2 << endl;
+            //clog << "def aff var " << var1 << " = " << var2 << endl;
 
             if (!exists(var2)) {
                 undeclaredVariableError(var2);
             }
             use(var2);
+            if (!initialized(var2)) {
+                uninitializedVariableError(var2);
+            }
             if (exists(var1)) {
                 redeclarationError(var1);
             }
             add(var1);
+            initialize(var1);
 
             return visitChildren(ctx);
         }
@@ -82,6 +92,18 @@ class VariableVisitor : public ifccBaseVisitor {
             use(var);
 
             return visitChildren(ctx);
+        }
+
+
+        bool anyUnused() {
+            bool result = false;
+            for (const string & var: declared_variables) {
+                if (!used(var)) {
+                    result = true;
+                    clog << "WARNING : Unused var " << var << endl;
+                }
+            }
+            return result;
         }
 
     protected:
@@ -97,15 +119,11 @@ class VariableVisitor : public ifccBaseVisitor {
         void use(const string & var) {
             used_variables.insert(var);
         }
-        bool anyUnused() {
-            bool result = false;
-            for (const string & var: declared_variables) {
-                if (!used(var)) {
-                    result = true;
-                    clog << "WARNING : Unused var" << var << endl;
-                }
-            }
-            return result;
+        bool initialized(const string & var) {
+            return (initialized_variables.find(var) != initialized_variables.end());
+        }
+        void initialize(const string & var) {
+            initialized_variables.insert(var);
         }
         void undeclaredVariableError(const string & var) {
             clog << "ERROR : Undeclared var " << var << endl;
@@ -115,7 +133,12 @@ class VariableVisitor : public ifccBaseVisitor {
             clog << "ERROR : Redeclaration of var " << var << endl;
             noError = false;
         }
+        void uninitializedVariableError(const string & var) {
+            clog << "ERROR : Uninitialized var " << var << endl;
+            noError = false;
+        }
         unordered_set<string> declared_variables;
         unordered_set<string> used_variables;
+        unordered_set<string> initialized_variables;
         bool noError = true;
 };
