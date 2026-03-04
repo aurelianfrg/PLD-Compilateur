@@ -18,9 +18,9 @@ return_stmt :
 ;
 
 expr :
-    expr '+' expr #expr_add
+    expr '*' expr #expr_mult
     |expr '-' expr #expr_sub
-    |expr '*' expr #expr_mult
+    |expr '+' expr #expr_add
     |CONST #expr_const
     |VAR #expr_var
 ;

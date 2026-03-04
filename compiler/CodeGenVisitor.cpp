@@ -83,9 +83,61 @@ std::any CodeGenVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx) {
 
     string location = to_string(var.getOffset()) + "(%rbp)";
     // move variable to a registry
-    string registry = "%r8d";
+    string registry = getAvailableRegistry();
     cout << "    movl    " << location << ", "  << registry << endl;
     return registry;
+}
+
+std::any CodeGenVisitor::visitExpr_sub(ifccParser::Expr_subContext *ctx){
+    // resolve value for both operands
+    string expr1ResultRegistry = any_cast<string>(this->visit(ctx->expr(0))); 
+    string expr2ResultRegistry = any_cast<string>(this->visit(ctx->expr(1))); 
+
+    // move 1st operand to eax registry where operation result will be stored
+    cout << "    movl    " << expr1ResultRegistry << ", %eax" << endl;
+    // perform operation
+    cout << "    subl    " << expr2ResultRegistry << ", %eax" << endl;
+
+    // reuse first registry to store result and return the 2nd
+    string resultRegistry = expr1ResultRegistry;
+    cout << "    movl    %eax, " << resultRegistry << endl;
+    returnRegistry(expr2ResultRegistry);
+    return resultRegistry;
+}
+
+std::any CodeGenVisitor::visitExpr_add(ifccParser::Expr_addContext *ctx){
+    // resolve value for both operands
+    string expr1ResultRegistry = any_cast<string>(this->visit(ctx->expr(0))); 
+    string expr2ResultRegistry = any_cast<string>(this->visit(ctx->expr(1))); 
+
+    // move 1st operand to eax registry where operation result will be stored
+    cout << "    movl    " << expr1ResultRegistry << ", %eax" << endl;
+    // perform operation
+    cout << "    addl    " << expr2ResultRegistry << ", %eax" << endl;
+
+    // reuse first registry to store result and return the 2nd
+    string resultRegistry = expr1ResultRegistry;
+    cout << "    movl    %eax, " << resultRegistry << endl;
+
+    returnRegistry(expr2ResultRegistry);
+    return resultRegistry;
+}
+                
+std::any CodeGenVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx){
+    // resolve value for both operands
+    string expr1ResultRegistry = any_cast<string>(this->visit(ctx->expr(0))); 
+    string expr2ResultRegistry = any_cast<string>(this->visit(ctx->expr(1))); 
+
+    // move 1st operand to eax registry where operation result will be stored
+    cout << "    movl    " << expr1ResultRegistry << ", %eax" << endl;
+    // perform operation
+    cout << "    imull    " << expr2ResultRegistry << ", %eax" << endl;
+
+    // reuse first registry to store result and return the 2nd
+    string resultRegistry = expr1ResultRegistry;
+    cout << "    movl    %eax, " << resultRegistry << endl;
+    returnRegistry(expr2ResultRegistry);
+    return resultRegistry;
 }
 
 std::any CodeGenVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
@@ -95,14 +147,15 @@ std::any CodeGenVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
     }
 
     // resolve expression value first
-    string resultLocation = any_cast<string> (this->visit(ctx->expr()));
+    string resultRegistry = any_cast<string> (this->visit(ctx->expr()));
 
     Symbol & var = symbolsTable.access(varName);
 
     // write assembly
-    cout << "    movl    " << resultLocation << ", " << var.getOffset() << "(%rbp)" << endl;
+    cout << "    movl    " << resultRegistry << ", " << var.getOffset() << "(%rbp)" << endl;
 
     var.affect();
+    returnRegistry(resultRegistry);
 
     return 0;
 }
@@ -130,14 +183,15 @@ std::any CodeGenVisitor::visitDef_aff_stmt(ifccParser::Def_aff_stmtContext *ctx)
     }
 
     // resolve expression value first
-    string resultLocation = any_cast<string> (this->visit(ctx->expr()));
+    string resultRegistry = any_cast<string> (this->visit(ctx->expr()));
 
     Symbol newVar = Symbol(newVarName, newVarOffset(type), false);
     newVar.affect();
     symbolsTable.add(newVar);
 
     // write assembly
-    cout << "    movl    " << resultLocation << ", " << newVar.getOffset() << "(%rbp)" << endl;
+    cout << "    movl    " << resultRegistry << ", " << newVar.getOffset() << "(%rbp)" << endl;
+    returnRegistry(resultRegistry);
         
     return 0;
 }
