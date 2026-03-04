@@ -13,6 +13,7 @@ typedef enum Location {
 class Address {
     public:
         Address(Location location, string address) : type(location), address(address) {} 
+        Address() {} 
         Location type;
         string address;
 };
@@ -33,6 +34,10 @@ class Symbol {
         void affect() {
             _affected = true;
             _used = false;
+        }
+
+        string getAdress() {
+            return to_string(offset) + "(%rbp)";
         }
 
         friend ostream & operator << (ostream & ofs, const Symbol & s){

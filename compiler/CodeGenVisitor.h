@@ -86,6 +86,10 @@ class CodeGenVisitor : public ifccBaseVisitor {
 				availableRegistries.at(registry) = true;
 			}
 		}
+		Symbol newTemporaryVariable(string type) {
+			Symbol newVar(to_string(temporaryVarCount++), newVarOffset(type), true);
+			return newVar;
+		}
 
 	protected:
 		SymbolsTable symbolsTable;

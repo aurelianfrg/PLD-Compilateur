@@ -65,10 +65,12 @@ std::any CodeGenVisitor::visitExpr_const(ifccParser::Expr_constContext *ctx) {
     string constValue = string("$") + value;
 
     // create a single-use temporary variable 
-    Symbol temporaryVar(to_string(temporaryVarCount++), newVarOffset("int"), true);
-    Address temporaryVarAddress(MEMORY, to_string(temporaryVar.getOffset())+"(%rbp)");
-    cout << "    movl    " << constValue << ", " << temporaryVarAddress.address << endl;
-    return temporaryVarAddress;
+    // Symbol temporaryVar(to_string(temporaryVarCount++), newVarOffset("int"), true);
+    // Address temporaryVarAddress(MEMORY, to_string(temporaryVar.getOffset())+"(%rbp)");
+    // cout << "    movl    " << constValue << ", " << temporaryVarAddress.address << endl;
+
+    Address constValueAdress(CONSTANT, constValue);
+    return constValueAdress;
 }
 
 std::any CodeGenVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx) {
@@ -104,16 +106,18 @@ std::any CodeGenVisitor::visitExpr_sub(ifccParser::Expr_subContext *ctx){
     // perform operation
     cout << "    subl    " << expr2ResultAddress.address << ", %eax" << endl;
 
-    // reuse first registry to store result and return the 2nd
-    string resultRegistry; 
+    // reuse first registry to store result if there was one, else store back to memory in temporary var
+    Address resultAddress;
     if (expr1ResultAddress.type = REGISTER) {
-        resultRegistry = expr1ResultAddress.address;
+        resultAddress = expr1ResultAddress;
     }
     else {
-        resultRegistry = getAvailableRegistry();
+        Symbol temporaryVar = newTemporaryVariable("int");
+        resultAddress = Address(MEMORY, temporaryVar.getAdress());
     }
-    Address resultAddress(REGISTER, resultRegistry);
-    cout << "    movl    %eax, " << resultRegistry << endl;
+    cout << "    movl    %eax, " << resultAddress.address << endl;
+
+    // free other registry because no longer needed
     if (expr2ResultAddress.type == REGISTER) {
         returnRegistry(expr2ResultAddress.address);
     }
@@ -130,16 +134,18 @@ std::any CodeGenVisitor::visitExpr_add(ifccParser::Expr_addContext *ctx){
     // perform operation
     cout << "    addl    " << expr2ResultAddress.address << ", %eax" << endl;
 
-    // reuse first registry to store result and return the 2nd
-    string resultRegistry; 
+    // reuse first registry to store result if there was one, else store back to memory in temporary var
+    Address resultAddress;
     if (expr1ResultAddress.type = REGISTER) {
-        resultRegistry = expr1ResultAddress.address;
+        resultAddress = expr1ResultAddress;
     }
     else {
-        resultRegistry = getAvailableRegistry();
+        Symbol temporaryVar = newTemporaryVariable("int");
+        resultAddress = Address(MEMORY, temporaryVar.getAdress());
     }
-    Address resultAddress(REGISTER, resultRegistry);
-    cout << "    movl    %eax, " << resultRegistry << endl;
+    cout << "    movl    %eax, " << resultAddress.address << endl;
+
+    // free other registry because no longer needed
     if (expr2ResultAddress.type == REGISTER) {
         returnRegistry(expr2ResultAddress.address);
     }
@@ -156,16 +162,18 @@ std::any CodeGenVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx){
     // perform operation
     cout << "    imull    " << expr2ResultAddress.address << ", %eax" << endl;
 
-    // reuse first registry to store result and return the 2nd
-    string resultRegistry; 
+    // reuse first registry to store result if there was one, else store back to memory in temporary var
+    Address resultAddress;
     if (expr1ResultAddress.type = REGISTER) {
-        resultRegistry = expr1ResultAddress.address;
+        resultAddress = expr1ResultAddress;
     }
     else {
-        resultRegistry = getAvailableRegistry();
+        Symbol temporaryVar = newTemporaryVariable("int");
+        resultAddress = Address(MEMORY, temporaryVar.getAdress());
     }
-    Address resultAddress(REGISTER, resultRegistry);
-    cout << "    movl    %eax, " << resultRegistry << endl;
+    cout << "    movl    %eax, " << resultAddress.address << endl;
+
+    // free other registry because no longer needed
     if (expr2ResultAddress.type == REGISTER) {
         returnRegistry(expr2ResultAddress.address);
     }
