@@ -1,18 +1,28 @@
+#pragma once
+
 #include <string>
 
 using namespace std;
 
-typedef enum TYPE {
-    INT // int32
-} TYPE;
+typedef enum Location {
+    REGISTER,
+    MEMORY,
+    CONSTANT
+} Location;
 
+class Address {
+    public:
+        Address(Location location, string address) : type(location), address(address) {} 
+        Location type;
+        string address;
+};
 
 class Symbol {
     public:
         Symbol(string name, int offset, bool affected) : name(name), offset(offset), _affected(affected), _used(false) {}
 
         string getName() {return this->name;}
-        TYPE getType() {return type;}
+        string getType() {return type;}
         int getOffset() {return offset;}
         bool affected() {return _affected;}
         bool used() {return _used;}
@@ -33,7 +43,7 @@ class Symbol {
     protected:
 
         string name;
-        TYPE type;
+        string type;
         int offset;
         bool _affected;
         bool _used;

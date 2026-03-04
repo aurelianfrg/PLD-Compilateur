@@ -6,6 +6,7 @@ compiler/build/
 compiler/ifcc
 bin/
 compiler/bin
+*.s
 
 #generated code
 compiler/generated/

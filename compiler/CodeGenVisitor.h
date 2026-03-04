@@ -36,6 +36,8 @@ class CodeGenVisitor : public ifccBaseVisitor {
 
 		virtual std::any visitExpr_var(ifccParser::Expr_varContext *ctx) override;
 
+		virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
+
 		virtual std::any visitExpr_sub(ifccParser::Expr_subContext *ctx) override;
 
 		virtual std::any visitExpr_add(ifccParser::Expr_addContext *ctx) override;
@@ -91,6 +93,7 @@ class CodeGenVisitor : public ifccBaseVisitor {
 		ofstream ofs;
 		bool noError;
 		int currentOffset;
+		int temporaryVarCount = 0;
 		unordered_map<string,int> typeSizes = {
 			{"int", 4}
 		};

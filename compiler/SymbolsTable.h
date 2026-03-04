@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Symbol.h"
 #include <unordered_map>
 

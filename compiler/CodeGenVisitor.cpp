@@ -53,18 +53,22 @@ std::any CodeGenVisitor::visitInstruction_return_stmt(ifccParser::Instruction_re
 std::any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     
     // resolve return value expression 
-    string resultLocation = any_cast<string> (this->visit(ctx->expr()));
+    Address resultAddress = any_cast<Address> (this->visit(ctx->expr()));
 
-    cout << "    movl    " << resultLocation << ", %eax" << endl;
+    cout << "    movl    " << resultAddress.address << ", %eax" << endl;
 
     return 0;
 }
 
 std::any CodeGenVisitor::visitExpr_const(ifccParser::Expr_constContext *ctx) {
-    // all expressions visits return a string : the registry or adress where the result is stored
     string value = ctx->CONST()->getText();
     string constValue = string("$") + value;
-    return constValue;
+
+    // create a single-use temporary variable 
+    Symbol temporaryVar(to_string(temporaryVarCount++), newVarOffset("int"), true);
+    Address temporaryVarAddress(MEMORY, to_string(temporaryVar.getOffset())+"(%rbp)");
+    cout << "    movl    " << constValue << ", " << temporaryVarAddress.address << endl;
+    return temporaryVarAddress;
 }
 
 std::any CodeGenVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx) {
@@ -82,62 +86,90 @@ std::any CodeGenVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx) {
     var.use();
 
     string location = to_string(var.getOffset()) + "(%rbp)";
-    // move variable to a registry
-    string registry = getAvailableRegistry();
-    cout << "    movl    " << location << ", "  << registry << endl;
-    return registry;
+    Address varAddress = Address(MEMORY, location);
+    return varAddress;
+}
+
+std::any CodeGenVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) {
+    return visit(ctx->expr());
 }
 
 std::any CodeGenVisitor::visitExpr_sub(ifccParser::Expr_subContext *ctx){
     // resolve value for both operands
-    string expr1ResultRegistry = any_cast<string>(this->visit(ctx->expr(0))); 
-    string expr2ResultRegistry = any_cast<string>(this->visit(ctx->expr(1))); 
+    Address expr1ResultAddress = any_cast<Address>(this->visit(ctx->expr(0))); 
+    Address expr2ResultAddress = any_cast<Address>(this->visit(ctx->expr(1))); 
 
     // move 1st operand to eax registry where operation result will be stored
-    cout << "    movl    " << expr1ResultRegistry << ", %eax" << endl;
+    cout << "    movl    " << expr1ResultAddress.address << ", %eax" << endl;
     // perform operation
-    cout << "    subl    " << expr2ResultRegistry << ", %eax" << endl;
+    cout << "    subl    " << expr2ResultAddress.address << ", %eax" << endl;
 
     // reuse first registry to store result and return the 2nd
-    string resultRegistry = expr1ResultRegistry;
+    string resultRegistry; 
+    if (expr1ResultAddress.type = REGISTER) {
+        resultRegistry = expr1ResultAddress.address;
+    }
+    else {
+        resultRegistry = getAvailableRegistry();
+    }
+    Address resultAddress(REGISTER, resultRegistry);
     cout << "    movl    %eax, " << resultRegistry << endl;
-    returnRegistry(expr2ResultRegistry);
-    return resultRegistry;
+    if (expr2ResultAddress.type == REGISTER) {
+        returnRegistry(expr2ResultAddress.address);
+    }
+    return resultAddress;
 }
 
 std::any CodeGenVisitor::visitExpr_add(ifccParser::Expr_addContext *ctx){
     // resolve value for both operands
-    string expr1ResultRegistry = any_cast<string>(this->visit(ctx->expr(0))); 
-    string expr2ResultRegistry = any_cast<string>(this->visit(ctx->expr(1))); 
+    Address expr1ResultAddress = any_cast<Address>(this->visit(ctx->expr(0))); 
+    Address expr2ResultAddress = any_cast<Address>(this->visit(ctx->expr(1))); 
 
     // move 1st operand to eax registry where operation result will be stored
-    cout << "    movl    " << expr1ResultRegistry << ", %eax" << endl;
+    cout << "    movl    " << expr1ResultAddress.address << ", %eax" << endl;
     // perform operation
-    cout << "    addl    " << expr2ResultRegistry << ", %eax" << endl;
+    cout << "    addl    " << expr2ResultAddress.address << ", %eax" << endl;
 
     // reuse first registry to store result and return the 2nd
-    string resultRegistry = expr1ResultRegistry;
+    string resultRegistry; 
+    if (expr1ResultAddress.type = REGISTER) {
+        resultRegistry = expr1ResultAddress.address;
+    }
+    else {
+        resultRegistry = getAvailableRegistry();
+    }
+    Address resultAddress(REGISTER, resultRegistry);
     cout << "    movl    %eax, " << resultRegistry << endl;
-
-    returnRegistry(expr2ResultRegistry);
-    return resultRegistry;
+    if (expr2ResultAddress.type == REGISTER) {
+        returnRegistry(expr2ResultAddress.address);
+    }
+    return resultAddress;
 }
                 
 std::any CodeGenVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx){
     // resolve value for both operands
-    string expr1ResultRegistry = any_cast<string>(this->visit(ctx->expr(0))); 
-    string expr2ResultRegistry = any_cast<string>(this->visit(ctx->expr(1))); 
+    Address expr1ResultAddress = any_cast<Address>(this->visit(ctx->expr(0))); 
+    Address expr2ResultAddress = any_cast<Address>(this->visit(ctx->expr(1))); 
 
     // move 1st operand to eax registry where operation result will be stored
-    cout << "    movl    " << expr1ResultRegistry << ", %eax" << endl;
+    cout << "    movl    " << expr1ResultAddress.address << ", %eax" << endl;
     // perform operation
-    cout << "    imull    " << expr2ResultRegistry << ", %eax" << endl;
+    cout << "    imull    " << expr2ResultAddress.address << ", %eax" << endl;
 
     // reuse first registry to store result and return the 2nd
-    string resultRegistry = expr1ResultRegistry;
+    string resultRegistry; 
+    if (expr1ResultAddress.type = REGISTER) {
+        resultRegistry = expr1ResultAddress.address;
+    }
+    else {
+        resultRegistry = getAvailableRegistry();
+    }
+    Address resultAddress(REGISTER, resultRegistry);
     cout << "    movl    %eax, " << resultRegistry << endl;
-    returnRegistry(expr2ResultRegistry);
-    return resultRegistry;
+    if (expr2ResultAddress.type == REGISTER) {
+        returnRegistry(expr2ResultAddress.address);
+    }
+    return resultAddress;
 }
 
 std::any CodeGenVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
@@ -147,15 +179,25 @@ std::any CodeGenVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
     }
 
     // resolve expression value first
-    string resultRegistry = any_cast<string> (this->visit(ctx->expr()));
+    Address resultAddress = any_cast<Address> (this->visit(ctx->expr()));
 
     Symbol & var = symbolsTable.access(varName);
 
-    // write assembly
-    cout << "    movl    " << resultRegistry << ", " << var.getOffset() << "(%rbp)" << endl;
+    if (resultAddress.type == MEMORY) {
+        // send value to a register before copying to variable
+        string registry = getAvailableRegistry();
+        cout << "    movl    " << resultAddress.address << ", " << registry << endl;
+        cout << "    movl    " << registry << ", " << var.getOffset() << "(%rbp)" << endl;
+        returnRegistry(registry);
+    }
+    else {
+        cout << "    movl    " << resultAddress.address << ", " << var.getOffset() << "(%rbp)" << endl;
+    }
 
     var.affect();
-    returnRegistry(resultRegistry);
+    if (resultAddress.type == REGISTER) {
+        returnRegistry(resultAddress.address);
+    }
 
     return 0;
 }
@@ -183,15 +225,26 @@ std::any CodeGenVisitor::visitDef_aff_stmt(ifccParser::Def_aff_stmtContext *ctx)
     }
 
     // resolve expression value first
-    string resultRegistry = any_cast<string> (this->visit(ctx->expr()));
+    Address resultAddress = any_cast<Address> (this->visit(ctx->expr()));
 
     Symbol newVar = Symbol(newVarName, newVarOffset(type), false);
     newVar.affect();
     symbolsTable.add(newVar);
 
-    // write assembly
-    cout << "    movl    " << resultRegistry << ", " << newVar.getOffset() << "(%rbp)" << endl;
-    returnRegistry(resultRegistry);
+    if (resultAddress.type == MEMORY) {
+        // send value to a register before copying to variable
+        string registry = getAvailableRegistry();
+        cout << "    movl    " << resultAddress.address << ", " << registry << endl;
+        cout << "    movl    " << registry << ", " << newVar.getOffset() << "(%rbp)" << endl;
+        returnRegistry(registry);
+    }
+    else {
+        cout << "    movl    " << resultAddress.address << ", " << newVar.getOffset() << "(%rbp)" << endl;
+    }
+
+    if (resultAddress.type == REGISTER) {
+        returnRegistry(resultAddress.address);
+    }
         
     return 0;
 }
