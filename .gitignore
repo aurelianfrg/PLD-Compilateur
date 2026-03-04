@@ -9,5 +9,7 @@ compiler/bin
 
 #generated code
 compiler/generated/
+compiler/.antlr/
+ifcc-test-output
 
 .vscode
