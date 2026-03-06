@@ -9,6 +9,7 @@
 #include "generated/ifccBaseVisitor.h"
 
 #include "CodeGenVisitor.h"
+#include "VariableVisitor.h"
 
 using namespace antlr4;
 using namespace std;
@@ -48,8 +49,10 @@ int main(int argn, const char **argv)
       exit(1);
   }
 
-  
-  CodeGenVisitor v;
+  VariableVisitor vv; 
+  vv.visit(tree);
+
+  CodeGenVisitor v = CodeGenVisitor(vv.getVarOffsets());
   v.visit(tree);
 
   return 0;
