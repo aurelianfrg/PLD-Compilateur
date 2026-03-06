@@ -14,6 +14,7 @@ class Address {
     public:
         Address(Location location, string address) : type(location), address(address) {} 
         Address() {} 
+        
         Location type;
         string address;
 };

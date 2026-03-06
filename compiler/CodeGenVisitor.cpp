@@ -96,6 +96,29 @@ std::any CodeGenVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisConte
     return visit(ctx->expr());
 }
 
+std::any CodeGenVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx) {
+    Address exprResultAddress = any_cast<Address>(this->visit(ctx->expr())); 
+
+    if (exprResultAddress.type == REGISTER) {
+        cout << "    negl    " << exprResultAddress.address << endl;
+        return exprResultAddress;
+    }
+    else if (exprResultAddress.type == MEMORY) {
+        string reg = getAvailableRegistry();
+        cout << "    movl    " << exprResultAddress.address << ", " << reg << endl;
+        cout << "    negl    " << reg << endl;
+        Symbol temp = newTemporaryVariable("int");
+        Address resultAddress = Address(MEMORY, temp.getAdress());
+        cout << "    movl    " << reg << ", " << resultAddress.address << endl;
+        return resultAddress;
+    }
+    else {
+        // impossible case
+        exit(-1);
+    }
+}
+
+
 std::any CodeGenVisitor::visitExpr_sub(ifccParser::Expr_subContext *ctx){
     // resolve value for both operands
     Address expr1ResultAddress = any_cast<Address>(this->visit(ctx->expr(0))); 

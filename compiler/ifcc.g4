@@ -19,6 +19,7 @@ return_stmt :
 
 expr :
     '(' expr ')' #expr_parenthesis
+    |'-' expr #expr_minus
     |expr '*' expr #expr_mult
     |expr '-' expr #expr_sub
     |expr '+' expr #expr_add

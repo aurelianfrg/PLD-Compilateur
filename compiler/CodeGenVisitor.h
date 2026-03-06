@@ -38,6 +38,8 @@ class CodeGenVisitor : public ifccBaseVisitor {
 
 		virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
 
+		virtual std::any visitExpr_minus(ifccParser::Expr_minusContext *ctx) override;
+
 		virtual std::any visitExpr_sub(ifccParser::Expr_subContext *ctx) override;
 
 		virtual std::any visitExpr_add(ifccParser::Expr_addContext *ctx) override;
