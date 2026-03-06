@@ -4,11 +4,15 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <unordered_map>
 #include <initializer_list>
 
 // Declarations from the parser -- replace with your own
-#include "type.h"
-#include "symbole.h"
+#include "Type.h"
+#include "Symbol.h"
+#include "SymbolsTable.h"
+
+using namespace std;
 
 class BasicBlock;
 class CFG;
@@ -22,6 +26,7 @@ class IRInstr {
 	/** The instructions themselves -- feel free to subclass instead */
 	typedef enum {
 		ldconst,
+		ret,
 		copy,
 		add,
 		sub,
@@ -128,7 +133,7 @@ class CFG {
 
 	// symbol table methods
 	void add_to_symbol_table(string name, Type t);
-	string create_new_tempvar(Type t);
+	Symbol& create_new_tempvar(Type t);
 	int get_var_index(string name);
 	Type get_var_type(string name);
 
@@ -136,10 +141,21 @@ class CFG {
 	string new_BB_name();
 	BasicBlock* current_bb;
 
+	int newVarOffset(Type type) {                       
+		currentOffset -= typeSizes.at(type);
+		return currentOffset;
+	}
+
  protected:
-	map <string, Type> SymbolType; /**< part of the symbol table  */
-	map <string, int> SymbolIndex; /**< part of the symbol table  */
-	int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
+	SymbolsTable symbolsTable;
+	int currentOffset = 0;
+	int temporaryVarCount = 0;
+	unordered_map<Type,int> typeSizes = {
+		{Type::INT, 4}
+	};
+	// map <string, Type> SymbolType; /**< part of the symbol table  */
+	// map <string, int> SymbolIndex; /**< part of the symbol table  */
+	// int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
 	int nextBBnumber; /**< just for naming */
 	
 	vector <BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
