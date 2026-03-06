@@ -5,5 +5,12 @@ compiler/config.mk
 compiler/build/
 compiler/ifcc
 bin/
+compiler/bin
+*.s
+
+#generated code
+compiler/generated/
+compiler/.antlr/
+ifcc-test-output
 
 .vscode
