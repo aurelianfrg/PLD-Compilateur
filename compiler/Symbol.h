@@ -4,21 +4,6 @@
 
 using namespace std;
 
-typedef enum Location {
-    REGISTER,
-    MEMORY,
-    CONSTANT
-} Location;
-
-class Address {
-    public:
-        Address(Location location, string address) : type(location), address(address) {} 
-        Address() {} 
-        
-        Location type;
-        string address;
-};
-
 class Symbol {
     public:
         Symbol(string name, int offset, bool affected) : name(name), offset(offset), _affected(affected), _used(false) {}
