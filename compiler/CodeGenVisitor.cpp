@@ -26,36 +26,28 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
 }
 
 
-antlrcpp::Any CodeGenVisitor::visitReturn_expr(ifccParser::Return_exprContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     this->visit(ctx->expr());
 
 return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitDeclaration_int(ifccParser::Declaration_intContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
 
-    std::cout << "    movl $0, " << varOffsets[varName] << "(%rbp)\n"; // Initialize variable to 0, a enlever ?
-
+    if (ctx->expr()) {
+        this->visit(ctx->expr());
+        std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n";  // Move value into variable
+    } 
     return 0;
 }
 
-antlrcpp::Any CodeGenVisitor::visitAssign_var_expr(ifccParser::Assign_var_exprContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     this->visit(ctx->expr());
 
     // Move value into variable
     std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n";
-    return 0;
-}
-
-antlrcpp::Any CodeGenVisitor::visitDeclaration_assign_var_expr(ifccParser::Declaration_assign_var_exprContext *ctx) {
-    std::string varName = ctx->VAR()->getText();
-    this->visit(ctx->expr());
-
-    // Move value into variable
-    std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n"; 
-
     return 0;
 }
 

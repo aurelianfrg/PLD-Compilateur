@@ -9,14 +9,14 @@ antlrcpp::Any VariableVisitor::visitProg(ifccParser::ProgContext *ctx) {
     return 0;
 }
 
-antlrcpp::Any VariableVisitor::visitReturn_expr(ifccParser::Return_exprContext *ctx) {
+antlrcpp::Any VariableVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     // Visiter l'expression pour marquer les variables utilisées
     this->visit(ctx->expr());
 
     return 0;
 }
 
-antlrcpp::Any VariableVisitor::visitDeclaration_int(ifccParser::Declaration_intContext *ctx) {
+antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) != varOffsets.end()) {
         std::cerr << "Error: Variable '" << varName << "' already declared." << std::endl;
@@ -28,10 +28,14 @@ antlrcpp::Any VariableVisitor::visitDeclaration_int(ifccParser::Declaration_intC
         currentOffset = currentOffset - 4; // 4 bc int
     }
 
+    if (ctx->expr()) {
+        this->visit(ctx->expr());
+    }
+    
     return 0;
 }
 
-antlrcpp::Any VariableVisitor::visitAssign_var_expr(ifccParser::Assign_var_exprContext *ctx) {
+antlrcpp::Any VariableVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) == varOffsets.end()) {
         std::cerr << "Error: Variable '" << varName << "' used before declaration.\n";
@@ -42,24 +46,6 @@ antlrcpp::Any VariableVisitor::visitAssign_var_expr(ifccParser::Assign_var_exprC
     return 0;
 }
 
-antlrcpp::Any VariableVisitor::visitDeclaration_assign_var_expr(ifccParser::Declaration_assign_var_exprContext *ctx) {
-    std::string varName = ctx->VAR()->getText();
-
-    if (varOffsets.find(varName) != varOffsets.end()) {
-        std::cerr << "Error: Variable '" << varName << "' already declared." << std::endl;
-        exit(1);
-    }
-    else {
-        varOffsets[varName] = currentOffset; 
-        varUse[varName] = false; // Usage false
-        currentOffset = currentOffset - 4; // 4 bc int
-    }
-
-    // Visiter l'expression pour marquer les variables utilisées
-    this->visit(ctx->expr());
-
-    return 0;
-}
 
 antlrcpp::Any VariableVisitor::visitMultiplication(ifccParser::MultiplicationContext *ctx) {
     this->visit(ctx->expr(0));
