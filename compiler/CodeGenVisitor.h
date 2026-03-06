@@ -26,8 +26,6 @@ class CodeGenVisitor : public ifccBaseVisitor {
 
 		virtual std::any visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx) override;
 
-		virtual std::any visitInstruction_def_aff_stmt(ifccParser::Instruction_def_aff_stmtContext *ctx) override;
-
 		virtual std::any visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx) override;
 
 		virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
@@ -40,17 +38,13 @@ class CodeGenVisitor : public ifccBaseVisitor {
 
 		virtual std::any visitExpr_minus(ifccParser::Expr_minusContext *ctx) override;
 
-		virtual std::any visitExpr_sub(ifccParser::Expr_subContext *ctx) override;
-
-		virtual std::any visitExpr_add(ifccParser::Expr_addContext *ctx) override;
+		virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;
 
 		virtual std::any visitExpr_mult(ifccParser::Expr_multContext *ctx) override;
 
 		virtual std::any visitAff_stmt(ifccParser::Aff_stmtContext *ctx) override;
 
 		virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
-
-		virtual std::any visitDef_aff_stmt(ifccParser::Def_aff_stmtContext *ctx) override;
 
 		void undeclaredVariableError(const string & var) {
 			clog << "ERROR : Undeclared var " << var << endl;

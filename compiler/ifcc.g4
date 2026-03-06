@@ -7,24 +7,22 @@ prog : 'int' 'main' '(' ')' bloc ;
 bloc : '{' instruction* '}' ;
 
 instruction : 
-    aff_stmt #instruction_aff_stmt
+    return_stmt #instruction_return_stmt
     |def_stmt #instruction_def_stmt
-    |def_aff_stmt #instruction_def_aff_stmt
-    |return_stmt #instruction_return_stmt
+    |aff_stmt #instruction_aff_stmt
+;
+
+expr :
+    OPEN_PAR expr CLOSE_PAR #expr_parenthesis
+    |'-' expr #expr_minus
+    |expr '*' expr #expr_mult
+    |expr ('+' | '-') expr #expr_add_sub
+    |CONST #expr_const
+    |VAR #expr_var
 ;
 
 return_stmt : 
     RETURN expr ';' 
-;
-
-expr :
-    '(' expr ')' #expr_parenthesis
-    |'-' expr #expr_minus
-    |expr '*' expr #expr_mult
-    |expr '-' expr #expr_sub
-    |expr '+' expr #expr_add
-    |CONST #expr_const
-    |VAR #expr_var
 ;
 
 aff_stmt : 
@@ -32,13 +30,11 @@ aff_stmt :
 ;
 
 def_stmt :
-    TYPE VAR ';' ;
-
-def_aff_stmt : 
-    TYPE VAR '=' expr ';'
-;
+    TYPE VAR ('=' expr )? ';' ;
 
 TYPE : 'int' ;
+OPEN_PAR : '(' ;
+CLOSE_PAR : ')' ;
 RETURN : 'return' ;
 CONST : [0-9]+ ;
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
