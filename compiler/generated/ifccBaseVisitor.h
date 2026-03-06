@@ -23,7 +23,47 @@ public:
     return visitChildren(ctx);
   }
 
+  virtual std::any visitBlock(ifccParser::BlockContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitStmt(ifccParser::StmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
   virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitMinus(ifccParser::MinusContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitParenthese(ifccParser::ParentheseContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitAddSub(ifccParser::AddSubContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitLiteral_expr(ifccParser::Literal_exprContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitMultiplication(ifccParser::MultiplicationContext *ctx) override {
+    return visitChildren(ctx);
+  }
+
+  virtual std::any visitLiteral(ifccParser::LiteralContext *ctx) override {
     return visitChildren(ctx);
   }
 
