@@ -19,8 +19,8 @@ antlrcpp::Any VariableVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *
 antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) != varOffsets.end()) {
-        std::cerr << "Error: Variable '" << varName << "' already declared." << std::endl;
-        exit(1);
+        std::cerr << "\e[31mError :\e[39m Variable '" << varName << "' already declared." << std::endl;
+        error = true;
     }
     else {
         varOffsets[varName] = currentOffset; 
@@ -38,8 +38,8 @@ antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stm
 antlrcpp::Any VariableVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) == varOffsets.end()) {
-        std::cerr << "Error: Variable '" << varName << "' used before declaration.\n";
-        exit(1);
+        std::cerr << "\e[31mError :\e[39m Variable '" << varName << "' used before declaration.\n";
+        error = true;
     }
     // Visiter l'expression pour marquer les variables utilisées
     this->visit(ctx->expr());
@@ -76,8 +76,8 @@ antlrcpp::Any VariableVisitor::visitLiteral(ifccParser::LiteralContext *ctx) {
     if (ctx->VAR()) {
         std::string varName = ctx->VAR()->getText();
         if (varOffsets.find(varName) == varOffsets.end()) {
-            std::cerr << "Error: Variable '" << varName << "' used before declaration.\n";
-            exit(1);
+            std::cerr << "\e[31mError :\e[39m Variable '" << varName << "' used before declaration.\n";
+            error = true;
         }
         varUse[varName] = true;
     }
@@ -94,7 +94,7 @@ void VariableVisitor::printSymbolTable() {
 void VariableVisitor::checkUsage() {
     for (const auto& [key, value] : varUse) {
         if (value == false) {
-            std::cout << "Warning : variable '" << key << "' is never used.\n";
+            std::cout << "\e[35mWarning :\e[39m variable '" << key << "' is never used.\n";
         }
     }
 }

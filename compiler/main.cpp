@@ -51,6 +51,11 @@ int main(int argn, const char **argv)
 
   VariableVisitor vv; 
   vv.visit(tree);
+  
+  bool error = vv.getError();
+  if (error){
+    exit(1);
+  }
 
   CodeGenVisitor v = CodeGenVisitor(vv.getVarOffsets());
   v.visit(tree);

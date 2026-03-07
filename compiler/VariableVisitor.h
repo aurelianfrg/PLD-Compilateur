@@ -24,10 +24,12 @@ class  VariableVisitor : public ifccBaseVisitor {
         void checkUsage();
 
         std::map<std::string, int> getVarOffsets() const { return varOffsets; }
+        bool getError() {return error; }
         
 
     protected:
         std::map<std::string, int> varOffsets; // map variables and their offset
         std::map<std::string, bool> varUse; // track if variables are used at least once
         int currentOffset = -4; // Track the current stack offset
+        bool error = false;
 };
