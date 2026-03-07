@@ -19,7 +19,8 @@ antlrcpp::Any VariableVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *
 antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) != varOffsets.end()) {
-        std::cerr << "\e[31mError :\e[39m Variable '" << varName << "' already declared." << std::endl;
+        int line = ctx -> getStart() -> getLine();
+        std::cerr <<"Ligne "<<line<<": \e[31mError :\e[39m Variable '" << varName << "' already declared." << std::endl;
         error = true;
     }
     else {
@@ -38,7 +39,8 @@ antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stm
 antlrcpp::Any VariableVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) == varOffsets.end()) {
-        std::cerr << "\e[31mError :\e[39m Variable '" << varName << "' used before declaration.\n";
+        int line = ctx -> getStart() -> getLine();
+        std::cerr <<"Ligne " <<line<<": \e[31mError :\e[39m Variable '" << varName << "' used before declaration.\n";
         error = true;
     }
     // Visiter l'expression pour marquer les variables utilisées
@@ -76,7 +78,8 @@ antlrcpp::Any VariableVisitor::visitLiteral(ifccParser::LiteralContext *ctx) {
     if (ctx->VAR()) {
         std::string varName = ctx->VAR()->getText();
         if (varOffsets.find(varName) == varOffsets.end()) {
-            std::cerr << "\e[31mError :\e[39m Variable '" << varName << "' used before declaration.\n";
+            int line = ctx -> getStart() -> getLine();
+            std::cerr <<"Ligne " << line<<": \e[31mError :\e[39m Variable '" << varName << "' used before declaration.\n";
             error = true;
         }
         varUse[varName] = true;
