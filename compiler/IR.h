@@ -1,5 +1,4 @@
-#ifndef IR_H
-#define IR_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -7,16 +6,22 @@
 #include <unordered_map>
 #include <initializer_list>
 
+#include "antlr4-runtime.h"
+#include "generated/ifccLexer.h"
+#include "generated/ifccParser.h"
+#include "generated/ifccBaseVisitor.h"
+
 // Declarations from the parser -- replace with your own
 #include "Type.h"
 #include "Symbol.h"
 #include "SymbolsTable.h"
 
+using namespace antlr4;
 using namespace std;
 
 class BasicBlock;
 class CFG;
-class DefFonction;
+//class DefFonction;
 
 
 //! The class for one 3-address instruction
@@ -119,9 +124,9 @@ class BasicBlock {
  */
 class CFG {
  public:
-	CFG(DefFonction* ast);
+	CFG(tree::ParseTree* ast);
 
-	DefFonction* ast; /**< The AST this CFG comes from */
+	tree::ParseTree* ast; /**< The AST this CFG comes from */
 	
 	void add_bb(BasicBlock* bb); 
 
@@ -160,6 +165,3 @@ class CFG {
 	
 	vector <BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
 };
-
-
-#endif
