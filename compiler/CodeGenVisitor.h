@@ -62,29 +62,47 @@ class CodeGenVisitor : public ifccBaseVisitor {
 			currentOffset -= typeSizes.at(type);
 			return currentOffset;
 		}
-		string getAvailableRegistry() {
-			// get a registry to perform operations on
-			// registry must be explicitely returned to be used again later
-			for (string & registry : registries) {
-				if (availableRegistry(registry)) {
-					availableRegistries.at(registry) = false;
-					return registry;
-				}
-			}
-			cerr << "ERROR : No available registry to perform operation" << endl;
-			exit(-1);
+		// string getAvailableRegistry() {
+		// 	// get a registry to perform operations on
+		// 	// registry must be explicitely returned to be used again later
+		// 	for (string & registry : registries) {
+		// 		if (availableRegistry(registry)) {
+		// 			availableRegistries.at(registry) = false;
+		// 			return registry;
+		// 		}
+		// 	}
+		// 	cerr << "ERROR : No available registry to perform operation" << endl;
+		// 	exit(-1);
+		// }
+		// bool availableRegistry(const string & registry) {
+		// 	return availableRegistries.at(registry);
+		// }
+		// void returnRegistry(const string & registry) {
+		// 	if (availableRegistries.find(registry) != availableRegistries.end()){
+		// 		availableRegistries.at(registry) = true;
+		// 	}
+		// }
+		Symbol & newTemporaryVariable(string type) {
+			string varName = string("!tmp") + to_string(temporaryVarCount++);
+			symbolsTable.add(Symbol(varName, newVarOffset(type), true));
+			return symbolsTable.access(varName);
 		}
-		bool availableRegistry(const string & registry) {
-			return availableRegistries.at(registry);
+
+		void move_op(string source, string target) {
+			cout << "    movl    " << source << ", " << target << endl;
 		}
-		void returnRegistry(const string & registry) {
-			if (availableRegistries.find(registry) != availableRegistries.end()){
-				availableRegistries.at(registry) = true;
-			}
+		void add_op(string expr1Reg, string expr2) {
+			cout << "    addl    " << expr2 << ", " << expr1Reg << endl;
 		}
-		Symbol newTemporaryVariable(string type) {
-			Symbol newVar(to_string(temporaryVarCount++), newVarOffset(type), true);
-			return newVar;
+		void sub_op(string expr1Reg, string expr2) {
+			// performs expr1Reg - expr2 --> expr1Reg
+			cout << "    subl    " << expr2 << ", " << expr1Reg << endl;
+		}
+		void minus_op(string expr) {
+			cout << "    negl    " << expr << endl;
+		}
+		void mult_op(string expr1Reg, string expr2){
+			cout << "    imull    " << expr2 << ", " << expr1Reg << endl;
 		}
 
 	protected:
@@ -97,16 +115,16 @@ class CodeGenVisitor : public ifccBaseVisitor {
 		unordered_map<string,int> typeSizes = {
 			{"int", 4}
 		};
-		vector<string> registries = {"%r8d","%r9d","%r10d","%r11d","%r12d","%r13d","%r14d","%r15d"};
-		unordered_map<string, bool> availableRegistries = {
-			{"%r8d", true},
-			{"%r9d", true},
-			{"%r10d", true},
-			{"%r11d", true},
-			{"%r12d", true},
-			{"%r13d", true},
-			{"%r14d", true},
-			{"%r15d", true},
-		};
+		// vector<string> registries = {"%r8d","%r9d","%r10d","%r11d","%r12d","%r13d","%r14d","%r15d"};
+		// unordered_map<string, bool> availableRegistries = {
+		// 	{"%r8d", true},
+		// 	{"%r9d", true},
+		// 	{"%r10d", true},
+		// 	{"%r11d", true},
+		// 	{"%r12d", true},
+		// 	{"%r13d", true},
+		// 	{"%r14d", true},
+		// 	{"%r15d", true},
+		// };
 	};
 
