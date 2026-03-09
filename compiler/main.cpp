@@ -9,6 +9,7 @@
 #include "generated/ifccBaseVisitor.h"
 
 #include "CodeGenVisitor.h"
+#include "IRVisitor.h"
 
 using namespace antlr4;
 using namespace std;
@@ -54,10 +55,19 @@ int main(int argn, const char **argv)
     // vv.visit(tree);
     // vv.anyUnused();
 
-    clog << endl << "Sortie : " << endl;
+    // clog << endl << "Sortie : " << endl;
     
-    CodeGenVisitor v;
-    v.visit(tree);
+    // CodeGenVisitor v;
+    // v.visit(tree);
+
+    IRVisitor irVisitor(tree);
+    irVisitor.visit(tree);
+
+    // cfg debugging
+    //cout << *(irVisitor.cfg) << endl;
+
+    // asm output
+    irVisitor.cfg->gen_asm(cout);
 
     return 0;
 }

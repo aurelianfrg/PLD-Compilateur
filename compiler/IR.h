@@ -27,36 +27,38 @@ class CFG;
 //! The class for one 3-address instruction
 class IRInstr {
  
-   public:
-	/** The instructions themselves -- feel free to subclass instead */
-	typedef enum {
-		ldconst,
-		ret,
-		copy,
-		add,
-		sub,
-		mul,
-		rmem,
-		wmem,
-		call, 
-		cmp_eq,
-		cmp_lt,
-		cmp_le
-	} Operation;
+	public:
+		/** The instructions themselves -- feel free to subclass instead */
+		typedef enum {
+			ldconst, 	// valeur reg
+			ret,		// expr_address
+			copy,		// source dest
+			add,		// 
+			sub,
+			mul,
+			rmem,
+			wmem,
+			call, 
+			cmp_eq,
+			cmp_lt,
+			cmp_le
+		} Operation;
+		
 
+		/**  constructor */
+		IRInstr(BasicBlock* bb_, Operation op, Type t, vector<string> params);
+		
+		/** Actual code generation */
+		void gen_asm(ostream &os); /**< x86 assembly code generation for this IR instruction */
 
-	/**  constructor */
-	IRInstr(BasicBlock* bb_, Operation op, Type t, vector<string> params);
-	
-	/** Actual code generation */
-	void gen_asm(ostream &o); /**< x86 assembly code generation for this IR instruction */
-	
- private:
-	BasicBlock* bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
-	Operation op;
-	Type t;
-	vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
-	// if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very important) comment becomes useless: it would be a better design. 
+		friend ostream & operator << (ostream & os, const IRInstr & irInstr);
+		
+	private:
+		BasicBlock* bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
+		Operation op;
+		Type t;
+		vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
+		// if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very important) comment becomes useless: it would be a better design. 
 };
 
 
@@ -93,9 +95,11 @@ Possible optimization:
 class BasicBlock {
 	public:
 		BasicBlock(CFG* cfg, string entry_label);
-		void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
+		void gen_asm(ostream &os); /**< x86 assembly code generation for this basic block (very simple) */
 
 		void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
+
+		friend ostream & operator << (ostream & os, const BasicBlock & bb);
 
 		// No encapsulation whatsoever here. Feel free to do better.
 		BasicBlock* exit_true;  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */ 
@@ -123,44 +127,44 @@ class BasicBlock {
 
  */
 class CFG {
- public:
-	CFG(tree::ParseTree* ast);
+	public:
+		CFG(tree::ParseTree* ast);
 
-	tree::ParseTree* ast; /**< The AST this CFG comes from */
-	
-	void add_bb(BasicBlock* bb); 
+		tree::ParseTree* ast; /**< The AST this CFG comes from */
+		
+		void add_bb(BasicBlock* bb); 
+		BasicBlock* createBasicBlock(); // create a new basicblock and return a pointer to it
 
-	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
-	void gen_asm(ostream& o);
-	string IR_reg_to_asm(string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
-	void gen_asm_prologue(ostream& o);
-	void gen_asm_epilogue(ostream& o);
+		// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
+		void gen_asm(ostream& os);
+		string IR_reg_to_asm(string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
+		void gen_asm_prologue(ostream& os);
+		void gen_asm_epilogue(ostream& os);
 
-	// symbol table methods
-	void add_to_symbol_table(Symbol s);
-	Symbol & create_new_tempvar(Type t); // create a new Symbol and adds it to symbolsTable
-	Symbol & access_symbol(string name);
+		// symbol table methods
+		void add_to_symbol_table(Symbol s);
+		Symbol & create_new_tempvar(Type t); // create a new Symbol and adds it to symbolsTable
+		Symbol & access_symbol(string name);
 
-	// basic block management
-	string new_BB_name();
-	BasicBlock* current_bb;
+		// basic block management
+		string new_BB_name();
+		BasicBlock* current_bb;
 
-	int newVarOffset(Type type) {                       
-		currentOffset -= typeSizes.at(type);
-		return currentOffset;
-	}
+		int newVarOffset(Type type);
 
- protected:
-	SymbolsTable symbolsTable;
-	int currentOffset = 0;
-	int temporaryVarCount = 0;
-	unordered_map<Type,int> typeSizes = {
-		{Type::INT, 4}
-	};
-	// map <string, Type> SymbolType; /**< part of the symbol table  */
-	// map <string, int> SymbolIndex; /**< part of the symbol table  */
-	// int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
-	int nextBBnumber; /**< just for naming */
-	
-	vector <BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
+		friend ostream & operator << (ostream & os, const CFG & cfg);
+
+	protected:
+		SymbolsTable symbolsTable;
+		int currentOffset = 0;
+		int temporaryVarCount = 0;
+		unordered_map<Type,int> typeSizes = {
+			{Type::INT, 4}
+		};
+		// map <string, Type> SymbolType; /**< part of the symbol table  */
+		// map <string, int> SymbolIndex; /**< part of the symbol table  */
+		// int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
+		int nextBBnumber; /**< just for naming */
+		
+		vector <BasicBlock*> bbs; /**< all the basic blocks of this CFG*/
 };
