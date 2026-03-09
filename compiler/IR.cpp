@@ -1,7 +1,7 @@
 #include "IR.h"
 
 
-// CFG METHODS
+// --- CFG METHODS ---
 
 CFG::CFG(tree::ParseTree* ast) {
 	ast = ast;
@@ -42,19 +42,23 @@ void CFG::add_bb(BasicBlock* bb) {
 	current_bb = bb;
 }
 
-Symbol& CFG::create_new_tempvar(Type t) {
-	Symbol newVar(string("!tmp") + to_string(temporaryVarCount++), newVarOffset(t), true);
-	
-	return newVar;
+// temporary variables system
+Symbol & CFG::create_new_tempvar(Type t) {
+	// create the Symbol inside the table and return a reference to it
+	string varName = string("!tmp") + to_string(temporaryVarCount++);
+	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
+	return symbolsTable.access(varName);
+}
+void CFG::add_to_symbol_table(Symbol s) {
+	symbolsTable.add(s);
+}
+Symbol & CFG::access_symbol(string name) {
+	return symbolsTable.access(name);
 }
 
-void CFG::add_to_symbol_table(string name, Type t) {
-	
-}
 
 
-
-// BASIC BLOCK METHODS
+// --- BASIC BLOCK METHODS ---
 
 void BasicBlock::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params) {
 	IRInstr* instr = new IRInstr(this, op, t, params);
@@ -71,10 +75,13 @@ BasicBlock::BasicBlock(CFG* cfg, string entry_label) {
 
 
 
-// IRInstr METHODS
+// --- IRInstr METHODS ---
 IRInstr::IRInstr(BasicBlock* bb_, Operation op, Type t, vector<string> params) {
 	bb = bb_;
 	op = op;
 	t = t;
 	params = params;
 }
+
+// specific instructions
+

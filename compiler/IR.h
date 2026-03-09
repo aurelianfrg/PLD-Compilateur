@@ -91,21 +91,21 @@ Possible optimization:
 */
 
 class BasicBlock {
- public:
-	BasicBlock(CFG* cfg, string entry_label);
-	void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
+	public:
+		BasicBlock(CFG* cfg, string entry_label);
+		void gen_asm(ostream &o); /**< x86 assembly code generation for this basic block (very simple) */
 
-	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
+		void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
-	// No encapsulation whatsoever here. Feel free to do better.
-	BasicBlock* exit_true;  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */ 
-	BasicBlock* exit_false; /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
-	string label; /**< label of the BB, also will be the label in the generated code */
-	CFG* cfg; /** < the CFG where this block belongs */
-	vector<IRInstr*> instrs; /** < the instructions themselves. */
-  string test_var_name;  /** < when generating IR code for an if(expr) or while(expr) etc,
-													 store here the name of the variable that holds the value of expr */
- protected:
+		// No encapsulation whatsoever here. Feel free to do better.
+		BasicBlock* exit_true;  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */ 
+		BasicBlock* exit_false; /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
+		string label; /**< label of the BB, also will be the label in the generated code */
+		CFG* cfg; /** < the CFG where this block belongs */
+		vector<IRInstr*> instrs; /** < the instructions themselves. */
+		string test_var_name;  /** < when generating IR code for an if(expr) or while(expr) etc,
+														store here the name of the variable that holds the value of expr */
+	protected:
 
  
 };
@@ -137,10 +137,9 @@ class CFG {
 	void gen_asm_epilogue(ostream& o);
 
 	// symbol table methods
-	void add_to_symbol_table(string name, Type t);
-	Symbol& create_new_tempvar(Type t);
-	int get_var_index(string name);
-	Type get_var_type(string name);
+	void add_to_symbol_table(Symbol s);
+	Symbol & create_new_tempvar(Type t); // create a new Symbol and adds it to symbolsTable
+	Symbol & access_symbol(string name);
 
 	// basic block management
 	string new_BB_name();
