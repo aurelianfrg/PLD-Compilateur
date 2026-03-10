@@ -1,5 +1,7 @@
 #include "CodeGenVisitor.h"
 
+#include <string>
+
 antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx) 
 {
     #ifdef __APPLE__
@@ -10,19 +12,103 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
     std::cout<< " main: \n" ;
     #endif
 
-    this->visit( ctx->return_stmt() );
+    // Prologue 
+    std::cout << "    pushq %rbp\n";
+    std::cout << "    movq %rsp, %rbp\n";
+
+    this->visit( ctx->block());
     
+    // Epilogue
+    std::cout << "    popq %rbp\n";
     std::cout << "    ret\n";
 
     return 0;
 }
 
 
-antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
-{
-    int retval = stoi(ctx->CONST()->getText());
+antlrcpp::Any CodeGenVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
+    this->visit(ctx->expr());
 
-    std::cout << "    movl $"<<retval<<", %eax\n" ;
+return 0;
+}
 
+antlrcpp::Any CodeGenVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
+    std::string varName = ctx->VAR()->getText();
+
+    if (ctx->expr()) {
+        this->visit(ctx->expr());
+        std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n";  // Move value into variable
+    } 
+    return 0;
+}
+
+antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
+    std::string varName = ctx->VAR()->getText();
+    this->visit(ctx->expr());
+
+    // Move value into variable
+    std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n";
+    return 0;
+}
+
+antlrcpp::Any CodeGenVisitor::visitMultiplication(ifccParser::MultiplicationContext *ctx) {
+    // Left
+    this->visit(ctx->expr(0));
+    std::cout << "    subq $8, %rsp\n";    
+    std::cout << "    movl %eax, (%rsp)\n";    
+
+    // Right
+    this->visit(ctx->expr(1));
+    std::cout << "    movl %eax, %ecx\n";
+    std::cout << "    movl (%rsp), %eax\n";
+    std::cout << "    addq $8, %rsp\n";
+
+    // Multiplication
+    std::cout << "    imull %ecx, %eax\n";
+    return 0;
+}
+
+antlrcpp::Any CodeGenVisitor::visitAddSub(ifccParser::AddSubContext *ctx) {
+    // Left
+    this->visit(ctx->expr(0));
+    std::cout << "    subq $8, %rsp\n";    
+    std::cout << "    movl %eax, (%rsp)\n";    
+
+    // Right
+    this->visit(ctx->expr(1));
+    std::cout << "    movl %eax, %ecx\n";
+    std::cout << "    movl (%rsp), %eax\n";
+    std::cout << "    addq $8, %rsp\n";
+
+    std::string op = ctx->children[1]->getText();  // get op
+    if (op == "+") {
+        std::cout << "    addl %ecx, %eax\n";
+    } else if (op == "-") {
+        std::cout << "    subl %ecx, %eax\n";
+    }
+    return 0;
+}
+
+antlrcpp::Any CodeGenVisitor::visitMinus(ifccParser::MinusContext *ctx) {
+    this->visit(ctx->expr());
+    std::cout << "    negl %eax\n";
+    return 0;
+}
+
+antlrcpp::Any CodeGenVisitor::visitParenthese(ifccParser::ParentheseContext *ctx) {
+    return this->visit(ctx->expr());
+}
+
+antlrcpp::Any CodeGenVisitor::visitLiteral_expr(ifccParser::Literal_exprContext *ctx) {
+    return this->visit(ctx->literal());
+}
+
+antlrcpp::Any CodeGenVisitor::visitLiteral(ifccParser::LiteralContext *ctx) {
+    if (ctx->CONST()) {
+        std::cout << "    movl $" << ctx->CONST()->getText() << ", %eax\n";
+    } else if (ctx->VAR()) {
+        std::string varName = ctx->VAR()->getText();
+        std::cout << "    movl " << varOffsets[varName] << "(%rbp), %eax\n";
+    }
     return 0;
 }

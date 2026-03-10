@@ -1,13 +1,36 @@
 grammar ifcc;
 
+// Program
 axiom : prog EOF ;
 
-prog : 'int' 'main' '(' ')' '{' return_stmt '}' ;
+prog : 'int' 'main' '(' ')' block ;
 
-return_stmt: RETURN CONST ';' ;
+// Block
+block : '{' stmt* '}' ; 
 
-RETURN : 'return' ;
+stmt : declaration_stmt 
+    | assign_stmt 
+    | return_stmt 
+    | expr ;
+
+declaration_stmt : 'int' VAR ('=' expr)? ';';
+assign_stmt : VAR '=' expr ';' ;
+return_stmt : 'return' expr ';' ;
+
+// Expression
+expr : '(' expr ')'         #parenthese
+    |   '-' expr            #minus
+    |   expr '*' expr       #multiplication
+    |   expr ('+'|'-') expr #addSub
+    |   literal             #literal_expr;
+
+
+// Literals and identifiers
+literal : CONST 
+    | VAR ;
+
 CONST : [0-9]+ ;
+VAR : [a-zA-Z]+;
 COMMENT : '/*' .*? '*/' -> skip ;
 DIRECTIVE : '#' .*? '\n' -> skip ;
 WS    : [ \t\r\n] -> channel(HIDDEN);

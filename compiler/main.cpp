@@ -9,6 +9,7 @@
 #include "generated/ifccBaseVisitor.h"
 
 #include "CodeGenVisitor.h"
+#include "VariableVisitor.h"
 
 using namespace antlr4;
 using namespace std;
@@ -21,14 +22,14 @@ int main(int argn, const char **argv)
      ifstream lecture(argv[1]);
      if( !lecture.good() )
      {
-         cerr<<"error: cannot read file: " << argv[1] << endl ;
+         cerr<<"\e[31mError :\e[39m cannot read file: " << argv[1] << endl ;
          exit(1);
      }
      in << lecture.rdbuf();
   }
   else
   {
-      cerr << "usage: ifcc path/to/file.c" << endl ;
+      cerr << "\e[31mUsage :\e[39m ifcc path/to/file.c" << endl ;
       exit(1);
   }
   
@@ -44,12 +45,19 @@ int main(int argn, const char **argv)
 
   if(parser.getNumberOfSyntaxErrors() != 0)
   {
-      cerr << "error: syntax error during parsing" << endl;
+      cerr << "\e[31mError :\e[39m syntax error during parsing" << endl;
       exit(1);
   }
 
+  VariableVisitor vv; 
+  vv.visit(tree);
   
-  CodeGenVisitor v;
+  bool error = vv.getError();
+  if (error){
+    exit(1);
+  }
+
+  CodeGenVisitor v = CodeGenVisitor(vv.getVarOffsets());
   v.visit(tree);
 
   return 0;
