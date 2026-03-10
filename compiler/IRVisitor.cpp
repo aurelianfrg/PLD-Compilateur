@@ -77,7 +77,7 @@ std::any IRVisitor::visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx)
 {
 
     string tempVarName1 = any_cast<string>(this->visit(ctx->expr(0)));
-    string op = ctx->OP()->getText();
+    string op = ctx->OP->getText();
     string tempVarName2 = any_cast<string>(this->visit(ctx->expr(1)));
     Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
 
@@ -99,7 +99,7 @@ std::any IRVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx)
     string tempVarName0 = any_cast<string>(this->visit(ctx->expr(0)));
     string tempVarName1 = any_cast<string>(this->visit(ctx->expr(1)));
     Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
-    cfg->current_bb->add_IRInstr(Instr::mul, Type::INT, {tempVar.getName(), tempVar0, tempVar1});
+    cfg->current_bb->add_IRInstr(IRInstr::mul, Type::INT, {tempVar.getName(), tempVarName0, tempVarName1});
 
     return tempVar.getName();
 }
@@ -112,6 +112,7 @@ std::any IRVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
     return 0;
 }
 
-std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx) {
+std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
+{
     return visitChildren(ctx);
 }

@@ -167,7 +167,7 @@ void IRInstr::gen_asm(ostream &os)
 		this->gen_asm_sub(os);
 		break;
 	case IRInstr::mul:
-		this->gen_adm_mul(os);
+		this->gen_asm_mul(os);
 		break;
 	default:
 		cerr << "Unknown operation" << endl;
