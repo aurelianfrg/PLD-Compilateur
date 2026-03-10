@@ -163,6 +163,40 @@ void IRInstr::gen_asm(ostream& os) {
 		// TEMPORARY WAY OF HANDLING RETURNS ANYWHERE
 		os << "    jmp     epilogue" << endl;
 	}
+	else if (this->op == IRInstr::cmp_eq) {
+		string resultVarName = params.at(0);
+		string tempVarName1 = params.at(1);
+		string tempVarName2 = params.at(2);
+		Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
+		Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
+		Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+		string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+		string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+		string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+
+		os << "    movl    " << tempVar1Address << ", %eax" << endl;
+		os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
+		os << "    sete    %al" << endl; // sete %al to 1 if equal
+		os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+		os << "    movl    %eax, " << resultAddress << endl; 
+	}
+	else if (this->op == IRInstr::cmp_diff) {
+		string resultVarName = params.at(0);
+		string tempVarName1 = params.at(1);
+		string tempVarName2 = params.at(2);
+		Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
+		Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
+		Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+		string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+		string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+		string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+
+		os << "    movl    " << tempVar1Address << ", %eax" << endl;
+		os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
+		os << "    setne   %al" << endl; // sete %al to 1 if equal
+		os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+		os << "    movl    %eax, " << resultAddress << endl; 
+	}
 	else {
 		cerr << "Unknown operation" << endl;
 	}

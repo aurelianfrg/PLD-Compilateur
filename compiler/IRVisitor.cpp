@@ -50,9 +50,26 @@ std::any IRVisitor::visitExpr_const(ifccParser::Expr_constContext *ctx) {
 std::any IRVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx) {
 
 }
-std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) {
 
+std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) {
+    string op = ctx->OP->getText();
+
+    // resolve both operands
+    string expr1Address = any_cast<string>(this->visit(ctx->expr(0)));
+    string expr2Address = any_cast<string>(this->visit(ctx->expr(1)));
+
+    Symbol & resultTempVar = cfg->create_new_tempvar(Type::INT);
+
+    if (op == string("==")) {
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_eq, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
+    }
+    else {
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_diff, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
+    }
+
+    return resultTempVar.getName();
 }
+
 std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     // create a new testing block 
     BasicBlock* start_bb = cfg->current_bb;
