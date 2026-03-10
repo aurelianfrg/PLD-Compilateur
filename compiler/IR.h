@@ -41,8 +41,9 @@ class IRInstr {
 			wmem,		// *ADDR<-VAR	 [var, addr]
 			call, 		// TODO
 			cmp_eq,		// VAR<-VAR==VAR [dest, v1, v2]
-			cmp_lt,		// VAR<-VAR<VAR [dest, v1, v2]
-			cmp_le		// VAR<-VAR<=VAR [dest, v1, v2]
+			cmp_lt,		// VAR<-VAR<VAR  [dest, v1, v2]
+			cmp_le,		// VAR<-VAR<=VAR [dest, v1, v2]
+			neg,		// VAR<- -VAR    [dest, source]
 		} Operation;
 		
 

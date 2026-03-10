@@ -160,6 +160,9 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::add:
 		this->gen_asm_add(os);
 		break;
+	case IRInstr::neg:
+		this->gen_asm_neg(os);
+		break;
 	default:
 		cerr << "Unknown operation" << endl;
 	}
@@ -216,6 +219,19 @@ void IRInstr::gen_asm_add(ostream &os)
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
+void IRInstr::gen_asm_neg(os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &srcVar = bb->cfg->access_symbol(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    negl    " << "%eax" << ", " << destAddress << endl;
+}
+
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	vector<string> operations = {// for printing
@@ -230,7 +246,8 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 								 "call",
 								 "cmp_eq",
 								 "cmp_lt",
-								 "cmp_le"};
+								 "cmp_le",
+								 "neg"};
 	os << "    " << operations[irInstr.op] << " ";
 	for (const string &param : irInstr.params)
 	{
