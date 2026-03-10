@@ -4,7 +4,7 @@
 // --- CFG METHODS ---
 
 CFG::CFG(tree::ParseTree* ast) {
-	ast = ast;
+	this->ast = ast;
 	nextBBnumber = 0;
 }
 
@@ -91,7 +91,7 @@ BasicBlock::BasicBlock(CFG* cfg, string entry_label) {
 	exit_true = nullptr;
 	label = entry_label;
 	test_var_name = "";
-	cfg = cfg;
+	this->cfg = cfg;
 }
 
 void BasicBlock::gen_asm(ostream& os) {
@@ -126,22 +126,26 @@ IRInstr::IRInstr(BasicBlock* bb_, Operation op_, Type t_, vector<string> params_
 }
 
 void IRInstr::gen_asm(ostream& os) {
+	// SPECIFIC LOGIC FOR INSTRUCTIONS
 	if (this->op == IRInstr::ldconst) {
 		string value = params.at(0);
-		string reg = params.at(1);
+		string tempVarName = params.at(1);
+
+		Symbol & tempVar = bb->cfg->access_symbol(tempVarName);
+		string address = to_string(tempVar.getOffset()) + "(%rbp)";
 		string const_value = string("$") + value;
-		os << "    movl    " << const_value << ", " << reg << endl;
+		os << "    movl    " << const_value << ", " << "%eax" << endl;
+		os << "    movl    " << "%eax" << ", " << address << endl;
 	}
 	else if (this->op == IRInstr::ret){
-		string reg = params.at(0);
-		if (!(reg == "%eax")) {
-			os << "    movl    " << reg << ", " << "%eax" << endl;
-		}
+		string tempVarName = params.at(0);
+		Symbol & tempVar = bb->cfg->access_symbol(tempVarName);
+		string address = to_string(tempVar.getOffset()) + "(%rbp)";
+		os << "    movl    " << address << ", " << "%eax" << endl;
 	}
 	else {
 		cerr << "Unknown operation" << endl;
 	}
-	
 }
 
 ostream & operator << (ostream & os, const IRInstr & irInstr) {

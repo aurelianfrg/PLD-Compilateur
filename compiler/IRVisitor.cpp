@@ -33,18 +33,18 @@ antlrcpp::Any IRVisitor::visitBloc(ifccParser::BlocContext *ctx)
 std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     // cout << "visit return" << endl;
 	// resolve return value expression 
-    string address = any_cast<string>(this->visit(ctx->expr()));
-	cfg->current_bb->add_IRInstr(IRInstr::ret, Type::INT, { address });
+    string tempVarName = any_cast<string>(this->visit(ctx->expr()));
+	cfg->current_bb->add_IRInstr(IRInstr::ret, Type::INT, { tempVarName });
     return 0;
 }
 
 std::any IRVisitor::visitExpr_const(ifccParser::Expr_constContext *ctx) {
     // cout << "visit expr const" << endl;
 	string value = ctx->CONST()->getText();
-    string reg = "%eax";
-    cfg->current_bb->add_IRInstr(IRInstr::ldconst, Type::INT, {value, reg});
+    Symbol & tempVar = cfg->create_new_tempvar(Type::INT);
+    cfg->current_bb->add_IRInstr(IRInstr::ldconst, Type::INT, {value, tempVar.getName()});
 	
-    return reg;
+    return tempVar.getName();
 }
 
 // std::any IRVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx) {}
