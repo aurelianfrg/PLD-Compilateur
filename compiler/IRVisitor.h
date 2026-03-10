@@ -24,12 +24,12 @@ public:
 	virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
 	virtual std::any visitExpr_const(ifccParser::Expr_constContext *ctx) override;
 	virtual std::any visitExpr_var(ifccParser::Expr_varContext *ctx) override;
-	// virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
+	virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
 	// virtual std::any visitExpr_minus(ifccParser::Expr_minusContext *ctx) override;
 	virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;
-	// virtual std::any visitExpr_mult(ifccParser::Expr_multContext *ctx) override;
+	virtual std::any visitExpr_mult(ifccParser::Expr_multContext *ctx) override;
 	// virtual std::any visitAff_stmt(ifccParser::Aff_stmtContext *ctx) override;
-	// virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
+	virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
 
 	CFG *cfg;
 };

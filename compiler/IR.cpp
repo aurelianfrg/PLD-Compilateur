@@ -160,6 +160,12 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::add:
 		this->gen_asm_add(os);
 		break;
+	case IRInstr::sub:
+		this->gen_asm_sub(os);
+		break;
+	case IRInstr::mul:
+		this->gen_adm_mul(os);
+		break;
 	default:
 		cerr << "Unknown operation" << endl;
 	}
@@ -213,6 +219,42 @@ void IRInstr::gen_asm_add(ostream &os)
 	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
 	os << "    movl    " << v1Address << ", " << "%eax" << endl;
 	os << "    addl    " << v2Address << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_sub(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    subl    " << v2Address << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_mul(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    imull    " << v2Address << ", " << "%eax" << endl;
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
