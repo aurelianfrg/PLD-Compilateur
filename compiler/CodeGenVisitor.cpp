@@ -15,10 +15,13 @@ antlrcpp::Any CodeGenVisitor::visitProg(ifccParser::ProgContext *ctx)
     // Prologue 
     std::cout << "    pushq %rbp\n";
     std::cout << "    movq %rsp, %rbp\n";
+    std::cout << "    subq $" << varOffsets.size() * 4 << ", %rsp\n"; // Space for variables
+
 
     this->visit( ctx->block());
     
     // Epilogue
+    std::cout << "    movq %rbp, %rsp\n"; 
     std::cout << "    popq %rbp\n";
     std::cout << "    ret\n";
 
@@ -33,14 +36,16 @@ return 0;
 }
 
 antlrcpp::Any CodeGenVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
-    std::string varName = ctx->VAR()->getText();
-
-    if (ctx->expr()) {
-        this->visit(ctx->expr());
-        std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n";  // Move value into variable
-    } 
+    for (auto item : ctx->declaration_item()) {
+        std::string varName = item->VAR()->getText();
+        if (item->expr()) {
+            this->visit(item->expr());
+            std::cout << "    movl %eax, " << varOffsets[varName] << "(%rbp)\n";    // Move value into variable
+        }
+    }
     return 0;
 }
+
 
 antlrcpp::Any CodeGenVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
@@ -82,8 +87,10 @@ antlrcpp::Any CodeGenVisitor::visitAddSub(ifccParser::AddSubContext *ctx) {
 
     std::string op = ctx->children[1]->getText();  // get op
     if (op == "+") {
+        // Addition
         std::cout << "    addl %ecx, %eax\n";
     } else if (op == "-") {
+        // Subtraction
         std::cout << "    subl %ecx, %eax\n";
     }
     return 0;

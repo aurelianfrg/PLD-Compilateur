@@ -5,34 +5,29 @@
 antlrcpp::Any VariableVisitor::visitProg(ifccParser::ProgContext *ctx) {
 
     this->visit( ctx->block());
-    checkUsage();
+    checkUsage();   // Check for unused variables
+    // printSymbolTable(); // Print symbol table for debugging. CAREFUL: it print the symbol table in the assembly code (cout)
     return 0;
 }
 
 antlrcpp::Any VariableVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
-    // Visiter l'expression pour marquer les variables utilisées
     this->visit(ctx->expr());
-
     return 0;
 }
 
-antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
+antlrcpp::Any VariableVisitor::visitDeclaration_item(ifccParser::Declaration_itemContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) != varOffsets.end()) {
         int line = ctx -> getStart() -> getLine();
         std::cerr << "\e[31mError:\e[39m \e[33mLigne "<<line<<":\e[39m Variable '" << varName << "' already declared." << std::endl;
         error = true;
     }
-    else {
-        varOffsets[varName] = currentOffset; 
-        varUse[varName] = false; // Usage false
-        currentOffset = currentOffset - 4; // 4 bc int
-    }
-
+    varOffsets[varName] = currentOffset;
+    varUse[varName] = false;
+    currentOffset -= 4;
     if (ctx->expr()) {
         this->visit(ctx->expr());
     }
-    
     return 0;
 }
 
@@ -43,7 +38,6 @@ antlrcpp::Any VariableVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *
         std::cerr << "\e[31mError:\e[39m \e[33mLigne "<<line<<":\e[39m Variable '" << varName << "' used before declaration.\n";
         error = true;
     }
-    // Visiter l'expression pour marquer les variables utilisées
     this->visit(ctx->expr());
     return 0;
 }

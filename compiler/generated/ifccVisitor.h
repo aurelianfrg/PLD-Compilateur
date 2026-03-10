@@ -23,7 +23,27 @@ public:
 
     virtual std::any visitProg(ifccParser::ProgContext *context) = 0;
 
+    virtual std::any visitBlock(ifccParser::BlockContext *context) = 0;
+
+    virtual std::any visitStmt(ifccParser::StmtContext *context) = 0;
+
+    virtual std::any visitDeclaration_stmt(ifccParser::Declaration_stmtContext *context) = 0;
+
+    virtual std::any visitAssign_stmt(ifccParser::Assign_stmtContext *context) = 0;
+
     virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *context) = 0;
+
+    virtual std::any visitMinus(ifccParser::MinusContext *context) = 0;
+
+    virtual std::any visitParenthese(ifccParser::ParentheseContext *context) = 0;
+
+    virtual std::any visitAddSub(ifccParser::AddSubContext *context) = 0;
+
+    virtual std::any visitLiteral_expr(ifccParser::Literal_exprContext *context) = 0;
+
+    virtual std::any visitMultiplication(ifccParser::MultiplicationContext *context) = 0;
+
+    virtual std::any visitLiteral(ifccParser::LiteralContext *context) = 0;
 
 
 };
