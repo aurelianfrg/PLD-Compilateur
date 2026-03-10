@@ -10,6 +10,7 @@ instruction :
     return_stmt #instruction_return_stmt
     |def_stmt #instruction_def_stmt
     |aff_stmt #instruction_aff_stmt
+    |if_stmt #instruction_if_stmt
 ;
 
 expr :
@@ -17,6 +18,8 @@ expr :
     |'-' expr #expr_minus
     |expr '*' expr #expr_mult
     |expr ('+' | '-') expr #expr_add_sub
+    |expr OP=('<=' | '<' | '>=' | '>') expr #expr_comp
+    |expr OP=('==' | '!=') expr #expr_eq_diff
     |CONST #expr_const
     |VAR #expr_var
 ;
@@ -32,11 +35,14 @@ aff_stmt :
 def_stmt :
     TYPE VAR ('=' expr )? ';' ;
 
+if_stmt :
+    'if' '(' IF_EXPR=expr ')' IF_BLOC=bloc ('else' 'if' '(' ELSEIF_EXPR=expr ')' ELSEIF_BLOC=bloc)*? ('else' ELSE_BLOC=bloc)?;
+
 TYPE : 'int' ;
 OPEN_PAR : '(' ;
 CLOSE_PAR : ')' ;
 RETURN : 'return' ;
-CONST : [0-9]+ ;
+CONST : ('-')?[0-9]+ ;
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 
 COMMENT : '/*' .*? '*/' -> skip ;

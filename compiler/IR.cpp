@@ -18,7 +18,7 @@ void CFG::gen_asm_prologue(ostream& os) {
     #endif
 
     //prologue 
-    os << "    # prologue\n";
+    os << "prologue:\n";
     os << "    pushq   %rbp\n";
     os << "    movq    %rsp, %rbp\n";
     os << "\n";
@@ -26,9 +26,8 @@ void CFG::gen_asm_prologue(ostream& os) {
 
 void CFG::gen_asm_epilogue(ostream& os) {
 	os << "\n";
-    os << "    # epilogue\n";
+    os << "epilogue:\n";
     os << "    popq    %rbp\n";
-    
     os << "    ret\n";
 }
 
@@ -99,8 +98,26 @@ void BasicBlock::gen_asm(ostream& os) {
 	for (IRInstr* instr : this->instrs) {
 		instr->gen_asm(os);
 	}
-	if (this->exit_true != nullptr or this->exit_false != nullptr) {
-		// INSERER ICI LA LOGIQUE DE JUMP CONDITIONNELLE ENTRE BLOCS
+
+	// BLOCK JUMP LOGIC
+	if (this->exit_true != nullptr and this->exit_false == nullptr) {
+		// linear code
+		os << "    jmp     " << this->exit_true->label << endl;
+	}
+	else if (this->exit_true != nullptr and this->exit_false != nullptr) {
+		string condVarName = this->test_var_name;
+		Symbol & condVar = cfg->access_symbol(condVarName);
+		string address = to_string(condVar.getOffset()) + "(%rbp)";
+		os << "    movl    " << address << ", " << "%eax" << endl;
+		os << "    cmpl    " << "$0, %eax" << endl;
+		os << "    jne     " << this->exit_true->label << endl;
+		os << "    jmp     " << this->exit_false->label << endl;
+	}
+	else if (this->exit_true == nullptr and this->exit_false == nullptr) {
+		// program ending 
+	}
+	else {
+		cerr << "INTERNAL ERROR : Unproper block linking" << endl;
 	}
 }
 
@@ -142,6 +159,9 @@ void IRInstr::gen_asm(ostream& os) {
 		Symbol & tempVar = bb->cfg->access_symbol(tempVarName);
 		string address = to_string(tempVar.getOffset()) + "(%rbp)";
 		os << "    movl    " << address << ", " << "%eax" << endl;
+
+		// TEMPORARY WAY OF HANDLING RETURNS ANYWHERE
+		os << "    jmp     epilogue" << endl;
 	}
 	else {
 		cerr << "Unknown operation" << endl;

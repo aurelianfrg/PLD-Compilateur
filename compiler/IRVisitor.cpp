@@ -6,11 +6,11 @@ IRVisitor::IRVisitor(tree::ParseTree* parseTree) {
     cfg = new CFG(parseTree);
 }
 
-// antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx) 
-// {
-//     this->visit( ctx->bloc() );
-//     return 0;
-// }
+antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx) {
+    BasicBlock* firstBlock = cfg->createBasicBlock();
+    this->visit( ctx->bloc() );
+    return 0;
+}
 
 std::any IRVisitor::visitInstruction_aff_stmt(ifccParser::Instruction_aff_stmtContext *ctx) {
     return visitChildren(ctx);
@@ -21,12 +21,12 @@ std::any IRVisitor::visitInstruction_def_stmt(ifccParser::Instruction_def_stmtCo
 std::any IRVisitor::visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx) {
     return visitChildren(ctx);
 }
+std::any IRVisitor::visitInstruction_if_stmt(ifccParser::Instruction_if_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
 
 antlrcpp::Any IRVisitor::visitBloc(ifccParser::BlocContext *ctx) 
 {
-    // cout << "visitblock" << endl;
-	BasicBlock* firstBlock = cfg->createBasicBlock();
-    this->visit( ctx->children[0] );
     return visitChildren(ctx);
 }
 
@@ -45,6 +45,33 @@ std::any IRVisitor::visitExpr_const(ifccParser::Expr_constContext *ctx) {
     cfg->current_bb->add_IRInstr(IRInstr::ldconst, Type::INT, {value, tempVar.getName()});
 	
     return tempVar.getName();
+}
+
+std::any IRVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx) {
+
+}
+std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) {
+
+}
+std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    // create a new testing block 
+    BasicBlock* start_bb = cfg->current_bb;
+    BasicBlock* test_bb = cfg->createBasicBlock();
+    start_bb->exit_true = test_bb;
+
+    string condVarName = any_cast<string>(this->visit(ctx->IF_EXPR));
+    test_bb->test_var_name = condVarName;
+
+    BasicBlock* true_bb = cfg->createBasicBlock();
+    this->visit(ctx->IF_BLOC);
+    test_bb->exit_true = true_bb;
+
+    // case without else statement
+    BasicBlock* end_bb = cfg->createBasicBlock();
+    test_bb->exit_false = end_bb;
+    true_bb->exit_true = end_bb;
+
+    return 0;
 }
 
 // std::any IRVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx) {}

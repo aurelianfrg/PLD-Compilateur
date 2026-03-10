@@ -67,6 +67,8 @@ int main(int argn, const char **argv)
     //cout << *(irVisitor.cfg) << endl;
 
     // asm output
+    ofstream ofs("output.s");
+    irVisitor.cfg->gen_asm(ofs);
     irVisitor.cfg->gen_asm(cout);
 
     return 0;
