@@ -30,18 +30,19 @@ class IRInstr {
 	public:
 		/** The instructions themselves -- feel free to subclass instead */
 		typedef enum {
-			ldconst, 	// valeur reg
-			ret,		// expr_address
-			copy,		// source dest
-			add,		// 
-			sub,
-			mul,
-			rmem,
-			wmem,
-			call, 
-			cmp_eq,
-			cmp_lt,
-			cmp_le
+			// L'IR manipule les variables par leur nom (temporaire ou pas)
+			ldconst, 	// VAR<-CONST 	 [const, var]
+			ret,		// RETURN EXPR 	 [expr_address]
+			copy,		// VAR<-VAR 	 [dest, source]
+			add,		// VAR<-VAR+VAR  [dest, v1, v2]
+			sub,		// VAR<-VAR-VAR  [dest, v1, v2]
+			mul,		// VAR<-VAR*VAR  [dest, v1, v2]
+			rmem,		// VAR<-*ADDR	 [var, addr]
+			wmem,		// *ADDR<-VAR	 [var, addr]
+			call, 		// TODO
+			cmp_eq,		// VAR<-VAR==VAR [dest, v1, v2]
+			cmp_lt,		// VAR<-VAR<VAR [dest, v1, v2]
+			cmp_le		// VAR<-VAR<=VAR [dest, v1, v2]
 		} Operation;
 		
 
