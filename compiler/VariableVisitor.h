@@ -12,6 +12,7 @@ class  VariableVisitor : public ifccBaseVisitor {
         virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override ;
         virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
         virtual antlrcpp::Any visitDeclaration_item(ifccParser::Declaration_itemContext *ctx) override;
+        virtual antlrcpp::Any visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) override;
         virtual antlrcpp::Any visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) override;
         virtual antlrcpp::Any visitAddSub(ifccParser::AddSubContext *ctx) override;
         virtual antlrcpp::Any visitMultiplication(ifccParser::MultiplicationContext *ctx) override;
@@ -19,6 +20,7 @@ class  VariableVisitor : public ifccBaseVisitor {
         virtual antlrcpp::Any visitParenthese(ifccParser::ParentheseContext *ctx) override;
         virtual antlrcpp::Any visitLiteral_expr(ifccParser::Literal_exprContext *ctx) override;
         virtual antlrcpp::Any visitLiteral(ifccParser::LiteralContext *ctx) override;
+        
         
         void printSymbolTable();
         void checkUsage();

@@ -31,6 +31,11 @@ antlrcpp::Any VariableVisitor::visitDeclaration_item(ifccParser::Declaration_ite
     return 0;
 }
 
+antlrcpp::Any VariableVisitor::visitDeclaration_stmt(ifccParser::Declaration_stmtContext *ctx) {
+    visitChildren(ctx);
+    return 0;
+}
+
 antlrcpp::Any VariableVisitor::visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) {
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) == varOffsets.end()) {
