@@ -188,8 +188,11 @@ void IRInstr::gen_asm_ldconst(ostream &os)
 
 void IRInstr::gen_asm_ret(ostream &os)
 {
+	cout << "entree dans le ret\n";
 	string tempVarName = params.at(0);
+	cout <<"tempVar: "<< tempVarName << endl;
 	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
+	cout << "bug?\n";
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << address << ", " << "%eax" << endl;
 }
@@ -225,7 +228,7 @@ void IRInstr::gen_asm_add(ostream &os)
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_neg(os)
+void IRInstr::gen_asm_neg(ostream &os)
 {
 	string dest = params.at(0);
 	string src = params.at(1);

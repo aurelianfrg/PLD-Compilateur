@@ -64,7 +64,7 @@ int main(int argn, const char **argv)
     irVisitor.visit(tree);
 
     // cfg debugging
-    //cout << *(irVisitor.cfg) << endl;
+    cout << *(irVisitor.cfg) << endl;
 
     // asm output
     irVisitor.cfg->gen_asm(cout);

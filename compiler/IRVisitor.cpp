@@ -108,7 +108,7 @@ std::any IRVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
     // cout << "visit aff stmt" << endl;
     string tempVarName = any_cast<string>(this->visit(ctx->expr()));
     string varName = ctx -> VAR() -> getText();
-	cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, { tempVar.getName(), tempVarName });
+	cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, { varName, tempVarName });
     return 0;
 }
 
