@@ -70,6 +70,15 @@ Symbol &CFG::create_new_tempvar(Type t)
 	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
 	return symbolsTable.access(varName);
 }
+
+// temporary variables system
+Symbol &CFG::create_new_var(Type t, string varName)
+{
+	// create the Symbol inside the table and return a reference to it
+	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
+	return symbolsTable.access(varName);
+}
+
 void CFG::add_to_symbol_table(Symbol s)
 {
 	symbolsTable.add(s);
@@ -188,11 +197,8 @@ void IRInstr::gen_asm_ldconst(ostream &os)
 
 void IRInstr::gen_asm_ret(ostream &os)
 {
-	cout << "entree dans le ret\n";
 	string tempVarName = params.at(0);
-	cout <<"tempVar: "<< tempVarName << endl;
 	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
-	cout << "bug?\n";
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << address << ", " << "%eax" << endl;
 }
@@ -238,7 +244,7 @@ void IRInstr::gen_asm_neg(ostream &os)
 	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
-	os << "    negl    " << "%eax" << ", " << destAddress << endl;
+	os << "    negl    " << "%eax" << endl;
 }
 
 void IRInstr::gen_asm_sub(ostream &os)

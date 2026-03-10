@@ -24,27 +24,29 @@ class CFG;
 // class DefFonction;
 
 //! The class for one 3-address instruction
-class IRInstr {
- 
-	public:
-		/** The instructions themselves -- feel free to subclass instead */
-		typedef enum {
-			// L'IR manipule les variables par leur nom (temporaire ou pas)
-			ldconst, 	// VAR<-CONST 	 [const, var]
-			ret,		// RETURN EXPR 	 [expr_address]
-			copy,		// VAR<-VAR 	 [dest, source]
-			add,		// VAR<-VAR+VAR  [dest, v1, v2]
-			sub,		// VAR<-VAR-VAR  [dest, v1, v2]
-			mul,		// VAR<-VAR*VAR  [dest, v1, v2]
-			rmem,		// VAR<-*ADDR	 [var, addr]
-			wmem,		// *ADDR<-VAR	 [var, addr]
-			call, 		// TODO
-			cmp_eq,		// VAR<-VAR==VAR [dest, v1, v2]
-			cmp_lt,		// VAR<-VAR<VAR  [dest, v1, v2]
-			cmp_le,		// VAR<-VAR<=VAR [dest, v1, v2]
-			neg,		// VAR<- -VAR    [dest, source]
-		} Operation;
-		
+class IRInstr
+{
+
+public:
+	/** The instructions themselves -- feel free to subclass instead */
+	typedef enum
+	{
+		// L'IR manipule les variables par leur nom (temporaire ou pas)
+		ldconst, // VAR<-CONST 	 [const, var]
+		ret,	 // RETURN EXPR 	 [expr_address]
+		copy,	 // VAR<-VAR 	 [dest, source]
+		add,	 // VAR<-VAR+VAR  [dest, v1, v2]
+		sub,	 // VAR<-VAR-VAR  [dest, v1, v2]
+		mul,	 // VAR<-VAR*VAR  [dest, v1, v2]
+		rmem,	 // VAR<-*ADDR	 [var, addr]
+		wmem,	 // *ADDR<-VAR	 [var, addr]
+		call,	 // TODO
+		cmp_eq,	 // VAR<-VAR==VAR [dest, v1, v2]
+		cmp_lt,	 // VAR<-VAR<VAR  [dest, v1, v2]
+		cmp_le,	 // VAR<-VAR<=VAR [dest, v1, v2]
+		neg,	 // VAR<- -VAR    [dest, source]
+	} Operation;
+
 	/**  constructor */
 	IRInstr(BasicBlock *bb_, Operation op, Type t, vector<string> params);
 
@@ -143,6 +145,7 @@ public:
 	// symbol table methods
 	void add_to_symbol_table(Symbol s);
 	Symbol &create_new_tempvar(Type t); // create a new Symbol and adds it to symbolsTable
+	Symbol &create_new_var(Type t, string varName);
 	Symbol &access_symbol(string name);
 
 	// basic block management

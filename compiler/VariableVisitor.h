@@ -1,144 +1,37 @@
 #pragma once
 
+#include <map>
+#include <string>
 
 #include "antlr4-runtime.h"
 #include "generated/ifccBaseVisitor.h"
-#include <unordered_set>
 
-using namespace std;
 
-class VariableVisitor : public ifccBaseVisitor {
+class  VariableVisitor : public ifccBaseVisitor {
 	public:
-        virtual std::any visitAff_stmt_var(ifccParser::Aff_stmt_varContext *ctx) override {
-            string var1 = ctx->VAR().at(0)->getText();
-            string var2 = ctx->VAR().at(1)->getText();
-            //clog << "aff " << var1 << " = " << var2 << endl;
+        virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override ;
+        virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
+        virtual antlrcpp::Any visitDeclaration_item(ifccParser::Declaration_itemContext *ctx) override;
+        virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
+        virtual antlrcpp::Any visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) override;
+        virtual antlrcpp::Any visitAddSub(ifccParser::AddSubContext *ctx) override;
+        virtual antlrcpp::Any visitMultiplication(ifccParser::MultiplicationContext *ctx) override;
+        virtual antlrcpp::Any visitMinus(ifccParser::MinusContext *ctx) override;
+        virtual antlrcpp::Any visitParenthese(ifccParser::ParentheseContext *ctx) override;
+        virtual antlrcpp::Any visitLiteral_expr(ifccParser::Literal_exprContext *ctx) override;
+        virtual antlrcpp::Any visitLiteral(ifccParser::LiteralContext *ctx) override;
+        
+        
+        void printSymbolTable();
+        void checkUsage();
 
-            if (!exists(var2)) {
-                undeclaredVariableError(var2);
-            }
-            use(var2);
-            if (!initialized(var2)) {
-                uninitializedVariableError(var2);
-            }
-            if (!exists(var1)) {
-                undeclaredVariableError(var1);
-            }
-            initialize(var1);
-
-            return visitChildren(ctx);
-        }
-
-        virtual std::any visitAff_stmt_const(ifccParser::Aff_stmt_constContext *ctx) override {
-            string var = ctx->VAR()->getText();
-            //clog << "def " << var << " = " << ctx->CONST()->getText() << endl;
-
-            if (!exists(var)) {
-                undeclaredVariableError(var);
-            }
-            initialize(var);
-
-            return visitChildren(ctx);
-        }
-
-        virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override {
-            string var = ctx->VAR()->getText();
-            //clog << "def " << var << endl;
-
-            if (exists(var)) {
-                redeclarationError(var);
-            }
-            add(var);
-
-            return visitChildren(ctx);
-        }
-
-        virtual std::any visitDef_aff_stmt_const(ifccParser::Def_aff_stmt_constContext *ctx) override {
-            string var = ctx->VAR()->getText();
-            //clog << "def aff const " << var << " = " << ctx->CONST()->getText() << endl;
-            if (exists(var)) {
-                redeclarationError(var);
-            }
-            add(var);
-            initialize(var);
-
-            return visitChildren(ctx);
-        }
-
-        virtual std::any visitDef_aff_stmt_var(ifccParser::Def_aff_stmt_varContext *ctx) override {
-            string var1 = ctx->VAR().at(0)->getText();
-            string var2 = ctx->VAR().at(1)->getText();
-            //clog << "def aff var " << var1 << " = " << var2 << endl;
-
-            if (!exists(var2)) {
-                undeclaredVariableError(var2);
-            }
-            use(var2);
-            if (!initialized(var2)) {
-                uninitializedVariableError(var2);
-            }
-            if (exists(var1)) {
-                redeclarationError(var1);
-            }
-            add(var1);
-            initialize(var1);
-
-            return visitChildren(ctx);
-        }
-
-        virtual std::any visitReturn_stmt_var(ifccParser::Return_stmt_varContext *ctx) override {
-            string var = ctx->VAR()->getText();
-            if (!exists(var)) undeclaredVariableError(var);
-            use(var);
-
-            return visitChildren(ctx);
-        }
-
-
-        bool anyUnused() {
-            bool result = false;
-            for (const string & var: declared_variables) {
-                if (!used(var)) {
-                    result = true;
-                    clog << "WARNING : Unused var " << var << endl;
-                }
-            }
-            return result;
-        }
+        std::map<std::string, int> getVarOffsets() const { return varOffsets; }
+        bool getError() {return error; }
+        
 
     protected:
-        bool exists(const string & var) {
-            return (declared_variables.find(var) != declared_variables.end());
-        } 
-        void add(const string & var) {
-            declared_variables.insert(var);
-        } 
-        bool used(const string & var) {
-            return (used_variables.find(var) != used_variables.end());
-        }
-        void use(const string & var) {
-            used_variables.insert(var);
-        }
-        bool initialized(const string & var) {
-            return (initialized_variables.find(var) != initialized_variables.end());
-        }
-        void initialize(const string & var) {
-            initialized_variables.insert(var);
-        }
-        void undeclaredVariableError(const string & var) {
-            clog << "ERROR : Undeclared var " << var << endl;
-            noError = false;
-        }
-        void redeclarationError(const string & var) {
-            clog << "ERROR : Redeclaration of var " << var << endl;
-            noError = false;
-        }
-        void uninitializedVariableError(const string & var) {
-            clog << "ERROR : Uninitialized var " << var << endl;
-            noError = false;
-        }
-        unordered_set<string> declared_variables;
-        unordered_set<string> used_variables;
-        unordered_set<string> initialized_variables;
-        bool noError = true;
+        std::map<std::string, int> varOffsets; // map variables and their offset
+        std::map<std::string, bool> varUse; // track if variables are used at least once
+        int currentOffset = -4; // Track the current stack offset
+        bool error = false;
 };

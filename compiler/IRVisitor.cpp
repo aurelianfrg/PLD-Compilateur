@@ -65,11 +65,12 @@ std::any IRVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *c
     return visitChildren(ctx);
 }
 
-std::any IRVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx) {
+std::any IRVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx)
+{
     // cout << "visit expr minus" << endl;
     string tempVarName = any_cast<string>(this->visit(ctx->expr()));
-    Symbol & tempVar = cfg->create_new_tempvar(Type::INT);
-    cfg->current_bb->add_IRInstr(IRInstr::neg, Type::INT, { tempVar.getName(), tempVarName});
+    Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
+    cfg->current_bb->add_IRInstr(IRInstr::neg, Type::INT, {tempVar.getName(), tempVarName});
     return tempVar.getName();
 }
 
@@ -104,15 +105,23 @@ std::any IRVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx)
     return tempVar.getName();
 }
 
-std::any IRVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx) {
+std::any IRVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx)
+{
     // cout << "visit aff stmt" << endl;
     string tempVarName = any_cast<string>(this->visit(ctx->expr()));
-    string varName = ctx -> VAR() -> getText();
-	cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, { varName, tempVarName });
+    string varName = ctx->VAR()->getText();
+    cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, tempVarName});
     return 0;
 }
 
 std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 {
-    return visitChildren(ctx);
+    string varName = ctx->VAR()->getText();
+    Symbol &tempVar = cfg->create_new_var(Type::INT, varName);
+    if (ctx->expr() != nullptr)
+    {
+        string tempVarName = any_cast<string>(this->visit(ctx->expr()));
+        cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, tempVarName});
+    }
+    return 0;
 }
