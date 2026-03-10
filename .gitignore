@@ -12,13 +12,5 @@ compiler/bin
 compiler/generated/
 compiler/.antlr/
 ifcc-test-output
-bin/
-compiler/bin
-*.s
-
-#generated code
-compiler/generated/
-compiler/.antlr/
-ifcc-test-output
 
 .vscode
