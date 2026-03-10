@@ -13,7 +13,8 @@ stmt : declaration_stmt
     | return_stmt 
     | expr ;
 
-declaration_stmt : 'int' VAR ('=' expr)? ';';
+declaration_stmt : 'int' declaration_item (',' declaration_item)* ';' ;
+declaration_item : VAR ('=' expr)? ;
 assign_stmt : VAR '=' expr ';' ;
 return_stmt : 'return' expr ';' ;
 
