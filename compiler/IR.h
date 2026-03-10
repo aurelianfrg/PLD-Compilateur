@@ -51,6 +51,12 @@ class IRInstr {
 		
 		/** Actual code generation */
 		void gen_asm(ostream &os); /**< x86 assembly code generation for this IR instruction */
+		void gen_asm_ldconst(ostream &os);
+		void gen_asm_ret(ostream &os);
+		void gen_asm_copy(ostream &os);
+		void gen_asm_add(ostream &os);
+		void gen_asm_sub(ostream &os);
+		void gen_adm_mul(ostream &os);
 
 		friend ostream & operator << (ostream & os, const IRInstr & irInstr);
 		
