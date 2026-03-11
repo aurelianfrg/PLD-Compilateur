@@ -191,3 +191,13 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     return 0;
 }
+
+std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
+    string varName = ctx->VAR()->getText();
+    string exprResultAddress = any_cast<string> (visit(ctx->expr()));
+
+    cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprResultAddress});
+
+    // return the newly affected variable so that affectations can be chained
+    return varName;
+}

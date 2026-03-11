@@ -31,20 +31,20 @@ class IRInstr {
 		typedef enum
 		{
 			// L'IR manipule les variables par leur nom (temporaire ou pas)
-			ldconst, // VAR<-CONST 	 [const, var]
-			ret,	 // RETURN EXPR 	 [expr_address]
-			copy,	 // VAR<-VAR 	 [dest, source]
-			add,	 // VAR<-VAR+VAR  [dest, v1, v2]
-			sub,	 // VAR<-VAR-VAR  [dest, v1, v2]
-			mul,	 // VAR<-VAR*VAR  [dest, v1, v2]
-			rmem,	 // VAR<-*ADDR	 [var, addr]
-			wmem,	 // *ADDR<-VAR	 [var, addr]
+			ldconst, // VAR<-CONST 	 	[const, var]
+			ret,	 // RETURN EXPR 	[expr_address]
+			copy,	 // VAR<-VAR 	 	[dest, source]
+			add,	 // VAR<-VAR+VAR  	[dest, v1, v2]
+			sub,	 // VAR<-VAR-VAR  	[dest, v1, v2]
+			mul,	 // VAR<-VAR*VAR  	[dest, v1, v2]
+			rmem,	 // VAR<-*ADDR	 	[var, addr]
+			wmem,	 // *ADDR<-VAR	 	[var, addr]
 			call,	 // TODO
-			cmp_eq,	 // VAR<-VAR==VAR [dest, v1, v2]
-			cmp_diff,// VAR<-VAR==VAR [dest, v1, v2]
-			cmp_lt,	 // VAR<-VAR<VAR  [dest, v1, v2]
-			cmp_le,	 // VAR<-VAR<=VAR [dest, v1, v2]
-			neg,	 // VAR<- -VAR    [dest, source]
+			cmp_eq,	 // VAR<-VAR==VAR 	[dest, v1, v2]
+			cmp_diff,// VAR<-VAR==VAR 	[dest, v1, v2]
+			cmp_lt,	 // VAR<-VAR<VAR  	[dest, v1, v2]
+			cmp_le,	 // VAR<-VAR<=VAR 	[dest, v1, v2]
+			neg,	 // VAR<- -VAR    	[dest, source]
 		} Operation;
 
 		/**  constructor */

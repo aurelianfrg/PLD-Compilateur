@@ -20,6 +20,7 @@ expr:
 	| expr OP=('+' | '-') expr	                # expr_add_sub
     | expr OP=('<=' | '<' | '>=' | '>') expr    # expr_comp
     | expr OP=('==' | '!=') expr                # expr_eq_diff
+	| VAR '=' expr								# expr_aff // affectations should return a value
 	| CONST							            # expr_const
 	| VAR							            # expr_var
 ;
