@@ -216,8 +216,7 @@ void IRInstr::gen_asm_ldconst(ostream &os)
 	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	string const_value = string("$") + value;
-	os << "    movl    " << const_value << ", " << "%eax" << endl;
-	os << "    movl    " << "%eax" << ", " << address << endl;
+	os << "    movl    " << const_value << ", " << address << endl;
 }
 
 void IRInstr::gen_asm_ret(ostream &os)
