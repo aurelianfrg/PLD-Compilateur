@@ -16,58 +16,59 @@ using namespace std;
 
 int main(int argn, const char **argv)
 {
-  stringstream in;
-  if (argn == 2)
-  {
-    ifstream lecture(argv[1]);
-    if (!lecture.good())
-    {
-      cerr << "error: cannot read file: " << argv[1] << endl;
-      exit(1);
-    }
-    in << lecture.rdbuf();
-  }
-  else
-  {
-    cerr << "usage: ifcc path/to/file.c" << endl;
-    exit(1);
-  }
+	stringstream in;
+	if (argn == 2)
+	{
+		ifstream lecture(argv[1]);
+		if (!lecture.good())
+		{
+			cerr << "error: cannot read file: " << argv[1] << endl;
+			exit(1);
+		}
+		in << lecture.rdbuf();
+	}
+	else
+	{
+		cerr << "usage: ifcc path/to/file.c" << endl;
+		exit(1);
+	}
 
-  ANTLRInputStream input(in.str());
+	ANTLRInputStream input(in.str());
 
-  ifccLexer lexer(&input);
-  CommonTokenStream tokens(&lexer);
+	ifccLexer lexer(&input);
+	CommonTokenStream tokens(&lexer);
 
-  tokens.fill();
+	tokens.fill();
 
-  ifccParser parser(&tokens);
-  tree::ParseTree *tree = parser.axiom();
+	ifccParser parser(&tokens);
+	tree::ParseTree *tree = parser.axiom();
 
-  if (parser.getNumberOfSyntaxErrors() != 0)
-  {
-    cerr << "error: syntax error during parsing" << endl;
-    exit(1);
-  }
+	if (parser.getNumberOfSyntaxErrors() != 0)
+	{
+		cerr << "error: syntax error during parsing" << endl;
+		exit(1);
+	}
 
-  // clog << "Analyse des variables : " << endl;
+	// clog << "Analyse des variables : " << endl;
 
-  // VariableVisitor vv;
-  // vv.visit(tree);
-  // vv.anyUnused();
+	// VariableVisitor vv;
+	// vv.visit(tree);
+	// vv.anyUnused();
 
-  // clog << endl << "Sortie : " << endl;
+	// clog << endl << "Sortie : " << endl;
 
-  // CodeGenVisitor v;
-  // v.visit(tree);
+	// CodeGenVisitor v;
+	// v.visit(tree);
 
-  IRVisitor irVisitor(tree);
-  irVisitor.visit(tree);
+	IRVisitor irVisitor(tree);
+	irVisitor.visit(tree);
+	// asm output
+	ofstream ofs("output.s");
+	irVisitor.cfg->gen_asm(ofs);
+	irVisitor.cfg->gen_asm(cout);
 
-  // cfg debugging
-  // cout << *(irVisitor.cfg) << endl;
+	// cfg debugging
+	// cout << *(irVisitor.cfg) << endl;
 
-  // asm output
-  irVisitor.cfg->gen_asm(cout);
-
-  return 0;
+	return 0;
 }

@@ -81,3 +81,8 @@ bin/%: ../testfiles/%.c
 	as tmp.s -o tmp.o
 	gcc tmp.o -o $@
 	rm tmp.s tmp.o
+
+##########################################
+# easy testing
+test:
+	python3 ../ifcc-test.py ../testfiles
