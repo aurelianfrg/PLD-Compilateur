@@ -86,3 +86,5 @@ bin/%: ../testfiles/%.c
 # easy testing
 test:
 	python3 ../ifcc-test.py ../testfiles
+testv:
+	python3 ../ifcc-test.py ../testfiles --verbose

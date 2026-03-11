@@ -93,7 +93,6 @@ int CFG::newVarOffset(Type type)
 
 ostream &operator<<(ostream &os, const CFG &cfg)
 {
-	os << "CFG content : " << endl;
 	for (BasicBlock *block : cfg.bbs)
 	{
 		os << *block << endl;
@@ -150,7 +149,7 @@ void BasicBlock::add_IRInstr(IRInstr::Operation op, Type t, vector<string> param
 
 ostream &operator<<(ostream &os, const BasicBlock &bb)
 {
-	os << "BasicBlock " << bb.label << endl;
+	os << bb.label << ":" << endl;
 	for (IRInstr *instr : bb.instrs)
 	{
 		os << *instr << endl;
@@ -347,24 +346,43 @@ void IRInstr::gen_asm_mul(ostream &os)
 
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
-	vector<string> operations = {// for printing
-								 "ldconst",
-								 "ret",
-								 "copy",
-								 "add",
-								 "sub",
-								 "mul",
-								 "rmem",
-								 "wmem",
-								 "call",
-								 "cmp_eq",
-								 "cmp_lt",
-								 "cmp_le",
-								 "neg"};
-	os << "    " << operations[irInstr.op] << " ";
-	for (const string &param : irInstr.params)
-	{
-		os << param << " ";
+	os << "    ";
+	switch (irInstr.op) {
+		case IRInstr::ldconst:
+			os << "ldconst " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
+			break;
+		case IRInstr::ret:
+			os << "ret     " << irInstr.params.at(0);
+			break;
+		case IRInstr::copy:
+			os << "copy    " << irInstr.params.at(1) << " --> " << irInstr.params.at(0);
+			break;
+		case IRInstr::add:
+			os << "add     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " + " << irInstr.params.at(2);
+			break;
+		case IRInstr::neg:
+			os << "neg     -" << irInstr.params.at(0);
+			break;
+		case IRInstr::sub:
+			os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " - " << irInstr.params.at(2);
+			break;
+		case IRInstr::mul:
+			os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " * " << irInstr.params.at(2);
+			break;
+		case IRInstr::cmp_eq:
+			os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " == " << irInstr.params.at(2);
+			break;
+		case IRInstr::cmp_diff:
+			os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " != " << irInstr.params.at(2);
+			break;
+		default:
+			os << "(unknown instruction) "; 
+			for (const string &param : irInstr.params)
+			{
+				os << param << " ";
+			}
+			break;
 	}
+
 	return os;
 }
