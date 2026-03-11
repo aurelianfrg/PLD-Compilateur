@@ -59,6 +59,13 @@ BasicBlock *CFG::createBasicBlock()
 	add_bb(bb);
 	return bb;
 }
+BasicBlock *CFG::createBasicBlock(string label)
+{
+	// TODO : check name of block does not already exists
+	BasicBlock *bb = new BasicBlock(this, label);
+	add_bb(bb);
+	return bb;
+}
 
 // temporary variables system
 Symbol &CFG::create_new_tempvar(Type t)

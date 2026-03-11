@@ -137,7 +137,8 @@ class CFG {
 
 		void add_bb(BasicBlock *bb);
 		BasicBlock *createBasicBlock(); // create a new basicblock and return a pointer to it
-
+		BasicBlock *createBasicBlock(string label); // create a new basicblock with a specific name
+		
 		// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
 		void gen_asm(ostream &os);
 		string IR_reg_to_asm(string reg); /**< helper method: inputs a IR reg or input variable, returns e.g. "-24(%rbp)" for the proper value of 24 */
