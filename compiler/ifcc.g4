@@ -17,9 +17,9 @@ expr:
 	  OPEN_PAR expr CLOSE_PAR		            # expr_parenthesis
 	| '-' expr						            # expr_minus
 	| expr '*' expr					            # expr_mult
-	| expr OP = ('+' | '-') expr	            # expr_add_sub
-    | expr OP=('<=' | '<' | '>=' | '>') expr    #expr_comp
-    | expr OP=('==' | '!=') expr                #expr_eq_diff
+	| expr OP=('+' | '-') expr	                # expr_add_sub
+    | expr OP=('<=' | '<' | '>=' | '>') expr    # expr_comp
+    | expr OP=('==' | '!=') expr                # expr_eq_diff
 	| CONST							            # expr_const
 	| VAR							            # expr_var
 ;
@@ -37,7 +37,7 @@ TYPE : 'int' ;
 OPEN_PAR : '(' ;
 CLOSE_PAR : ')' ;
 RETURN : 'return' ;
-CONST : ('-')?[0-9]+ ;
+CONST : [0-9]+ ;
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
 
 COMMENT: '/*' .*? '*/' -> skip;
