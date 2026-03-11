@@ -62,7 +62,7 @@ std::any IRVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx)
 
 std::any IRVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx)
 {
-    return visitChildren(ctx);
+    return visit(ctx->expr());
 }
 
 std::any IRVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx)

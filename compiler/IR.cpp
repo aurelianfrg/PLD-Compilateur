@@ -245,6 +245,7 @@ void IRInstr::gen_asm_neg(ostream &os)
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
 	os << "    negl    " << "%eax" << endl;
+	os << "    movl    %eax, " << destAddress << endl;
 }
 
 void IRInstr::gen_asm_sub(ostream &os)
