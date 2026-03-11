@@ -68,7 +68,7 @@ int main(int argn, const char **argv)
 	irVisitor.cfg->gen_asm(cout);
 
 	// cfg debugging
-	// cout << *(irVisitor.cfg) << endl;
+	cout << *(irVisitor.cfg) << endl;
 
 	return 0;
 }
