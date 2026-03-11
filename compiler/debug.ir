@@ -1,9 +1,9 @@
 bloc_0:
     ldconst 2 --> !tmp0
     copy    !tmp0 --> a
-    ldconst 2 --> !tmp1
-    cmp_eq  !tmp2 = a == !tmp1
-    copy    !tmp2 --> b
-    ret     b
+    ldconst 1 --> !tmp1
+    copy    !tmp1 --> b
+    (unknown instruction) !tmp2 a b 
+    ret     !tmp2
 
 

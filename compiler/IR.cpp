@@ -160,10 +160,10 @@ ostream &operator<<(ostream &os, const BasicBlock &bb)
 // --- IRInstr METHODS ---
 IRInstr::IRInstr(BasicBlock *bb_, Operation op_, Type t_, vector<string> params_)
 {
-	bb = bb_;
-	op = op_;
-	t = t_;
-	params = params_;
+	this->bb = bb_;
+	this->op = op_;
+	this->t = t_;
+	this->params = params_;
 }
 
 void IRInstr::gen_asm(ostream &os) {
@@ -195,6 +195,12 @@ void IRInstr::gen_asm(ostream &os) {
 		break;
 	case IRInstr::cmp_diff:
 		this->gen_asm_diff(os);
+		break;
+	case IRInstr::cmp_lt:
+		this->gen_asm_lt(os);
+		break;
+	case IRInstr::cmp_le:
+		this->gen_asm_le(os);
 		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
@@ -259,6 +265,44 @@ void IRInstr::gen_asm_diff(ostream &os)
 	os << "    movl    " << tempVar1Address << ", %eax" << endl;
 	os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
 	os << "    setne   %al" << endl; // sete %al to 1 if equal
+	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+	os << "    movl    %eax, " << resultAddress << endl; 
+}
+
+void IRInstr::gen_asm_lt(ostream &os)
+{
+	string resultVarName = params.at(0);
+	string tempVarName1 = params.at(1);
+	string tempVarName2 = params.at(2);
+	Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
+	Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
+	Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+
+	os << "    movl    " << tempVar2Address << ", %eax" << endl;
+	os << "    cmpl    " << "%eax" << ", " << tempVar1Address << endl;
+	os << "    setl    %al" << endl; // sete %al to 1 if lower
+	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+	os << "    movl    %eax, " << resultAddress << endl; 
+}
+
+void IRInstr::gen_asm_le(ostream &os)
+{
+	string resultVarName = params.at(0);
+	string tempVarName1 = params.at(1);
+	string tempVarName2 = params.at(2);
+	Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
+	Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
+	Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+
+	os << "    movl    " << tempVar2Address << ", %eax" << endl;
+	os << "    cmpl    " << "%eax" << ", " << tempVar1Address << endl;
+	os << "    setle   %al" << endl; // sete %al to 1 if lower
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
 	os << "    movl    %eax, " << resultAddress << endl; 
 }

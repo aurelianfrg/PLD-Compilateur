@@ -61,6 +61,8 @@ class IRInstr {
 		void gen_asm_neg(ostream &os);
 		void gen_asm_eq(ostream &os);
 		void gen_asm_diff(ostream &os);
+		void gen_asm_lt(ostream &os);
+		void gen_asm_le(ostream &os);
 
 		friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 

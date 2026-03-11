@@ -125,8 +125,31 @@ std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
     }
     return 0;
 }
-std::any IRVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx) {
 
+std::any IRVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx) {
+    string op = ctx->OP->getText();
+
+    // resolve both operands
+    string expr1Address = any_cast<string>(this->visit(ctx->expr(0)));
+    string expr2Address = any_cast<string>(this->visit(ctx->expr(1)));
+
+    Symbol & resultTempVar = cfg->create_new_tempvar(Type::INT);
+
+    if (op == string("<")) {
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_lt, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
+    }
+    else if (op == string("<=")) {
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_le, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
+    }
+    else if (op == string(">")) {
+        // use '<' by putting the expression in the reverse order
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_lt, Type::INT, {resultTempVar.getName(), expr2Address, expr1Address });
+    }
+    else {
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_le, Type::INT, {resultTempVar.getName(), expr2Address, expr1Address });
+    }
+
+    return resultTempVar.getName();
 }
 
 std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) {
