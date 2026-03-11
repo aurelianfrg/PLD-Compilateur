@@ -100,6 +100,10 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 	return os;
 }
 
+
+
+
+
 // --- BASIC BLOCK METHODS ---
 
 BasicBlock::BasicBlock(CFG *cfg, string entry_label)
@@ -154,16 +158,27 @@ ostream &operator<<(ostream &os, const BasicBlock &bb)
 	{
 		os << *instr << endl;
 	}
+	if (bb.exit_true != nullptr) {
+		os << "exit_true : " << bb.exit_true->label << endl;
+	}
+	if (bb.exit_false != nullptr) {
+		os << "exit_false : " << bb.exit_false->label << endl;
+	}
 	return os;
 }
 
+
+
+
+
+
 // --- IRInstr METHODS ---
-IRInstr::IRInstr(BasicBlock *bb_, Operation op_, Type t_, vector<string> params_)
+IRInstr::IRInstr(BasicBlock *bb, Operation op, Type t, vector<string> params)
 {
-	this->bb = bb_;
-	this->op = op_;
-	this->t = t_;
-	this->params = params_;
+	this->bb = bb;
+	this->op = op;
+	this->t = t;
+	this->params = params;
 }
 
 void IRInstr::gen_asm(ostream &os) {

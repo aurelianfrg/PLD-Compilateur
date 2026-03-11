@@ -1,9 +1,0 @@
-bloc_0:
-    ldconst 2 --> !tmp0
-    copy    !tmp0 --> a
-    ldconst 1 --> !tmp1
-    copy    !tmp1 --> b
-    (unknown instruction) !tmp2 a b 
-    ret     !tmp2
-
-
