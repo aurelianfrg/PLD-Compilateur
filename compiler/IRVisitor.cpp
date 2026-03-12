@@ -29,6 +29,10 @@ std::any IRVisitor::visitInstruction_if_stmt(ifccParser::Instruction_if_stmtCont
     return visitChildren(ctx);
 }
 
+std::any IRVisitor::visitInstruction_while_stmt(ifccParser::Instruction_while_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
+
 antlrcpp::Any IRVisitor::visitBloc(ifccParser::BlocContext *ctx)
 {
     return visitChildren(ctx);
@@ -229,3 +233,25 @@ std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
     // return the newly affected variable so that affectations can be chained
     return varName;
 }
+
+std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
+
+    BasicBlock* start_bb = cfg->current_bb;
+    BasicBlock* end_bb = cfg->createBasicBlock();
+    
+    BasicBlock* test_bb = cfg->createBasicBlock();
+    start_bb->exit_true = test_bb;
+    string condVarName = any_cast<string>(this->visit(ctx->expr()));
+    test_bb->test_var_name = condVarName;
+
+    BasicBlock* while_bb = cfg->createBasicBlock();
+    this->visit(ctx->bloc());
+    test_bb->exit_true = while_bb;
+    test_bb->exit_false = end_bb;
+    while_bb->exit_true = test_bb;
+
+    cfg->current_bb = end_bb;
+
+    return 0;
+}
+

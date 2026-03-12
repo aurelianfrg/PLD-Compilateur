@@ -11,6 +11,7 @@ instruction:
 	| def_stmt	# instruction_def_stmt
 	| aff_stmt	# instruction_aff_stmt
     | if_stmt #instruction_if_stmt
+	| while_stmt #instruction_while_stmt
 ;
 
 expr:
@@ -33,6 +34,9 @@ def_stmt: TYPE VAR ('=' expr)? ';';
 
 if_stmt :
     'if' '(' expr ')' bloc ('else' 'if' '(' expr ')' bloc)* ('else' bloc)?;
+
+while_stmt :
+	'while' '(' expr ')' bloc ;
 
 TYPE : 'int' ;
 OPEN_PAR : '(' ;
