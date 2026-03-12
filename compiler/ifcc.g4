@@ -33,7 +33,10 @@ expr:
 
 return_stmt: RETURN expr ';';
 
-def_stmt: TYPE VAR ('=' expr)? ';';
+aff_stmt: VAR '=' expr ';';
+
+def_stmt: TYPE def_item (',' def_item)* ';';
+def_item: VAR ('=' expr)?;
 
 if_stmt :
     'if' '(' expr ')' bloc ('else' 'if' '(' expr ')' bloc)* ('else' bloc)?;

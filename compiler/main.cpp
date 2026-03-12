@@ -8,6 +8,7 @@
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
 
+#include "VariableVisitor.h"
 #include "IRVisitor.h"
 
 using namespace antlr4;
@@ -44,7 +45,7 @@ int main(int argn, const char **argv)
 
 	if (parser.getNumberOfSyntaxErrors() != 0)
 	{
-		cerr << "error: syntax error during parsing" << endl;
+		cerr << "\e[31mError: syntax error during parsing\e[39m" << endl;
 		exit(1);
 	}
 
@@ -52,7 +53,11 @@ int main(int argn, const char **argv)
 
 	// VariableVisitor vv;
 	// vv.visit(tree);
-	// vv.anyUnused();
+
+	// if (vv.getError())
+	// {
+	// 	exit(1);
+	// }
 
 	// clog << endl << "Sortie : " << endl;
 
