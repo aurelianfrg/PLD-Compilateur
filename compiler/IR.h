@@ -45,6 +45,7 @@ class IRInstr {
 			cmp_lt,	 // VAR<-VAR<VAR  	[dest, v1, v2]
 			cmp_le,	 // VAR<-VAR<=VAR 	[dest, v1, v2]
 			neg,	 // VAR<- -VAR    	[dest, source]
+			ldchar,  // VAR<-CHAR       [char, var]
 		} Operation;
 
 		/**  constructor */
@@ -63,6 +64,7 @@ class IRInstr {
 		void gen_asm_diff(ostream &os);
 		void gen_asm_lt(ostream &os);
 		void gen_asm_le(ostream &os);
+		void gen_asm_ldchar(ostream &os);
 
 		friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 

@@ -224,6 +224,9 @@ void IRInstr::gen_asm(ostream &os) {
 	case IRInstr::cmp_le:
 		this->gen_asm_le(os);
 		break;
+	case IRInstr::ldchar:
+		this->gen_asm_ldchar(os);
+		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
 	}
@@ -409,6 +412,17 @@ void IRInstr::gen_asm_mul(ostream &os)
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
+void IRInstr::gen_asm_ldchar(ostream &os)
+{
+	string value = params.at(0);
+	int ascii = (int) value[1];
+	string tempVarName = params.at(1);
+	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
+	string address = to_string(tempVar.getOffset()) + "(%rbp)";
+	string char_value = string("$") + to_string(ascii);
+	os << "    movl    " << char_value << ", " << address << endl;
+}
+
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	os << "    ";
@@ -439,6 +453,9 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 			break;
 		case IRInstr::cmp_diff:
 			os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " != " << irInstr.params.at(2);
+			break;
+		case IRInstr::ldchar:
+			os << "ldchar  " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
 			break;
 		default:
 			os << "(unknown instruction) "; 

@@ -23,6 +23,7 @@ expr:
 	| VAR '=' expr								# expr_aff // affectations should return a value
 	| CONST							            # expr_const
 	| VAR							            # expr_var
+	| CHAR      								# expr_char
 ;
 
 return_stmt: RETURN expr ';';
@@ -40,6 +41,7 @@ CLOSE_PAR : ')' ;
 RETURN : 'return' ;
 CONST : [0-9]+ ;
 VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
+CHAR : '\''[a-zA-Z_]+'\'' ;
 
 COMMENT: '/*' .*? '*/' -> skip;
 DIRECTIVE: '#' .*? '\n' -> skip;

@@ -27,6 +27,7 @@ class IRVisitor : public ifccBaseVisitor {
 		virtual std::any visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *context) override;
 		virtual std::any visitIf_stmt(ifccParser::If_stmtContext *context) override;
 		virtual std::any visitExpr_var(ifccParser::Expr_varContext *ctx) override;
+		virtual std::any visitExpr_char(ifccParser::Expr_charContext *ctx) override;
 		virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
 		virtual std::any visitExpr_minus(ifccParser::Expr_minusContext *ctx) override;
 		virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;

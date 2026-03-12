@@ -60,6 +60,15 @@ std::any IRVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx)
     return value;
 }
 
+std::any IRVisitor::visitExpr_char(ifccParser::Expr_charContext *ctx)
+{
+    string value = ctx->CHAR()->getText();
+    Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
+    cfg->current_bb->add_IRInstr(IRInstr::ldchar, Type::INT, {value, tempVar.getName()});
+
+    return tempVar.getName();
+}
+
 std::any IRVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx)
 {
     return visit(ctx->expr());
