@@ -1,4 +1,2 @@
 
-typedef enum {
-	INT
-} Type;
+typedef enum { INT } Type;

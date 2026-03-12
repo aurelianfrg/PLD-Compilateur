@@ -4,7 +4,7 @@ axiom: prog EOF;
 
 prog: 'int' 'main' '(' ')' bloc;
 
-function_def: TYPE_FUNCTION FUNCTION_NAME '(' ((TYPE VAR ',')* TYPE VAR)? ')' ; 
+function_def: TYPE_FUNCTION FUNCTION_NAME '(' ((TYPE VAR ',')* TYPE VAR)? ')' ;
 
 bloc: '{' instruction* '}';
 
@@ -13,7 +13,7 @@ instruction:
 	| def_stmt		# instruction_def_stmt
     | if_stmt 		# instruction_if_stmt
 	| while_stmt 	# instruction_while_stmt
-	| expr ';'		# instruction_expr 
+	| expr ';'		# instruction_expr
 ;
 
 expr:
@@ -46,7 +46,7 @@ if_stmt :
 while_stmt :
 	'while' '(' expr ')' bloc ;
 
-call_stmt : FUNCTION_NAME '(' ((expr ',')* expr)? ')' ';' ; 
+call_stmt : FUNCTION_NAME '(' ((expr ',')* expr)? ')' ';' ;
 
 TYPE : 'int' ;
 OPEN_PAR : '(' ;
