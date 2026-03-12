@@ -8,39 +8,39 @@ CFG::CFG(tree::ParseTree *ast)
 	nextBBnumber = 0;
 }
 
-void CFG::gen_asm_prologue(ostream &os)
-{
-#ifdef __APPLE__
-	os << ".globl _main\n";
-	os << " _main: \n";
-#else
-	os << ".globl main\n";
-	os << " main: \n";
-#endif
+// void CFG::gen_asm_prologue(ostream &os)
+// {
+// #ifdef __APPLE__
+// 	os << ".globl _main\n";
+// 	os << " _main: \n";
+// #else
+// 	os << ".globl main\n";
+// 	os << " main: \n";
+// #endif
 
-	// prologue
-	os << "prologue:\n";
-	os << "    pushq   %rbp\n";
-	os << "    movq    %rsp, %rbp\n";
-	os << "\n";
-}
+// 	// prologue
+// 	os << "prologue:\n";
+// 	os << "    pushq   %rbp\n";
+// 	os << "    movq    %rsp, %rbp\n";
+// 	os << "\n";
+// }
 
-void CFG::gen_asm_epilogue(ostream &os)
-{
-	os << "\n";
-	os << "epilogue:\n";
-	os << "    popq    %rbp\n";
-	os << "    ret\n";
-}
+// void CFG::gen_asm_epilogue(ostream &os)
+// {
+// 	os << "\n";
+// 	os << "epilogue:\n";
+// 	os << "    popq    %rbp\n";
+// 	os << "    ret\n";
+// }
 
 void CFG::gen_asm(ostream &os)
 {
-	this->gen_asm_prologue(os);
+	//this->gen_asm_prologue(os);
 	for (Block *b : blocks)
 	{
 		b->gen_asm(os);
 	}
-	this->gen_asm_epilogue(os);
+	//this->gen_asm_epilogue(os);
 }
 
 string CFG::new_BB_name()
@@ -57,6 +57,7 @@ BasicBlock *CFG::createChildBasicBlock(const SymbolsTable & parentSymbolsTable)
 {
 	string name = new_BB_name();
 	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable, true);
+	bb->symbolsTable.setBlock(bb);
 	add_block(bb);
 	return bb;
 }
@@ -65,6 +66,7 @@ BasicBlock *CFG::createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTabl
 {
 	string name = new_BB_name();
 	BasicBlock *bb = new BasicBlock(this, name, siblingSymbolsTable, false);
+	bb->symbolsTable.setBlock(bb);
 	add_block(bb);
 	return bb;
 }
@@ -72,6 +74,7 @@ FunctionBlock *CFG::createFunctionBlock(string label, vector<Type> paramsType, v
 {
 	// TODO : check name of block does not already exists
 	FunctionBlock *fb = new FunctionBlock(this, label, paramsType, paramsName);
+	fb->symbolsTable.setBlock(fb);
 	add_block(fb);
 	return fb;
 }
@@ -152,6 +155,32 @@ void BasicBlock::gen_asm(ostream &os)
 	{
 		cerr << "INTERNAL ERROR : Unproper block linking" << endl;
 	}
+}
+
+void FunctionBlock::gen_asm(ostream &os) {
+	// get the local size to move return stack pointer accordingly 
+	int local_stack_size = this->symbolsTable.getLocalSize();
+	string local_stack_size_string = string("$") + to_string(local_stack_size);
+
+	os << ".globl  " << label << endl;
+	os << ".type   " << label << ", @function" << endl;
+	os << this->label << ":" << endl;
+
+	// generate block prologue
+	os << "    pushq   %rbp" << endl;
+	os << "    movq    %rsp, %rbp" << endl;
+	os << "    subq    " << local_stack_size_string << ", %rsp" << endl;
+
+	// generate asm for internal instructions
+	for (IRInstr *instr : this->instrs)
+	{
+		instr->gen_asm(os);
+	}
+
+	// generate block epilogue
+	os << "    movq    %rbp, %rsp" << endl;
+	os << "    popq    %rbp" << endl;
+	os << "    ret" << endl;
 }
 
 void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params)
@@ -279,7 +308,9 @@ void IRInstr::gen_asm_ret(ostream &os)
 	os << "    movl    " << address << ", " << "%eax" << endl;
 
 	// TEMPORARY WAY OF HANDLING RETURNS ANYWHERE
-	os << "    jmp     epilogue" << endl;
+	os << "    movq    %rbp, %rsp" << endl;
+	os << "    popq    %rbp" << endl;
+	os << "    ret" << endl;
 }
 
 void IRInstr::gen_asm_eq(ostream &os)

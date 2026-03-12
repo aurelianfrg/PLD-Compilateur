@@ -16,7 +16,17 @@ antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx)
 }
 
 std::any IRVisitor::visitFunction_def(ifccParser::Function_defContext *ctx) {
-    
+    string function_name = ctx->VAR(0)->getText();
+    string return_type = ctx->type_function()->getText();
+
+    // TODO : handle parameters and add them to the FunctionBlock SymbolsTable
+    vector<Type> paramsType;
+    vector<string> paramsName;
+
+    FunctionBlock* fb = cfg->createFunctionBlock(function_name, paramsType, paramsName);
+    this->visit(ctx->bloc());
+
+    return 0;
 }
 
 std::any IRVisitor::visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx)
@@ -236,8 +246,12 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     bool else_bloc = !(ctx->expr().size() == ctx->bloc().size());
 
     // create a new testing block 
-    BasicBlock* start_bb = dynamic_cast<BasicBlock*>(cfg->current_block);
+    Block* start_bb = cfg->current_block;
+    if (start_bb == nullptr) {
+        cerr << "cast failed" << endl;
+    }
     SymbolsTable inheritedSymbols = start_bb->symbolsTable;
+
     BasicBlock* end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);    
     BasicBlock* test_bb = cfg->createChildBasicBlock(inheritedSymbols);
     start_bb->exit_true = test_bb;

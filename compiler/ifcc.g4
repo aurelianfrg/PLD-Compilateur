@@ -2,9 +2,9 @@ grammar ifcc;
 
 axiom: prog EOF;
 
-prog: (function_def)+ ;
+prog: function_def+ ;
 
-function_def: TYPE_FUNCTION FUNCTION_NAME '(' ((TYPE VAR ',')* TYPE VAR)? ')' bloc ; 
+function_def: type_function VAR '(' ((TYPE VAR ',')* TYPE VAR)? ')' bloc ; 
 
 bloc: '{' instruction* '}';
 
@@ -44,15 +44,13 @@ if_stmt :
 while_stmt :
 	'while' '(' expr ')' bloc ;
 
-call_stmt : FUNCTION_NAME '(' ((expr ',')* expr)? ')' ';' ; 
+call_stmt : VAR '(' ((expr ',')* expr)? ')' ';' ; 
 
-
+type_function: 'void' | TYPE ;
 TYPE: 'int';
-TYPE_FUNCTION: 'void' | TYPE ;
 RETURN: 'return';
 CONST: [0-9]+;
 VAR: [a-zA-Z_][a-zA-Z0-9_]*;
-FUNCTION_NAME: [a-zA-Z_][a-zA-Z0-9_]*;
 
 COMMENT: '/*' .*? '*/' -> skip;
 DIRECTIVE: '#' .*? '\n' -> skip;

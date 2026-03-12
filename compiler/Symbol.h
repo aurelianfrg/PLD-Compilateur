@@ -10,11 +10,11 @@ class Symbol {
         //Symbol(string name, int offset, bool affected) : name(name), offset(offset), _affected(affected), _used(false) {}
         Symbol(Type type, string name, int offset) : type(type), name(name), offset(offset), _affected(false), _used(false) {}
 
-        string getName() {return this->name;}
-        Type getType() {return type;}
-        int getOffset() {return offset;}
-        bool affected() {return _affected;}
-        bool used() {return _used;}
+        string getName() const {return this->name;}
+        Type getType() const {return type;}
+        int getOffset() const {return offset;}
+        bool affected() const {return _affected;}
+        bool used() const {return _used;}
 
         void use() {
             _used = true;
@@ -24,11 +24,11 @@ class Symbol {
             _used = false;
         }
 
-        string getAdressx86() {
+        string getAdressx86() const {
             return to_string(offset) + "(%rbp)";
         }
 
-        friend ostream & operator << (ostream & ofs, const Symbol & s){
+        friend ostream & operator << (ostream & ofs, const Symbol & s) {
             ofs << "Symbol (name=" << s.name << ", offset=" << s.offset << ", affected=" << s._affected << ", used=" << s._used ;
             return ofs;
         }

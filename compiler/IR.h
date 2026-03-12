@@ -130,6 +130,7 @@ public:
 	CFG *cfg;				  /** < the CFG where this block belongs */
 	vector<IRInstr *> instrs; /** < the instructions themselves. */
 	SymbolsTable symbolsTable;
+	BasicBlock *exit_true;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
 };
 
 class BasicBlock : public Block
@@ -141,7 +142,7 @@ public:
 	virtual void print(ostream& os) const override;
 
 	// No encapsulation whatsoever here. Feel free to do better.
-	BasicBlock *exit_true;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
+	
 	BasicBlock *exit_false;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
 	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
 													store here the name of the variable that holds the value of expr */
@@ -174,9 +175,9 @@ public:
 	tree::ParseTree *ast; /**< The AST this CFG comes from */
 
 	void add_block(Block *b);
-	BasicBlock *createChildBasicBlock(const SymbolsTable & parentSymbolsTable);				// create a new basicblock and return a pointer to it
-	BasicBlock *createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable);				// create a new basicblock and return a pointer to it
-	FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); // create a new basicblock with a specific name
+	BasicBlock *createChildBasicBlock(const SymbolsTable & parentSymbolsTable);								// create a new basicblock that inherits its parents Symbols and has a new local table
+	BasicBlock *createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable);							// create a new basicblock that copies its siblings symbols
+	FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); 	// create a new function block, with a completely new symbolsTable initialized with its parameters
 
 	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
 	void gen_asm(ostream &os);

@@ -13,6 +13,11 @@ class SymbolsTable {
         SymbolsTable(Block* block) {
             this->block = block;
         }
+        SymbolsTable(const SymbolsTable & st) {
+            this->block = st.block;
+            this->inheritedSymbols = st.inheritedSymbols;
+            this->localSymbols = st.localSymbols;
+        }
 
         bool contains(const string & name) {
             return ((inheritedSymbols.find(name) != inheritedSymbols.end()) or (localSymbols.find(name) != localSymbols.end()));
@@ -72,6 +77,20 @@ class SymbolsTable {
         }
         void setTemporaryVarCount(int temporaryVarCount) {
             this->temporaryVarCount = temporaryVarCount;
+        }
+
+        int getLocalSize() {
+            // get the total local amount of bytes allocated in the stack by the owner of this table
+            int total = 0;
+            for (auto it : localSymbols) {
+                Symbol & s = it.second;
+                total += typeSizes.at(s.getType());
+            }
+            // round total up to 16 bytes (AMD64 ABI REQUIREMENT)
+            return total + (16 - total%16);
+        }
+        void setBlock(Block* block) {
+            this->block = block;
         }
 
     protected:
