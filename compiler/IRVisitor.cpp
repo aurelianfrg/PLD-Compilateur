@@ -172,22 +172,50 @@ std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) {
 }
 
 std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
+    int elseif_count = ctx->expr().size() - 1;
+    bool else_bloc = !(ctx->expr().size() == ctx->bloc().size());
+
     // create a new testing block 
     BasicBlock* start_bb = cfg->current_bb;
+    BasicBlock* end_bb = cfg->createBasicBlock();    
     BasicBlock* test_bb = cfg->createBasicBlock();
     start_bb->exit_true = test_bb;
 
-    string condVarName = any_cast<string>(this->visit(ctx->IF_EXPR));
+    string condVarName = any_cast<string>(this->visit(ctx->expr(0)));
     test_bb->test_var_name = condVarName;
-
+    
     BasicBlock* true_bb = cfg->createBasicBlock();
-    this->visit(ctx->IF_BLOC);
+    this->visit(ctx->bloc(0));
     test_bb->exit_true = true_bb;
-
-    // case without else statement
-    BasicBlock* end_bb = cfg->createBasicBlock();
-    test_bb->exit_false = end_bb;
     true_bb->exit_true = end_bb;
+
+    BasicBlock* prev_test_bb_i = test_bb;
+    for (int i = 1; i < elseif_count+1; ++i) {
+        // chain previous false exit to new test block
+        BasicBlock* test_bb_i = cfg->createBasicBlock();
+        prev_test_bb_i->exit_false = test_bb_i;
+
+        condVarName = any_cast<string>(this->visit(ctx->expr(i)));
+        test_bb_i->test_var_name = condVarName;
+
+        BasicBlock* true_bb_i = cfg->createBasicBlock();
+        this->visit(ctx->bloc(i));
+        test_bb_i->exit_true = true_bb_i;
+        true_bb_i->exit_true = end_bb;
+
+        prev_test_bb_i = test_bb_i;
+    }
+
+    if (else_bloc) {
+        BasicBlock* else_bb = cfg->createBasicBlock();
+        this->visit(ctx->bloc().back());
+        else_bb->exit_true = end_bb;
+    }
+    else {
+        prev_test_bb_i->exit_false = end_bb;
+    }
+
+    cfg->current_bb = end_bb;
 
     return 0;
 }

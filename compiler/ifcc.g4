@@ -32,7 +32,7 @@ aff_stmt: VAR '=' expr ';';
 def_stmt: TYPE VAR ('=' expr)? ';';
 
 if_stmt :
-    'if' '(' IF_EXPR=expr ')' IF_BLOC=bloc ('else' 'if' '(' ELSEIF_EXPR=expr ')' ELSEIF_BLOC=bloc)*? ('else' ELSE_BLOC=bloc)?;
+    'if' '(' expr ')' bloc ('else' 'if' '(' expr ')' bloc)* ('else' bloc)?;
 
 TYPE : 'int' ;
 OPEN_PAR : '(' ;
