@@ -14,10 +14,6 @@ antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx)
     return 0;
 }
 
-std::any IRVisitor::visitInstruction_aff_stmt(ifccParser::Instruction_aff_stmtContext *ctx)
-{
-    return visitChildren(ctx);
-}
 std::any IRVisitor::visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx)
 {
     return visitChildren(ctx);
@@ -129,15 +125,6 @@ std::any IRVisitor::visitExpr_mult_div_mod(ifccParser::Expr_mult_div_modContext 
     }
 
     return tempVar.getName();
-}
-
-std::any IRVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx)
-{
-    // cout << "visit aff stmt" << endl;
-    string tempVarName = any_cast<string>(this->visit(ctx->expr()));
-    string varName = ctx->VAR()->getText();
-    cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, tempVarName});
-    return 0;
 }
 
 std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
@@ -283,6 +270,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     return 0;
 }
+
 std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 {
     string varName = ctx->VAR()->getText();
