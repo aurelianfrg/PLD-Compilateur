@@ -27,9 +27,11 @@ expr:
 	| expr '&' expr								# expr_and
 	| expr '^' expr								# expr_xor
 	| expr '|' expr								# expr_or
-	| VAR '=' expr								# expr_aff
-	| CONST										# expr_const
-	| VAR										# expr_var;
+	| VAR '=' expr								# expr_aff // affectations should return a value
+	| CONST							            # expr_const
+	| VAR							            # expr_var
+	| CHAR      								# expr_char
+;
 
 return_stmt: RETURN expr ';';
 
@@ -46,12 +48,14 @@ while_stmt :
 
 call_stmt : FUNCTION_NAME '(' ((expr ',')* expr)? ')' ';' ; 
 
-
-TYPE: 'int';
+TYPE : 'int' ;
+OPEN_PAR : '(' ;
+CLOSE_PAR : ')' ;
+RETURN : 'return' ;
+CONST : [0-9]+ ;
+VAR : [a-zA-Z_][a-zA-Z0-9_]* ;
+CHAR : '\''[a-zA-Z_]+'\'' ;
 TYPE_FUNCTION: 'void' | TYPE ;
-RETURN: 'return';
-CONST: [0-9]+;
-VAR: [a-zA-Z_][a-zA-Z0-9_]*;
 FUNCTION_NAME: [a-zA-Z_][a-zA-Z0-9_]*;
 
 COMMENT: '/*' .*? '*/' -> skip;

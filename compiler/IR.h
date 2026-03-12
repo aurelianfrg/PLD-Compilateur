@@ -26,7 +26,6 @@ class CFG;
 //! The class for one 3-address instruction
 class IRInstr
 {
-
 public:
 	/** The instructions themselves -- feel free to subclass instead */
 	typedef enum
@@ -51,7 +50,8 @@ public:
 		not_,	  // VAR<- !VAR    	[dest, source]
 		bit_and,  // VAR<-VAR&VAR 	[dest, v1, v2]
 		bit_xor,  // VAR<-VAR^VAR 	[dest, v1, v2]
-		bit_or	  // VAR<-VAR|VAR 	[dest, v1, v2]
+		bit_or,   // VAR<-VAR|VAR 	[dest, v1, v2]
+		ldchar    // VAR<-CHAR       [char, var]
 	} Operation;
 
 	/**  constructor */
@@ -76,6 +76,7 @@ public:
 	void gen_asm_and(ostream &os);
 	void gen_asm_xor(ostream &os);
 	void gen_asm_or(ostream &os);
+	void gen_asm_ldchar(ostream &os);
 
 	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
