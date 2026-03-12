@@ -9,17 +9,24 @@
 
 class  VariableVisitor : public ifccBaseVisitor {
 	public:
-        virtual antlrcpp::Any visitProg(ifccParser::ProgContext *ctx) override ;
-        virtual antlrcpp::Any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
-        virtual antlrcpp::Any visitDeclaration_item(ifccParser::Declaration_itemContext *ctx) override;
+        virtual std::any visitProg(ifccParser::ProgContext *ctx) override ;
+        virtual std::any visitBloc(ifccParser::BlocContext *ctx) override;
+        virtual std::any visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx) override;
+        virtual std::any visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx) override;
+        virtual std::any visitInstruction_aff_stmt(ifccParser::Instruction_aff_stmtContext *ctx) override;
+        virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
+        virtual std::any visitAff_stmt(ifccParser::Aff_stmtContext *ctx) override;
         virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
-        virtual antlrcpp::Any visitAssign_stmt(ifccParser::Assign_stmtContext *ctx) override;
-        virtual antlrcpp::Any visitAddSub(ifccParser::AddSubContext *ctx) override;
-        virtual antlrcpp::Any visitMultiplication(ifccParser::MultiplicationContext *ctx) override;
-        virtual antlrcpp::Any visitMinus(ifccParser::MinusContext *ctx) override;
-        virtual antlrcpp::Any visitParenthese(ifccParser::ParentheseContext *ctx) override;
-        virtual antlrcpp::Any visitLiteral_expr(ifccParser::Literal_exprContext *ctx) override;
-        virtual antlrcpp::Any visitLiteral(ifccParser::LiteralContext *ctx) override;
+
+        virtual std::any visitExpr_comp(ifccParser::Expr_compContext *ctx) override;
+        virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
+        virtual std::any visitExpr_minus(ifccParser::Expr_minusContext *ctx) override;
+        virtual std::any visitExpr_aff(ifccParser::Expr_affContext *ctx) override;
+        virtual std::any visitExpr_mult(ifccParser::Expr_multContext *ctx) override;
+        virtual std::any visitExpr_var(ifccParser::Expr_varContext *ctx) override;
+        virtual std::any visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) override;
+        virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;
+
         
         
         void printSymbolTable();
