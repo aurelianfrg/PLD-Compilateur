@@ -39,6 +39,14 @@ std::any VariableVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 
 std::any VariableVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 {
+    for (auto item : ctx->def_item()){
+        this -> visit(item);
+    }
+    return 0;
+}
+
+std::any VariableVisitor::visitDef_item(ifccParser::Def_itemContext *ctx)
+{
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) != varOffsets.end())
     {
@@ -53,6 +61,7 @@ std::any VariableVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
     {
         this->visit(ctx->expr());
     }
+
     return 0;
 }
 

@@ -17,6 +17,7 @@ public:
     virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
     virtual std::any visitAff_stmt(ifccParser::Aff_stmtContext *ctx) override;
     virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
+    virtual std::any visitDef_item(ifccParser::Def_itemContext *ctx) override;
 
     virtual std::any visitExpr_comp(ifccParser::Expr_compContext *ctx) override;
     virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
