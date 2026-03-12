@@ -206,6 +206,9 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::neg:
 		this->gen_asm_neg(os);
 		break;
+	case IRInstr::not_:
+		this->gen_asm_not(os);
+		break;
 	case IRInstr::sub:
 		this->gen_asm_sub(os);
 		break;
@@ -390,6 +393,22 @@ void IRInstr::gen_asm_neg(ostream &os)
 	os << "    movl    %eax, " << destAddress << endl;
 }
 
+void IRInstr::gen_asm_not(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &srcVar = bb->cfg->access_symbol(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	
+	os << "    cmpl    " << "$0" << ", " << srcAddress << endl;
+	os << "    sete    %al" << endl;	   // sete %al to 1 if equal
+	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+	os << "    movl    %eax, " << destAddress << endl;
+}
+
 void IRInstr::gen_asm_sub(ostream &os)
 {
 	string dest = params.at(0);
@@ -532,44 +551,45 @@ void IRInstr::gen_asm_or(ostream &os)
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	os << "    ";
-	switch (irInstr.op) {
-		case IRInstr::ldconst:
-			os << "ldconst " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
-			break;
-		case IRInstr::ret:
-			os << "ret     " << irInstr.params.at(0);
-			break;
-		case IRInstr::copy:
-			os << "copy    " << irInstr.params.at(1) << " --> " << irInstr.params.at(0);
-			break;
-		case IRInstr::add:
-			os << "add     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " + " << irInstr.params.at(2);
-			break;
-		case IRInstr::neg:
-			os << "neg     -" << irInstr.params.at(0);
-			break;
-		case IRInstr::sub:
-			os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " - " << irInstr.params.at(2);
-			break;
-		case IRInstr::mul:
-			os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " * " << irInstr.params.at(2);
-			break;
-		case IRInstr::cmp_eq:
-			os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " == " << irInstr.params.at(2);
-			break;
-		case IRInstr::cmp_diff:
-			os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " != " << irInstr.params.at(2);
-			break;
-		case IRInstr::ldchar:
+	switch (irInstr.op)
+	{
+	case IRInstr::ldconst:
+		os << "ldconst " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
+		break;
+	case IRInstr::ret:
+		os << "ret     " << irInstr.params.at(0);
+		break;
+	case IRInstr::copy:
+		os << "copy    " << irInstr.params.at(1) << " --> " << irInstr.params.at(0);
+		break;
+	case IRInstr::add:
+		os << "add     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " + " << irInstr.params.at(2);
+		break;
+	case IRInstr::neg:
+		os << "neg     -" << irInstr.params.at(0);
+		break;
+	case IRInstr::sub:
+		os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " - " << irInstr.params.at(2);
+		break;
+	case IRInstr::mul:
+		os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " * " << irInstr.params.at(2);
+		break;
+	case IRInstr::cmp_eq:
+		os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " == " << irInstr.params.at(2);
+		break;
+	case IRInstr::cmp_diff:
+		os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " != " << irInstr.params.at(2);
+		break;
+	case IRInstr::ldchar:
 			os << "ldchar  " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
 			break;
-		default:
-			os << "(unknown instruction) "; 
-			for (const string &param : irInstr.params)
-			{
-				os << param << " ";
-			}
-			break;
+	default:
+		os << "(unknown instruction) ";
+		for (const string &param : irInstr.params)
+		{
+			os << param << " ";
+		}
+		break;
 	}
 
 	return os;

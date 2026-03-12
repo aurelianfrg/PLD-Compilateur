@@ -26,56 +26,57 @@ class CFG;
 //! The class for one 3-address instruction
 class IRInstr
 {
-
-	public:
-		/** The instructions themselves -- feel free to subclass instead */
-		typedef enum
-		{
-			// L'IR manipule les variables par leur nom (temporaire ou pas)
-			ldconst, // VAR<-CONST 	 	[const, var]
-			ret,	 // RETURN EXPR 	[expr_address]
-			copy,	 // VAR<-VAR 	 	[dest, source]
-			add,	 // VAR<-VAR+VAR  	[dest, v1, v2]
-			sub,	 // VAR<-VAR-VAR  	[dest, v1, v2]
-			mul,	 // VAR<-VAR*VAR  	[dest, v1, v2]
-			rmem,	 // VAR<-*ADDR	 	[var, addr]
-			wmem,	 // *ADDR<-VAR	 	[var, addr]
-			call,	 // TODO
-			cmp_eq,	 // VAR<-VAR==VAR 	[dest, v1, v2]
-			cmp_diff,// VAR<-VAR==VAR 	[dest, v1, v2]
-			cmp_lt,	 // VAR<-VAR<VAR  	[dest, v1, v2]
-			cmp_le,	 // VAR<-VAR<=VAR 	[dest, v1, v2]
-			neg,	 // VAR<- -VAR    	[dest, source]
-			ldchar,  // VAR<-CHAR       [char, var]
-			bit_and,  // VAR<-VAR&VAR 	[dest, v1, v2]
-			bit_xor,  // VAR<-VAR^VAR 	[dest, v1, v2]
-			bit_or,	  // VAR<-VAR|VAR 	[dest, v1, v2]
-			div,
-			mod
-		} Operation;
+public:
+	/** The instructions themselves -- feel free to subclass instead */
+	typedef enum
+	{
+		// L'IR manipule les variables par leur nom (temporaire ou pas)
+		ldconst,  // VAR<-CONST 	 	[const, var]
+		ret,	  // RETURN EXPR 	[expr_address]
+		copy,	  // VAR<-VAR 	 	[dest, source]
+		add,	  // VAR<-VAR+VAR  	[dest, v1, v2]
+		sub,	  // VAR<-VAR-VAR  	[dest, v1, v2]
+		mul,	  // VAR<-VAR*VAR  	[dest, v1, v2]
+		div,	  // VAR<-VAR/VAR  	[dest, v1, v2]
+		mod,	  // VAR<-VAR%VAR  	[dest, v1, v2]
+		rmem,	  // VAR<-*ADDR	 	[var, addr]
+		wmem,	  // *ADDR<-VAR	 	[var, addr]
+		call,	  // TODO
+		cmp_eq,	  // VAR<-VAR==VAR 	[dest, v1, v2]
+		cmp_diff, // VAR<-VAR!=VAR 	[dest, v1, v2]
+		cmp_lt,	  // VAR<-VAR<VAR  	[dest, v1, v2]
+		cmp_le,	  // VAR<-VAR<=VAR 	[dest, v1, v2]
+		neg,	  // VAR<- -VAR    	[dest, source]
+		not_,	  // VAR<- !VAR    	[dest, source]
+		bit_and,  // VAR<-VAR&VAR 	[dest, v1, v2]
+		bit_xor,  // VAR<-VAR^VAR 	[dest, v1, v2]
+		bit_or,   // VAR<-VAR|VAR 	[dest, v1, v2]
+		ldchar    // VAR<-CHAR       [char, var]
+	} Operation;
 
 	/**  constructor */
 	IRInstr(BasicBlock *bb_, Operation op, Type t, vector<string> params);
 
-		/** Actual code generation */
-		void gen_asm(ostream &os); /**< x86 assembly code generation for this IR instruction */
-		void gen_asm_ldconst(ostream &os);
-		void gen_asm_ret(ostream &os);
-		void gen_asm_copy(ostream &os);
-		void gen_asm_add(ostream &os);
-		void gen_asm_sub(ostream &os);
-		void gen_asm_mul(ostream &os);
-		void gen_asm_neg(ostream &os);
-		void gen_asm_eq(ostream &os);
-		void gen_asm_diff(ostream &os);
-		void gen_asm_lt(ostream &os);
-		void gen_asm_le(ostream &os);
-		void gen_asm_ldchar(ostream &os);
-		void gen_asm_and(ostream &os);
-		void gen_asm_xor(ostream &os);
-		void gen_asm_or(ostream &os);
-		void gen_asm_div(ostream &os);
-		void gen_asm_mod(ostream &os);
+	/** Actual code generation */
+	void gen_asm(ostream &os); /**< x86 assembly code generation for this IR instruction */
+	void gen_asm_ldconst(ostream &os);
+	void gen_asm_ret(ostream &os);
+	void gen_asm_copy(ostream &os);
+	void gen_asm_add(ostream &os);
+	void gen_asm_sub(ostream &os);
+	void gen_asm_mul(ostream &os);
+	void gen_asm_div(ostream &os);
+	void gen_asm_mod(ostream &os);
+	void gen_asm_neg(ostream &os);
+	void gen_asm_not(ostream &os);
+	void gen_asm_eq(ostream &os);
+	void gen_asm_diff(ostream &os);
+	void gen_asm_lt(ostream &os);
+	void gen_asm_le(ostream &os);
+	void gen_asm_and(ostream &os);
+	void gen_asm_xor(ostream &os);
+	void gen_asm_or(ostream &os);
+	void gen_asm_ldchar(ostream &os);
 
 	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
