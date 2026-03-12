@@ -34,7 +34,7 @@ public:
 	virtual std::any visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx) override;
 	virtual std::any visitExpr_minus(ifccParser::Expr_minusContext *ctx) override;
 	virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;
-	virtual std::any visitExpr_mult(ifccParser::Expr_multContext *ctx) override;
+	virtual std::any visitExpr_mult_div_mod(ifccParser::Expr_mult_div_modContext *ctx) override;
 	virtual std::any visitExpr_aff(ifccParser::Expr_affContext *ctx) override;
 	virtual std::any visitAff_stmt(ifccParser::Aff_stmtContext *ctx) override;
 	virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;

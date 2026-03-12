@@ -8,7 +8,6 @@
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
 
-#include "CodeGenVisitor.h"
 #include "IRVisitor.h"
 
 using namespace antlr4;
@@ -56,9 +55,6 @@ int main(int argn, const char **argv)
 	// vv.anyUnused();
 
 	// clog << endl << "Sortie : " << endl;
-
-	// CodeGenVisitor v;
-	// v.visit(tree);
 
 	IRVisitor irVisitor(tree);
 	irVisitor.visit(tree);

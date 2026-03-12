@@ -97,12 +97,25 @@ std::any IRVisitor::visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx)
     return tempVar.getName();
 }
 
-std::any IRVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx)
+std::any IRVisitor::visitExpr_mult_div_mod(ifccParser::Expr_mult_div_modContext *ctx)
 {
-    string tempVarName0 = any_cast<string>(this->visit(ctx->expr(0)));
-    string tempVarName1 = any_cast<string>(this->visit(ctx->expr(1)));
+    string tempVarName1 = any_cast<string>(this->visit(ctx->expr(0)));
+    string op = ctx->OP->getText();
+    string tempVarName2 = any_cast<string>(this->visit(ctx->expr(1)));
     Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
-    cfg->current_bb->add_IRInstr(IRInstr::mul, Type::INT, {tempVar.getName(), tempVarName0, tempVarName1});
+
+    if (op == "*")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::mul, Type::INT, {tempVar.getName(), tempVarName1, tempVarName2});
+    }
+    else if (op == "/")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::div, Type::INT, {tempVar.getName(), tempVarName1, tempVarName2});
+    }
+    else if (op == "%")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::mod, Type::INT, {tempVar.getName(), tempVarName1, tempVarName2});
+    }
 
     return tempVar.getName();
 }

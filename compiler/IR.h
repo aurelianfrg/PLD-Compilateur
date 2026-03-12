@@ -38,6 +38,8 @@ public:
 		add,	  // VAR<-VAR+VAR  	[dest, v1, v2]
 		sub,	  // VAR<-VAR-VAR  	[dest, v1, v2]
 		mul,	  // VAR<-VAR*VAR  	[dest, v1, v2]
+		div,	  // VAR<-VAR/VAR  	[dest, v1, v2]
+		mod,	  // VAR<-VAR%VAR  	[dest, v1, v2]
 		rmem,	  // VAR<-*ADDR	 	[var, addr]
 		wmem,	  // *ADDR<-VAR	 	[var, addr]
 		call,	  // TODO
@@ -62,6 +64,8 @@ public:
 	void gen_asm_add(ostream &os);
 	void gen_asm_sub(ostream &os);
 	void gen_asm_mul(ostream &os);
+	void gen_asm_div(ostream &os);
+	void gen_asm_mod(ostream &os);
 	void gen_asm_neg(ostream &os);
 	void gen_asm_eq(ostream &os);
 	void gen_asm_diff(ostream &os);
