@@ -239,15 +239,15 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     int elseif_count = ctx->expr().size() - 1;
     bool else_bloc = !(ctx->expr().size() == ctx->bloc().size());
 
-    // create a new testing block 
+    // create a new testing block
     BasicBlock* start_bb = cfg->current_bb;
-    BasicBlock* end_bb = cfg->createBasicBlock();    
+    BasicBlock* end_bb = cfg->createBasicBlock();
     BasicBlock* test_bb = cfg->createBasicBlock();
     start_bb->exit_true = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr(0)));
     test_bb->test_var_name = condVarName;
-    
+
     BasicBlock* true_bb = cfg->createBasicBlock();
     this->visit(ctx->bloc(0));
     test_bb->exit_true = true_bb;
@@ -298,7 +298,7 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     BasicBlock* start_bb = cfg->current_bb;
     BasicBlock* end_bb = cfg->createBasicBlock();
-    
+
     BasicBlock* test_bb = cfg->createBasicBlock();
     start_bb->exit_true = test_bb;
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
@@ -314,4 +314,3 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     return 0;
 }
-

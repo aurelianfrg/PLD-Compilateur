@@ -1,4 +1,4 @@
-## Project setup 
+## Project setup
 
 ### antlr4 install on ubuntu or wsl
 ```
@@ -24,18 +24,16 @@ ANTLRLIB=/home/$USER/antlr4-install/lib/libantlr4-runtime.a
 EOF
 ```
 
-### Execute tests 
+### Execute tests
 ```
 make test
 ```
 To verbose :
 ```
 make testv
-``` 
+```
 
-### Formatter le code 
+### Formatter le code
 
 ctrl + maj + i (Anatole)
 maj + alt + f (les autres)
-
-

@@ -38,6 +38,6 @@ class IRVisitor : public ifccBaseVisitor {
 		virtual std::any visitExpr_aff(ifccParser::Expr_affContext *ctx) override;
 		virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
 		virtual std::any visitWhile_stmt(ifccParser::While_stmtContext *ctx) override;
-		
+
 		CFG* cfg;
 };

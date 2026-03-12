@@ -402,7 +402,7 @@ void IRInstr::gen_asm_not(ostream &os)
 	Symbol &srcVar = bb->cfg->access_symbol(src);
 	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
-	
+
 	os << "    cmpl    " << "$0" << ", " << srcAddress << endl;
 	os << "    sete    %al" << endl;	   // sete %al to 1 if equal
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int

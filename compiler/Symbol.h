@@ -39,4 +39,3 @@ class Symbol {
         bool _affected;
         bool _used;
 };
-

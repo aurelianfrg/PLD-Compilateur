@@ -6,4 +6,3 @@ int main() {
     int a = function();
     return a;
 }
-
