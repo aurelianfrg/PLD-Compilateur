@@ -51,13 +51,13 @@ int main(int argn, const char **argv)
 
 	// clog << "Analyse des variables : " << endl;
 
-	// VariableVisitor vv;
-	// vv.visit(tree);
+	VariableVisitor vv;
+	vv.visit(tree);
 
-	// if (vv.getError())
-	// {
-	// 	exit(1);
-	// }
+	if (vv.getError())
+	{
+		exit(1);
+	}
 
 	// clog << endl << "Sortie : " << endl;
 
