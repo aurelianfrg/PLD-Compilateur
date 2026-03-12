@@ -131,12 +131,16 @@ std::any IRVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx)
 
 std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 {
-    string varName = ctx->VAR()->getText();
-    Symbol &tempVar = cfg->create_new_var(Type::INT, varName);
-    if (ctx->expr() != nullptr)
+    for (auto item : ctx->def_item())
     {
-        string tempVarName = any_cast<string>(this->visit(ctx->expr()));
-        cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, tempVarName});
+        string varName = item->VAR()->getText();
+        Symbol &tempVar = cfg->create_new_var(Type::INT, varName);
+
+        if (item->expr() != nullptr)
+        {
+            string tempVarName = any_cast<string>(this->visit(item->expr()));
+            cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, tempVarName});
+        }
     }
     return 0;
 }
