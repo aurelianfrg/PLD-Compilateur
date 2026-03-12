@@ -11,17 +11,20 @@
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
 
+using namespace antlr4;
+using namespace std;
+
+class Block;
+class BasicBlock;
+class FunctionBlock;
+class CFG;
+class IRInstr;
+
 // Declarations from the parser -- replace with your own
 #include "Type.h"
 #include "Symbol.h"
 #include "SymbolsTable.h"
 
-using namespace antlr4;
-using namespace std;
-
-class BasicBlock;
-class CFG;
-// class DefFonction;
 
 //! The class for one 3-address instruction
 class IRInstr
@@ -55,7 +58,7 @@ public:
 	} Operation;
 
 	/**  constructor */
-	IRInstr(BasicBlock *bb_, Operation op, Type t, vector<string> params);
+	IRInstr(Block *b, Operation op, Type t, vector<string> params);
 
 	/** Actual code generation */
 	void gen_asm(ostream &os); /**< x86 assembly code generation for this IR instruction */
@@ -80,7 +83,7 @@ public:
 	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
 private:
-	BasicBlock *bb; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
+	Block *block; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
 	Operation op;
 	Type t;
 	vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
@@ -120,6 +123,7 @@ public:
 
 	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
+	virtual void print(ostream& os) const = 0;
 	friend ostream &operator<<(ostream &os, const Block &b);
 
 	string label;			  /**< label of the BB, also will be the label in the generated code */
@@ -131,10 +135,10 @@ public:
 class BasicBlock : public Block
 {
 public:
-	BasicBlock(CFG *cfg, string entry_label, SymbolsTable parentSymbolsTable);
+	BasicBlock(CFG *cfg, string label, SymbolsTable currentSymbolsTable, bool isAChild);
 	void gen_asm(ostream &os) override; /**< x86 assembly code generation for this basic block (very simple) */
 
-	friend ostream &operator<<(ostream &os, const BasicBlock &bb);
+	virtual void print(ostream& os) const override;
 
 	// No encapsulation whatsoever here. Feel free to do better.
 	BasicBlock *exit_true;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
@@ -146,11 +150,10 @@ public:
 class FunctionBlock : public Block
 {
 public:
-	FunctionBlock(CFG *cfg, string entry_label);
+	FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, vector<string> paramsName);
 	void gen_asm(ostream &os) override; 
 
-	friend ostream &operator<<(ostream &os, const FunctionBlock &bb);
-
+	virtual void print(ostream& os) const override;
 };
 	
 
@@ -171,8 +174,9 @@ public:
 	tree::ParseTree *ast; /**< The AST this CFG comes from */
 
 	void add_block(Block *b);
-	BasicBlock *createBasicBlock(const SymbolsTable & parentSymbolsTable);				// create a new basicblock and return a pointer to it
-	FunctionBlock *createFunctionBlock(string label); // create a new basicblock with a specific name
+	BasicBlock *createChildBasicBlock(const SymbolsTable & parentSymbolsTable);				// create a new basicblock and return a pointer to it
+	BasicBlock *createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable);				// create a new basicblock and return a pointer to it
+	FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); // create a new basicblock with a specific name
 
 	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
 	void gen_asm(ostream &os);
@@ -180,26 +184,14 @@ public:
 	void gen_asm_prologue(ostream &os);
 	void gen_asm_epilogue(ostream &os);
 
-	// symbol table methods
-	void add_to_symbol_table(Symbol s);
-	Symbol &create_new_tempvar(Type t); // create a new Symbol and adds it to symbolsTable
-	Symbol &create_new_var(Type t, string varName);
-	Symbol &access_symbol(string name);
-
-	// basic block management
+	// block management
 	string new_BB_name();
 	Block *current_block;
-
-	int newVarOffset(Type type);
 
 	friend ostream &operator<<(ostream &os, const CFG &cfg);
 
 protected:
-	int currentOffset = 0;
-	int temporaryVarCount = 0;
-	unordered_map<Type, int> typeSizes = {
-		{Type::INT, 4}
-	};
+	
 	int nextBBnumber; /**< just for naming */
 
 	vector<Block *> blocks; /**< all the basic blocks of this CFG*/

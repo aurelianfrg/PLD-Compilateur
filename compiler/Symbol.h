@@ -1,15 +1,17 @@
 #pragma once
 
 #include <string>
+#include "Type.h"
 
 using namespace std;
 
 class Symbol {
     public:
-        Symbol(string name, int offset, bool affected) : name(name), offset(offset), _affected(affected), _used(false) {}
+        //Symbol(string name, int offset, bool affected) : name(name), offset(offset), _affected(affected), _used(false) {}
+        Symbol(Type type, string name, int offset) : type(type), name(name), offset(offset), _affected(false), _used(false) {}
 
         string getName() {return this->name;}
-        string getType() {return type;}
+        Type getType() {return type;}
         int getOffset() {return offset;}
         bool affected() {return _affected;}
         bool used() {return _used;}
@@ -22,7 +24,7 @@ class Symbol {
             _used = false;
         }
 
-        string getAdress() {
+        string getAdressx86() {
             return to_string(offset) + "(%rbp)";
         }
 
@@ -34,7 +36,7 @@ class Symbol {
     protected:
 
         string name;
-        string type;
+        Type type;
         int offset;
         bool _affected;
         bool _used;

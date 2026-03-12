@@ -53,50 +53,27 @@ void CFG::add_block(Block *b)
 	nextBBnumber++;
 	current_block = b;
 }
-BasicBlock *CFG::createBasicBlock(const SymbolsTable & parentSymbolsTable)
+BasicBlock *CFG::createChildBasicBlock(const SymbolsTable & parentSymbolsTable)
 {
 	string name = new_BB_name();
-	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable);
+	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable, true);
 	add_block(bb);
 	return bb;
 }
-FunctionBlock *CFG::createFunctionBlock(string label)
+
+BasicBlock *CFG::createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable)
+{
+	string name = new_BB_name();
+	BasicBlock *bb = new BasicBlock(this, name, siblingSymbolsTable, false);
+	add_block(bb);
+	return bb;
+}
+FunctionBlock *CFG::createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName)
 {
 	// TODO : check name of block does not already exists
-	FunctionBlock *fb = new FunctionBlock(this, label);
+	FunctionBlock *fb = new FunctionBlock(this, label, paramsType, paramsName);
 	add_block(fb);
 	return fb;
-}
-
-// temporary variables system
-// Symbol &CFG::create_new_tempvar(Type t)
-// {
-// 	// create the Symbol inside the table and return a reference to it
-// 	string varName = string("!tmp") + to_string(temporaryVarCount++);
-// 	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
-// 	return symbolsTable.access(varName);
-// }
-
-// // temporary variables system
-// Symbol &CFG::create_new_var(Type t, string varName)
-// {
-// 	// create the Symbol inside the table and return a reference to it
-// 	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
-// 	return symbolsTable.access(varName);
-// }
-
-// void CFG::add_to_symbol_table(Symbol s)
-// {
-// 	symbolsTable.add(s);
-// }
-// Symbol &CFG::access_symbol(string name)
-// {
-// 	return symbolsTable.access(name);
-// }
-int CFG::newVarOffset(Type type)
-{
-	currentOffset -= typeSizes.at(type);
-	return currentOffset;
 }
 
 ostream &operator<<(ostream &os, const CFG &cfg)
@@ -108,15 +85,39 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 	return os;
 }
 
-// --- BASIC BLOCK METHODS ---
+// --- BLOCK METHODS ---
 
-BasicBlock::BasicBlock(CFG *cfg, string entry_label)
+BasicBlock::BasicBlock(CFG *cfg, string label, SymbolsTable currentSymbolsTable, bool isAChild)
 {
-	exit_false = nullptr;
-	exit_true = nullptr;
-	label = entry_label;
-	test_var_name = "";
+	this->exit_false = nullptr;
+	this->exit_true = nullptr;
+	this->label = label;
+	this->test_var_name = "";
 	this->cfg = cfg;
+
+	// initialize the symbolsTable for this block with values from the previous one, depending on the relation between the blocks (child or sibling)
+	this->symbolsTable = SymbolsTable(this);
+	this->symbolsTable.setCurrentOffset(currentSymbolsTable.getCurrentOffset());
+	this->symbolsTable.setTemporaryVarCount(currentSymbolsTable.getTemporaryVarCount());
+	if (isAChild) {
+		this->symbolsTable.setInheritedSymbols(currentSymbolsTable.getSymbols());
+	}
+	else {
+		this->symbolsTable.setInheritedSymbols(currentSymbolsTable.getInheritedSymbols());
+		this->symbolsTable.setLocalSymbols(currentSymbolsTable.getLocalSymbols());
+	}
+}
+
+FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, vector<string> paramsName)
+{
+	this->label = label;
+	this->cfg = cfg;
+
+	// initialize with a new SymbolsTable containing the parameters
+	this->symbolsTable = SymbolsTable();
+	for (int i = 0; i < paramsType.size(); ++i) {
+		symbolsTable.create_new_var(paramsType.at(i), paramsName.at(i));
+	}
 }
 
 void BasicBlock::gen_asm(ostream &os)
@@ -136,7 +137,7 @@ void BasicBlock::gen_asm(ostream &os)
 	else if (this->exit_true != nullptr and this->exit_false != nullptr)
 	{
 		string condVarName = this->test_var_name;
-		Symbol &condVar = cfg->access_symbol(condVarName);
+		Symbol &condVar = symbolsTable.access(condVarName);
 		string address = to_string(condVar.getOffset()) + "(%rbp)";
 		os << "    movl    " << address << ", " << "%eax" << endl;
 		os << "    cmpl    " << "$0, %eax" << endl;
@@ -153,34 +154,46 @@ void BasicBlock::gen_asm(ostream &os)
 	}
 }
 
-void BasicBlock::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params)
+void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params)
 {
 	IRInstr *instr = new IRInstr(this, op, t, params);
 	instrs.push_back(instr);
 }
 
-ostream &operator<<(ostream &os, const BasicBlock &bb)
-{
-	os << bb.label << ":" << endl;
-	for (IRInstr *instr : bb.instrs)
+void BasicBlock::print(ostream& os) const {
+	os << this->label << ":" << endl;
+	for (IRInstr *instr : this->instrs)
 	{
 		os << *instr << endl;
 	}
-	if (bb.exit_true != nullptr)
+	if (this->exit_true != nullptr)
 	{
-		os << "exit_true : " << bb.exit_true->label << endl;
+		os << "exit_true : " << this->exit_true->label << endl;
 	}
-	if (bb.exit_false != nullptr)
+	if (this->exit_false != nullptr)
 	{
-		os << "exit_false : " << bb.exit_false->label << endl;
+		os << "exit_false : " << this->exit_false->label << endl;
 	}
+}
+
+void FunctionBlock::print(ostream& os) const {
+	os << this->label << " (function) : " << endl;
+	for (IRInstr *instr : this->instrs)
+	{
+		os << *instr << endl;
+	}
+}
+
+ostream &operator<<(ostream &os, const Block &b)
+{
+	b.print(os);
 	return os;
 }
 
 // --- IRInstr METHODS ---
-IRInstr::IRInstr(BasicBlock *bb, Operation op, Type t, vector<string> params)
+IRInstr::IRInstr(Block *b, Operation op, Type t, vector<string> params)
 {
-	this->bb = bb;
+	this->block = b;
 	this->op = op;
 	this->t = t;
 	this->params = params;
@@ -252,7 +265,7 @@ void IRInstr::gen_asm_ldconst(ostream &os)
 	string value = params.at(0);
 	string tempVarName = params.at(1);
 
-	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
+	Symbol &tempVar = block->symbolsTable.access(tempVarName);
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	string const_value = string("$") + value;
 	os << "    movl    " << const_value << ", " << address << endl;
@@ -261,7 +274,7 @@ void IRInstr::gen_asm_ldconst(ostream &os)
 void IRInstr::gen_asm_ret(ostream &os)
 {
 	string tempVarName = params.at(0);
-	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
+	Symbol &tempVar = block->symbolsTable.access(tempVarName);
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << address << ", " << "%eax" << endl;
 
@@ -274,9 +287,9 @@ void IRInstr::gen_asm_eq(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
@@ -293,9 +306,9 @@ void IRInstr::gen_asm_diff(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
@@ -312,9 +325,9 @@ void IRInstr::gen_asm_lt(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
@@ -331,9 +344,9 @@ void IRInstr::gen_asm_le(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
@@ -350,8 +363,8 @@ void IRInstr::gen_asm_copy(ostream &os)
 	string dest = params.at(0);
 	string src = params.at(1);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &srcVar = bb->cfg->access_symbol(src);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
 	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
@@ -364,9 +377,9 @@ void IRInstr::gen_asm_add(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -381,8 +394,8 @@ void IRInstr::gen_asm_neg(ostream &os)
 	string dest = params.at(0);
 	string src = params.at(1);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &srcVar = bb->cfg->access_symbol(src);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
 	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
@@ -395,8 +408,8 @@ void IRInstr::gen_asm_not(ostream &os)
 	string dest = params.at(0);
 	string src = params.at(1);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &srcVar = bb->cfg->access_symbol(src);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
 	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	
@@ -412,9 +425,9 @@ void IRInstr::gen_asm_sub(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -430,9 +443,9 @@ void IRInstr::gen_asm_mul(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -448,9 +461,9 @@ void IRInstr::gen_asm_div(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -467,9 +480,9 @@ void IRInstr::gen_asm_mod(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -486,9 +499,9 @@ void IRInstr::gen_asm_and(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -504,9 +517,9 @@ void IRInstr::gen_asm_xor(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
@@ -522,9 +535,9 @@ void IRInstr::gen_asm_or(ostream &os)
 	string v1 = params.at(1);
 	string v2 = params.at(2);
 
-	Symbol &destVar = bb->cfg->access_symbol(dest);
-	Symbol &v1Var = bb->cfg->access_symbol(v1);
-	Symbol &v2Var = bb->cfg->access_symbol(v2);
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
 
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
