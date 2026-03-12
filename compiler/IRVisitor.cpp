@@ -278,9 +278,21 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 {
     string varName = ctx->VAR()->getText();
-    string exprResultAddress = any_cast<string>(visit(ctx->expr()));
+    string op = ctx->OP->getText();
+    string exprAddress = any_cast<string>(visit(ctx->expr()));
 
-    cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprResultAddress});
+    if (op == "=")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprAddress});
+    }
+    else if (op == "+=")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::add, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "-=")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::sub, Type::INT, {varName, varName, exprAddress});
+    }
 
     // return the newly affected variable so that affectations can be chained
     return varName;
