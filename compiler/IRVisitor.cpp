@@ -247,9 +247,6 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     // create a new testing block 
     Block* start_bb = cfg->current_block;
-    if (start_bb == nullptr) {
-        cerr << "cast failed" << endl;
-    }
     SymbolsTable inheritedSymbols = start_bb->symbolsTable;
 
     BasicBlock* end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);    

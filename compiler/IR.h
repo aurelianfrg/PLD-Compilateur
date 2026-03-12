@@ -120,6 +120,7 @@ class Block
 {
 public:
 	virtual void gen_asm(ostream &os) = 0; 
+	void gen_block_linking_asm(ostream &os);
 
 	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
@@ -131,6 +132,9 @@ public:
 	vector<IRInstr *> instrs; /** < the instructions themselves. */
 	SymbolsTable symbolsTable;
 	BasicBlock *exit_true;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
+	BasicBlock *exit_false;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
+	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
+													store here the name of the variable that holds the value of expr */
 };
 
 class BasicBlock : public Block
@@ -140,12 +144,6 @@ public:
 	void gen_asm(ostream &os) override; /**< x86 assembly code generation for this basic block (very simple) */
 
 	virtual void print(ostream& os) const override;
-
-	// No encapsulation whatsoever here. Feel free to do better.
-	
-	BasicBlock *exit_false;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
-	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
-													store here the name of the variable that holds the value of expr */
 };
 
 class FunctionBlock : public Block

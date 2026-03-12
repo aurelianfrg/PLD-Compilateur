@@ -123,14 +123,7 @@ FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, ve
 	}
 }
 
-void BasicBlock::gen_asm(ostream &os)
-{
-	os << this->label << ":" << endl;
-	for (IRInstr *instr : this->instrs)
-	{
-		instr->gen_asm(os);
-	}
-
+void Block::gen_block_linking_asm(ostream &os) {
 	// BLOCK JUMP LOGIC
 	if (this->exit_true != nullptr and this->exit_false == nullptr)
 	{
@@ -149,12 +142,27 @@ void BasicBlock::gen_asm(ostream &os)
 	}
 	else if (this->exit_true == nullptr and this->exit_false == nullptr)
 	{
-		// program ending
+		// generate block epilogue
+		os << "    movq    %rbp, %rsp" << endl;
+		os << "    popq    %rbp" << endl;
+		os << "    ret" << endl;
 	}
 	else
 	{
 		cerr << "INTERNAL ERROR : Unproper block linking" << endl;
 	}
+}
+
+
+void BasicBlock::gen_asm(ostream &os)
+{
+	os << this->label << ":" << endl;
+	for (IRInstr *instr : this->instrs)
+	{
+		instr->gen_asm(os);
+	}
+
+	gen_block_linking_asm(os);
 }
 
 void FunctionBlock::gen_asm(ostream &os) {
@@ -177,10 +185,7 @@ void FunctionBlock::gen_asm(ostream &os) {
 		instr->gen_asm(os);
 	}
 
-	// generate block epilogue
-	os << "    movq    %rbp, %rsp" << endl;
-	os << "    popq    %rbp" << endl;
-	os << "    ret" << endl;
+	gen_block_linking_asm(os);
 }
 
 void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params)
