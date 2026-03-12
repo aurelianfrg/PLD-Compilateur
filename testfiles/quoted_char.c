@@ -1,5 +1,5 @@
 int main() {
-    int z;
-    z='a';
-    return z;
+  int z;
+  z = 'a';
+  return z;
 }
