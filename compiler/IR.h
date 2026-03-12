@@ -49,7 +49,9 @@ class IRInstr
 			ldchar,  // VAR<-CHAR       [char, var]
 			bit_and,  // VAR<-VAR&VAR 	[dest, v1, v2]
 			bit_xor,  // VAR<-VAR^VAR 	[dest, v1, v2]
-			bit_or	  // VAR<-VAR|VAR 	[dest, v1, v2]
+			bit_or,	  // VAR<-VAR|VAR 	[dest, v1, v2]
+			div,
+			mod
 		} Operation;
 
 	/**  constructor */
@@ -72,6 +74,8 @@ class IRInstr
 		void gen_asm_and(ostream &os);
 		void gen_asm_xor(ostream &os);
 		void gen_asm_or(ostream &os);
+		void gen_asm_div(ostream &os);
+		void gen_asm_mod(ostream &os);
 
 	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
