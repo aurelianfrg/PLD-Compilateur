@@ -311,3 +311,67 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
   return 0;
 }
+
+std::any IRVisitor::visitExpr_log_and(ifccParser::Expr_log_andContext *ctx) {
+
+  Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
+
+  // evaluate left operand
+  string leftVarName = any_cast<string>(this->visit(ctx->expr(0)));
+
+  cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT,
+                               {tempVar.getName(), leftVarName});
+
+  BasicBlock *test_left = cfg->current_bb;
+  BasicBlock *eval_right = cfg->createBasicBlock();
+  BasicBlock *end_bb = cfg->createBasicBlock();
+
+  test_left->test_var_name = leftVarName;
+
+  // short circuit
+  test_left->exit_true = eval_right;
+  test_left->exit_false = end_bb;
+
+  // evaluate right operand
+  cfg->current_bb = eval_right;
+  string rightVarName = any_cast<string>(this->visit(ctx->expr(1)));
+  cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT,
+                               {tempVar.getName(), rightVarName});
+  eval_right->exit_true = end_bb;
+
+  cfg->current_bb = end_bb;
+
+  return tempVar.getName();
+}
+
+std::any IRVisitor::visitExpr_log_or(ifccParser::Expr_log_orContext *ctx) {
+
+  Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
+
+  // evaluate left operand
+  string leftVarName = any_cast<string>(this->visit(ctx->expr(0)));
+
+  cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT,
+                               {tempVar.getName(), leftVarName});
+
+  BasicBlock *test_left = cfg->current_bb;
+  BasicBlock *eval_right = cfg->createBasicBlock();
+  BasicBlock *end_bb = cfg->createBasicBlock();
+
+  test_left->test_var_name = leftVarName;
+
+  // short circuit
+  test_left->exit_true = end_bb;
+  test_left->exit_false = eval_right;
+
+  // evaluate right operand
+  cfg->current_bb = eval_right;
+  string rightVarName = any_cast<string>(this->visit(ctx->expr(1)));
+  eval_right->add_IRInstr(IRInstr::copy, Type::INT,
+                          {tempVar.getName(), rightVarName});
+  eval_right->exit_true = end_bb;
+
+  cfg->current_bb = end_bb;
+
+  return tempVar.getName();
+}

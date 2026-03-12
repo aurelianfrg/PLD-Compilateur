@@ -49,6 +49,10 @@ public:
   virtual std::any visitExpr_aff(ifccParser::Expr_affContext *ctx) override;
   virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
   virtual std::any visitWhile_stmt(ifccParser::While_stmtContext *ctx) override;
+  virtual std::any
+  visitExpr_log_and(ifccParser::Expr_log_andContext *ctx) override;
+  virtual std::any
+  visitExpr_log_or(ifccParser::Expr_log_orContext *ctx) override;
 
   CFG *cfg;
 };
