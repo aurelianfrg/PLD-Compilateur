@@ -84,7 +84,7 @@ std::any VariableVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx)
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx)
+std::any VariableVisitor::visitExpr_mult_div_mod(ifccParser::Expr_mult_div_modContext *ctx)
 {
     return visitChildren(ctx);
 }
