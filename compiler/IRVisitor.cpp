@@ -71,12 +71,19 @@ std::any IRVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *c
     return visit(ctx->expr());
 }
 
-std::any IRVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx)
+std::any IRVisitor::visitExpr_minus_not(ifccParser::Expr_minus_notContext *ctx)
 {
-    // cout << "visit expr minus" << endl;
+    string op = ctx->OP->getText();
     string tempVarName = any_cast<string>(this->visit(ctx->expr()));
     Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
-    cfg->current_bb->add_IRInstr(IRInstr::neg, Type::INT, {tempVar.getName(), tempVarName});
+
+    if (op == string("-")) {
+        cfg->current_bb->add_IRInstr(IRInstr::neg, Type::INT, {tempVar.getName(), tempVarName});
+    }
+    else {
+        cfg->current_bb->add_IRInstr(IRInstr::not_, Type::INT, {tempVar.getName(), tempVarName});
+    }
+
     return tempVar.getName();
 }
 

@@ -206,6 +206,9 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::neg:
 		this->gen_asm_neg(os);
 		break;
+	case IRInstr::not_:
+		this->gen_asm_not(os);
+		break;
 	case IRInstr::sub:
 		this->gen_asm_sub(os);
 		break;
@@ -384,6 +387,22 @@ void IRInstr::gen_asm_neg(ostream &os)
 	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
 	os << "    negl    " << "%eax" << endl;
+	os << "    movl    %eax, " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_not(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &srcVar = bb->cfg->access_symbol(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	
+	os << "    cmpl    " << "$0" << ", " << srcAddress << endl;
+	os << "    sete    %al" << endl;	   // sete %al to 1 if equal
+	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
 	os << "    movl    %eax, " << destAddress << endl;
 }
 

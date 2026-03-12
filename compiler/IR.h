@@ -48,6 +48,7 @@ public:
 		cmp_lt,	  // VAR<-VAR<VAR  	[dest, v1, v2]
 		cmp_le,	  // VAR<-VAR<=VAR 	[dest, v1, v2]
 		neg,	  // VAR<- -VAR    	[dest, source]
+		not_,	  // VAR<- !VAR    	[dest, source]
 		bit_and,  // VAR<-VAR&VAR 	[dest, v1, v2]
 		bit_xor,  // VAR<-VAR^VAR 	[dest, v1, v2]
 		bit_or	  // VAR<-VAR|VAR 	[dest, v1, v2]
@@ -67,6 +68,7 @@ public:
 	void gen_asm_div(ostream &os);
 	void gen_asm_mod(ostream &os);
 	void gen_asm_neg(ostream &os);
+	void gen_asm_not(ostream &os);
 	void gen_asm_eq(ostream &os);
 	void gen_asm_diff(ostream &os);
 	void gen_asm_lt(ostream &os);

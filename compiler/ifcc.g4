@@ -16,7 +16,7 @@ instruction:
 
 expr:
 	OPEN_PAR expr CLOSE_PAR						# expr_parenthesis
-	| '-' expr									# expr_minus
+	| OP=('-' | '!') expr						# expr_minus_not
 	| expr OP = ('*' | '/' | '%') expr			# expr_mult_div_mod
 	| expr OP = ('+' | '-') expr				# expr_add_sub
 	| expr OP = ('<=' | '<' | '>=' | '>') expr	# expr_comp
