@@ -18,18 +18,19 @@ void CFG::gen_asm_prologue(ostream &os)
 	os << " main: \n";
 #endif
 
-    //prologue 
-    os << "prologue:\n";
-    os << "    pushq   %rbp\n";
-    os << "    movq    %rsp, %rbp\n";
-    os << "\n";
+	// prologue
+	os << "prologue:\n";
+	os << "    pushq   %rbp\n";
+	os << "    movq    %rsp, %rbp\n";
+	os << "\n";
 }
 
-void CFG::gen_asm_epilogue(ostream& os) {
+void CFG::gen_asm_epilogue(ostream &os)
+{
 	os << "\n";
-    os << "epilogue:\n";
-    os << "    popq    %rbp\n";
-    os << "    ret\n";
+	os << "epilogue:\n";
+	os << "    popq    %rbp\n";
+	os << "    ret\n";
 }
 
 void CFG::gen_asm(ostream &os)
@@ -107,10 +108,6 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 	return os;
 }
 
-
-
-
-
 // --- BASIC BLOCK METHODS ---
 
 BasicBlock::BasicBlock(CFG *cfg, string entry_label)
@@ -131,23 +128,27 @@ void BasicBlock::gen_asm(ostream &os)
 	}
 
 	// BLOCK JUMP LOGIC
-	if (this->exit_true != nullptr and this->exit_false == nullptr) {
+	if (this->exit_true != nullptr and this->exit_false == nullptr)
+	{
 		// linear code
 		os << "    jmp     " << this->exit_true->label << endl;
 	}
-	else if (this->exit_true != nullptr and this->exit_false != nullptr) {
+	else if (this->exit_true != nullptr and this->exit_false != nullptr)
+	{
 		string condVarName = this->test_var_name;
-		Symbol & condVar = cfg->access_symbol(condVarName);
+		Symbol &condVar = cfg->access_symbol(condVarName);
 		string address = to_string(condVar.getOffset()) + "(%rbp)";
 		os << "    movl    " << address << ", " << "%eax" << endl;
 		os << "    cmpl    " << "$0, %eax" << endl;
 		os << "    jne     " << this->exit_true->label << endl;
 		os << "    jmp     " << this->exit_false->label << endl;
 	}
-	else if (this->exit_true == nullptr and this->exit_false == nullptr) {
-		// program ending 
+	else if (this->exit_true == nullptr and this->exit_false == nullptr)
+	{
+		// program ending
 	}
-	else {
+	else
+	{
 		cerr << "INTERNAL ERROR : Unproper block linking" << endl;
 	}
 }
@@ -165,19 +166,16 @@ ostream &operator<<(ostream &os, const BasicBlock &bb)
 	{
 		os << *instr << endl;
 	}
-	if (bb.exit_true != nullptr) {
+	if (bb.exit_true != nullptr)
+	{
 		os << "exit_true : " << bb.exit_true->label << endl;
 	}
-	if (bb.exit_false != nullptr) {
+	if (bb.exit_false != nullptr)
+	{
 		os << "exit_false : " << bb.exit_false->label << endl;
 	}
 	return os;
 }
-
-
-
-
-
 
 // --- IRInstr METHODS ---
 IRInstr::IRInstr(BasicBlock *bb, Operation op, Type t, vector<string> params)
@@ -188,9 +186,11 @@ IRInstr::IRInstr(BasicBlock *bb, Operation op, Type t, vector<string> params)
 	this->params = params;
 }
 
-void IRInstr::gen_asm(ostream &os) {
+void IRInstr::gen_asm(ostream &os)
+{
 	// SPECIFIC LOGIC FOR INSTRUCTIONS
-	switch (this->op) {
+	switch (this->op)
+	{
 	case IRInstr::ldconst:
 		this->gen_asm_ldconst(os);
 		break;
@@ -212,6 +212,12 @@ void IRInstr::gen_asm(ostream &os) {
 	case IRInstr::mul:
 		this->gen_asm_mul(os);
 		break;
+	case IRInstr::div:
+		this->gen_asm_div(os);
+		break;
+	case IRInstr::mod:
+		this->gen_asm_mod(os);
+		break;
 	case IRInstr::cmp_eq:
 		this->gen_asm_eq(os);
 		break;
@@ -227,11 +233,19 @@ void IRInstr::gen_asm(ostream &os) {
 	case IRInstr::ldchar:
 		this->gen_asm_ldchar(os);
 		break;
+	case IRInstr::bit_and:
+		this->gen_asm_and(os);
+		break;
+	case IRInstr::bit_xor:
+		this->gen_asm_xor(os);
+		break;
+	case IRInstr::bit_or:
+		this->gen_asm_or(os);
+		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
 	}
 }
-
 
 void IRInstr::gen_asm_ldconst(ostream &os)
 {
@@ -247,7 +261,7 @@ void IRInstr::gen_asm_ldconst(ostream &os)
 void IRInstr::gen_asm_ret(ostream &os)
 {
 	string tempVarName = params.at(0);
-	Symbol & tempVar = bb->cfg->access_symbol(tempVarName);
+	Symbol &tempVar = bb->cfg->access_symbol(tempVarName);
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	os << "    movl    " << address << ", " << "%eax" << endl;
 
@@ -260,18 +274,18 @@ void IRInstr::gen_asm_eq(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
+	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
+	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
 	os << "    movl    " << tempVar1Address << ", %eax" << endl;
 	os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
-	os << "    sete    %al" << endl; // sete %al to 1 if equal
+	os << "    sete    %al" << endl;	   // sete %al to 1 if equal
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
-	os << "    movl    %eax, " << resultAddress << endl; 
+	os << "    movl    %eax, " << resultAddress << endl;
 }
 
 void IRInstr::gen_asm_diff(ostream &os)
@@ -279,18 +293,18 @@ void IRInstr::gen_asm_diff(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
+	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
+	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
 	os << "    movl    " << tempVar1Address << ", %eax" << endl;
 	os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
-	os << "    setne   %al" << endl; // sete %al to 1 if equal
+	os << "    setne   %al" << endl;	   // sete %al to 1 if equal
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
-	os << "    movl    %eax, " << resultAddress << endl; 
+	os << "    movl    %eax, " << resultAddress << endl;
 }
 
 void IRInstr::gen_asm_lt(ostream &os)
@@ -298,18 +312,18 @@ void IRInstr::gen_asm_lt(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
+	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
+	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
 	os << "    movl    " << tempVar2Address << ", %eax" << endl;
 	os << "    cmpl    " << "%eax" << ", " << tempVar1Address << endl;
-	os << "    setl    %al" << endl; // sete %al to 1 if lower
+	os << "    setl    %al" << endl;	   // sete %al to 1 if lower
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
-	os << "    movl    %eax, " << resultAddress << endl; 
+	os << "    movl    %eax, " << resultAddress << endl;
 }
 
 void IRInstr::gen_asm_le(ostream &os)
@@ -317,18 +331,18 @@ void IRInstr::gen_asm_le(ostream &os)
 	string resultVarName = params.at(0);
 	string tempVarName1 = params.at(1);
 	string tempVarName2 = params.at(2);
-	Symbol & resultVar = bb->cfg->access_symbol(resultVarName);
-	Symbol & tempVar1 = bb->cfg->access_symbol(tempVarName1);
-	Symbol & tempVar2 = bb->cfg->access_symbol(tempVarName2);
+	Symbol &resultVar = bb->cfg->access_symbol(resultVarName);
+	Symbol &tempVar1 = bb->cfg->access_symbol(tempVarName1);
+	Symbol &tempVar2 = bb->cfg->access_symbol(tempVarName2);
 	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
 	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
 	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
 	os << "    movl    " << tempVar2Address << ", %eax" << endl;
 	os << "    cmpl    " << "%eax" << ", " << tempVar1Address << endl;
-	os << "    setle   %al" << endl; // sete %al to 1 if lower
+	os << "    setle   %al" << endl;	   // sete %al to 1 if lower
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
-	os << "    movl    %eax, " << resultAddress << endl; 
+	os << "    movl    %eax, " << resultAddress << endl;
 }
 
 void IRInstr::gen_asm_copy(ostream &os)
@@ -421,6 +435,98 @@ void IRInstr::gen_asm_ldchar(ostream &os)
 	string address = to_string(tempVar.getOffset()) + "(%rbp)";
 	string char_value = string("$") + to_string(ascii);
 	os << "    movl    " << char_value << ", " << address << endl;
+}
+
+void IRInstr::gen_asm_div(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    cltd" << endl; // Extend %eax into %edx:%eax for division
+	os << "    idivl    " << v2Address << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl; // quotient is in %eax
+}
+
+void IRInstr::gen_asm_mod(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    cltd" << endl; // Extend %eax into %edx:%eax for division
+	os << "    idivl    " << v2Address << endl;
+	os << "    movl    " << "%edx" << ", " << destAddress << endl; // Remainder is in %edx
+}
+
+void IRInstr::gen_asm_and(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    andl    " << v2Address << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_xor(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    xorl    " << v2Address << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_or(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = bb->cfg->access_symbol(dest);
+	Symbol &v1Var = bb->cfg->access_symbol(v1);
+	Symbol &v2Var = bb->cfg->access_symbol(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    orl    " << v2Address << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
 ostream &operator<<(ostream &os, const IRInstr &irInstr)

@@ -17,10 +17,12 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccLexer.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
-	build/main.o \
-	build/CodeGenVisitor.o \
+	build/VariableVisitor.o \
 	build/IR.o \
-	build/IRVisitor.o
+	build/IRVisitor.o \
+	build/main.o
+	
+
 
 ifcc: $(OBJECTS)
 	@mkdir -p build
