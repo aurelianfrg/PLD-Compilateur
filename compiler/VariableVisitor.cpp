@@ -39,8 +39,9 @@ std::any VariableVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 
 std::any VariableVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 {
-    for (auto item : ctx->def_item()){
-        this -> visit(item);
+    for (auto item : ctx->def_item())
+    {
+        this->visit(item);
     }
     return 0;
 }
