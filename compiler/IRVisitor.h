@@ -17,6 +17,7 @@ class IRVisitor : public ifccBaseVisitor {
 		IRVisitor(tree::ParseTree* tree);
 		virtual std::any visitProg(ifccParser::ProgContext *ctx) override;
 		virtual std::any visitBloc(ifccParser::BlocContext *ctx) override;
+		virtual std::any visitFunction_def(ifccParser::Function_defContext *ctx) override;
 		virtual std::any visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx) override;
 		virtual std::any visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx) override;
 		virtual std::any visitInstruction_if_stmt(ifccParser::Instruction_if_stmtContext *context) override;

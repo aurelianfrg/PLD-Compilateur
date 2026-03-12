@@ -2,9 +2,9 @@ grammar ifcc;
 
 axiom: prog EOF;
 
-prog: 'int' 'main' '(' ')' bloc;
+prog: (function_def)+ ;
 
-function_def: TYPE_FUNCTION FUNCTION_NAME '(' ((TYPE VAR ',')* TYPE VAR)? ')' ; 
+function_def: TYPE_FUNCTION FUNCTION_NAME '(' ((TYPE VAR ',')* TYPE VAR)? ')' bloc ; 
 
 bloc: '{' instruction* '}';
 

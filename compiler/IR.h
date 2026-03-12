@@ -32,7 +32,7 @@ public:
 	typedef enum
 	{
 		// L'IR manipule les variables par leur nom (temporaire ou pas)
-		ldconst,  // VAR<-CONST 	 	[const, var]
+		ldconst,  // VAR<-CONST 	[const, var]
 		ret,	  // RETURN EXPR 	[expr_address]
 		copy,	  // VAR<-VAR 	 	[dest, source]
 		add,	  // VAR<-VAR+VAR  	[dest, v1, v2]
@@ -113,26 +113,46 @@ Possible optimization:
 	   followed by a conditional jump to the exit_false branch
 */
 
-class BasicBlock
+class Block
 {
 public:
-	BasicBlock(CFG *cfg, string entry_label);
-	void gen_asm(ostream &os); /**< x86 assembly code generation for this basic block (very simple) */
+	virtual void gen_asm(ostream &os) = 0; 
 
 	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
+
+	friend ostream &operator<<(ostream &os, const Block &b);
+
+	string label;			  /**< label of the BB, also will be the label in the generated code */
+	CFG *cfg;				  /** < the CFG where this block belongs */
+	vector<IRInstr *> instrs; /** < the instructions themselves. */
+	SymbolsTable symbolsTable;
+};
+
+class BasicBlock : public Block
+{
+public:
+	BasicBlock(CFG *cfg, string entry_label, SymbolsTable parentSymbolsTable);
+	void gen_asm(ostream &os) override; /**< x86 assembly code generation for this basic block (very simple) */
 
 	friend ostream &operator<<(ostream &os, const BasicBlock &bb);
 
 	// No encapsulation whatsoever here. Feel free to do better.
 	BasicBlock *exit_true;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
 	BasicBlock *exit_false;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
-	string label;			  /**< label of the BB, also will be the label in the generated code */
-	CFG *cfg;				  /** < the CFG where this block belongs */
-	vector<IRInstr *> instrs; /** < the instructions themselves. */
 	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
 													store here the name of the variable that holds the value of expr */
-protected:
 };
+
+class FunctionBlock : public Block
+{
+public:
+	FunctionBlock(CFG *cfg, string entry_label);
+	void gen_asm(ostream &os) override; 
+
+	friend ostream &operator<<(ostream &os, const FunctionBlock &bb);
+
+};
+	
 
 /** The class for the control flow graph, also includes the symbol table */
 
@@ -150,9 +170,9 @@ public:
 
 	tree::ParseTree *ast; /**< The AST this CFG comes from */
 
-	void add_bb(BasicBlock *bb);
-	BasicBlock *createBasicBlock();				// create a new basicblock and return a pointer to it
-	BasicBlock *createBasicBlock(string label); // create a new basicblock with a specific name
+	void add_block(Block *b);
+	BasicBlock *createBasicBlock(const SymbolsTable & parentSymbolsTable);				// create a new basicblock and return a pointer to it
+	FunctionBlock *createFunctionBlock(string label); // create a new basicblock with a specific name
 
 	// x86 code generation: could be encapsulated in a processor class in a retargetable compiler
 	void gen_asm(ostream &os);
@@ -168,22 +188,19 @@ public:
 
 	// basic block management
 	string new_BB_name();
-	BasicBlock *current_bb;
+	Block *current_block;
 
 	int newVarOffset(Type type);
 
 	friend ostream &operator<<(ostream &os, const CFG &cfg);
 
 protected:
-	SymbolsTable symbolsTable;
 	int currentOffset = 0;
 	int temporaryVarCount = 0;
 	unordered_map<Type, int> typeSizes = {
-		{Type::INT, 4}};
-	// map <string, Type> SymbolType; /**< part of the symbol table  */
-	// map <string, int> SymbolIndex; /**< part of the symbol table  */
-	// int nextFreeSymbolIndex; /**< to allocate new symbols in the symbol table */
+		{Type::INT, 4}
+	};
 	int nextBBnumber; /**< just for naming */
 
-	vector<BasicBlock *> bbs; /**< all the basic blocks of this CFG*/
+	vector<Block *> blocks; /**< all the basic blocks of this CFG*/
 };

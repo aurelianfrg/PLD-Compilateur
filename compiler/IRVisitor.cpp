@@ -9,9 +9,14 @@ IRVisitor::IRVisitor(tree::ParseTree *parseTree)
 
 antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx)
 {
-    BasicBlock *firstBlock = cfg->createBasicBlock();
-    this->visit(ctx->bloc());
+    for (auto & function_def : ctx->function_def()) {
+        this->visit(function_def);
+    }
     return 0;
+}
+
+std::any IRVisitor::visitFunction_def(ifccParser::Function_defContext *ctx) {
+    
 }
 
 std::any IRVisitor::visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx)

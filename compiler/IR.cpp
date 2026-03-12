@@ -36,9 +36,9 @@ void CFG::gen_asm_epilogue(ostream &os)
 void CFG::gen_asm(ostream &os)
 {
 	this->gen_asm_prologue(os);
-	for (BasicBlock *bb : bbs)
+	for (Block *b : blocks)
 	{
-		bb->gen_asm(os);
+		b->gen_asm(os);
 	}
 	this->gen_asm_epilogue(os);
 }
@@ -47,52 +47,52 @@ string CFG::new_BB_name()
 {
 	return "bloc_" + to_string(nextBBnumber);
 }
-void CFG::add_bb(BasicBlock *bb)
+void CFG::add_block(Block *b)
 {
-	bbs.push_back(bb);
+	blocks.push_back(b);
 	nextBBnumber++;
-	current_bb = bb;
+	current_block = b;
 }
-BasicBlock *CFG::createBasicBlock()
+BasicBlock *CFG::createBasicBlock(const SymbolsTable & parentSymbolsTable)
 {
 	string name = new_BB_name();
-	BasicBlock *bb = new BasicBlock(this, name);
-	add_bb(bb);
+	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable);
+	add_block(bb);
 	return bb;
 }
-BasicBlock *CFG::createBasicBlock(string label)
+FunctionBlock *CFG::createFunctionBlock(string label)
 {
 	// TODO : check name of block does not already exists
-	BasicBlock *bb = new BasicBlock(this, label);
-	add_bb(bb);
-	return bb;
+	FunctionBlock *fb = new FunctionBlock(this, label);
+	add_block(fb);
+	return fb;
 }
 
 // temporary variables system
-Symbol &CFG::create_new_tempvar(Type t)
-{
-	// create the Symbol inside the table and return a reference to it
-	string varName = string("!tmp") + to_string(temporaryVarCount++);
-	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
-	return symbolsTable.access(varName);
-}
+// Symbol &CFG::create_new_tempvar(Type t)
+// {
+// 	// create the Symbol inside the table and return a reference to it
+// 	string varName = string("!tmp") + to_string(temporaryVarCount++);
+// 	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
+// 	return symbolsTable.access(varName);
+// }
 
-// temporary variables system
-Symbol &CFG::create_new_var(Type t, string varName)
-{
-	// create the Symbol inside the table and return a reference to it
-	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
-	return symbolsTable.access(varName);
-}
+// // temporary variables system
+// Symbol &CFG::create_new_var(Type t, string varName)
+// {
+// 	// create the Symbol inside the table and return a reference to it
+// 	symbolsTable.add(Symbol(varName, newVarOffset(t), true));
+// 	return symbolsTable.access(varName);
+// }
 
-void CFG::add_to_symbol_table(Symbol s)
-{
-	symbolsTable.add(s);
-}
-Symbol &CFG::access_symbol(string name)
-{
-	return symbolsTable.access(name);
-}
+// void CFG::add_to_symbol_table(Symbol s)
+// {
+// 	symbolsTable.add(s);
+// }
+// Symbol &CFG::access_symbol(string name)
+// {
+// 	return symbolsTable.access(name);
+// }
 int CFG::newVarOffset(Type type)
 {
 	currentOffset -= typeSizes.at(type);
@@ -101,7 +101,7 @@ int CFG::newVarOffset(Type type)
 
 ostream &operator<<(ostream &os, const CFG &cfg)
 {
-	for (BasicBlock *block : cfg.bbs)
+	for (Block *block : cfg.blocks)
 	{
 		os << *block << endl;
 	}
