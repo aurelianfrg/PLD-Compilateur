@@ -7,9 +7,10 @@ IRVisitor::IRVisitor(tree::ParseTree *parseTree)
     cfg = new CFG(parseTree);
 }
 
-antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx) {
-    BasicBlock* firstBlock = cfg->createBasicBlock();
-    this->visit( ctx->bloc() );
+antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx)
+{
+    BasicBlock *firstBlock = cfg->createBasicBlock();
+    this->visit(ctx->bloc());
     return 0;
 }
 
@@ -25,7 +26,8 @@ std::any IRVisitor::visitInstruction_return_stmt(ifccParser::Instruction_return_
 {
     return visitChildren(ctx);
 }
-std::any IRVisitor::visitInstruction_if_stmt(ifccParser::Instruction_if_stmtContext *ctx) {
+std::any IRVisitor::visitInstruction_if_stmt(ifccParser::Instruction_if_stmtContext *ctx)
+{
     return visitChildren(ctx);
 }
 
@@ -99,12 +101,25 @@ std::any IRVisitor::visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx)
     return tempVar.getName();
 }
 
-std::any IRVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx)
+std::any IRVisitor::visitExpr_mult_div_mod(ifccParser::Expr_mult_div_modContext *ctx)
 {
-    string tempVarName0 = any_cast<string>(this->visit(ctx->expr(0)));
-    string tempVarName1 = any_cast<string>(this->visit(ctx->expr(1)));
+    string tempVarName1 = any_cast<string>(this->visit(ctx->expr(0)));
+    string op = ctx->OP->getText();
+    string tempVarName2 = any_cast<string>(this->visit(ctx->expr(1)));
     Symbol &tempVar = cfg->create_new_tempvar(Type::INT);
-    cfg->current_bb->add_IRInstr(IRInstr::mul, Type::INT, {tempVar.getName(), tempVarName0, tempVarName1});
+
+    if (op == "*")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::mul, Type::INT, {tempVar.getName(), tempVarName1, tempVarName2});
+    }
+    else if (op == "/")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::div, Type::INT, {tempVar.getName(), tempVarName1, tempVarName2});
+    }
+    else if (op == "%")
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::mod, Type::INT, {tempVar.getName(), tempVarName1, tempVarName2});
+    }
 
     return tempVar.getName();
 }
@@ -130,48 +145,86 @@ std::any IRVisitor::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
     return 0;
 }
 
-std::any IRVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx) {
+std::any IRVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx)
+{
     string op = ctx->OP->getText();
 
     // resolve both operands
     string expr1Address = any_cast<string>(this->visit(ctx->expr(0)));
     string expr2Address = any_cast<string>(this->visit(ctx->expr(1)));
 
-    Symbol & resultTempVar = cfg->create_new_tempvar(Type::INT);
+    Symbol &resultTempVar = cfg->create_new_tempvar(Type::INT);
 
-    if (op == string("<")) {
+    if (op == string("<"))
+    {
         cfg->current_bb->add_IRInstr(IRInstr::cmp_lt, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
     }
-    else if (op == string("<=")) {
+    else if (op == string("<="))
+    {
         cfg->current_bb->add_IRInstr(IRInstr::cmp_le, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
     }
-    else if (op == string(">")) {
+    else if (op == string(">"))
+    {
         // use '<' by putting the expression in the reverse order
-        cfg->current_bb->add_IRInstr(IRInstr::cmp_lt, Type::INT, {resultTempVar.getName(), expr2Address, expr1Address });
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_lt, Type::INT, {resultTempVar.getName(), expr2Address, expr1Address});
     }
-    else {
-        cfg->current_bb->add_IRInstr(IRInstr::cmp_le, Type::INT, {resultTempVar.getName(), expr2Address, expr1Address });
+    else
+    {
+        cfg->current_bb->add_IRInstr(IRInstr::cmp_le, Type::INT, {resultTempVar.getName(), expr2Address, expr1Address});
     }
 
     return resultTempVar.getName();
 }
 
-std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) {
+std::any IRVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx)
+{
     string op = ctx->OP->getText();
 
     // resolve both operands
     string expr1Address = any_cast<string>(this->visit(ctx->expr(0)));
     string expr2Address = any_cast<string>(this->visit(ctx->expr(1)));
 
-    Symbol & resultTempVar = cfg->create_new_tempvar(Type::INT);
+    Symbol &resultTempVar = cfg->create_new_tempvar(Type::INT);
 
-    if (op == string("==")) {
+    if (op == string("=="))
+    {
         cfg->current_bb->add_IRInstr(IRInstr::cmp_eq, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
     }
-    else {
+    else
+    {
         cfg->current_bb->add_IRInstr(IRInstr::cmp_diff, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
     }
 
+    return resultTempVar.getName();
+}
+
+std::any IRVisitor::visitExpr_and(ifccParser::Expr_andContext *context)
+{
+    string expr1Address = any_cast<string>(this->visit(context->expr(0)));
+    string expr2Address = any_cast<string>(this->visit(context->expr(1)));
+    Symbol &resultTempVar = cfg->create_new_tempvar(Type::INT);
+
+    cfg->current_bb->add_IRInstr(IRInstr::bit_and, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
+    return resultTempVar.getName();
+}
+
+std::any IRVisitor::visitExpr_xor(ifccParser::Expr_xorContext *context)
+{
+    string expr1Address = any_cast<string>(this->visit(context->expr(0)));
+    string expr2Address = any_cast<string>(this->visit(context->expr(1)));
+    Symbol &resultTempVar = cfg->create_new_tempvar(Type::INT);
+
+    cfg->current_bb->add_IRInstr(IRInstr::bit_xor, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
+    return resultTempVar.getName();
+}
+
+std::any IRVisitor::visitExpr_or(ifccParser::Expr_orContext *context)
+{
+    string expr1Address = any_cast<string>(this->visit(context->expr(0)));
+    string expr2Address = any_cast<string>(this->visit(context->expr(1)));
+    Symbol &resultTempVar = cfg->create_new_tempvar(Type::INT);
+
+    cfg->current_bb->add_IRInstr(IRInstr::bit_or, Type::INT, {resultTempVar.getName(), expr1Address, expr2Address});
     return resultTempVar.getName();
 }
 
@@ -223,10 +276,10 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     return 0;
 }
-
-std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
+std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
+{
     string varName = ctx->VAR()->getText();
-    string exprResultAddress = any_cast<string> (visit(ctx->expr()));
+    string exprResultAddress = any_cast<string>(visit(ctx->expr()));
 
     cfg->current_bb->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprResultAddress});
 
