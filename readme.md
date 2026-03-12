@@ -37,3 +37,27 @@ make testv
 
 ctrl + maj + i (Anatole)
 maj + alt + f (les autres)
+
+### CI : Pre-commit
+
+In order to make sure code always well-formatted and commit messages respect standards, we will use `pre-commit`.
+
+__Installation __: 
+```
+# 1. Install tool
+pip install pre-commit 
+
+# 2. Install hooks (code formatting)
+pre-commit install 
+
+# 3. Install hook for commit messages formatting 
+pre-commit run --all-files
+
+# 4. (optional) Launch manual formatting of all files 
+pre-commit --hook-type commit-msg e
+```
+
+```
+# bypassing pre-commit check when committing
+git commit -n  
+```
