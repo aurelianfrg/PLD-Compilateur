@@ -5,7 +5,7 @@
 std::any VariableVisitor::visitProg(ifccParser::ProgContext *ctx)
 {
 
-    this->visit( ctx->bloc() );
+    this->visit(ctx->bloc());
     checkUsage(); // Check for unused variables
     // printSymbolTable(); // Print symbol table for debugging. CAREFUL: it print the symbol table in the assembly code (cout)
     return 0;
@@ -13,7 +13,7 @@ std::any VariableVisitor::visitProg(ifccParser::ProgContext *ctx)
 
 std::any VariableVisitor::visitBloc(ifccParser::BlocContext *ctx)
 {
-    
+
     return visitChildren(ctx);
 }
 
@@ -69,31 +69,38 @@ std::any VariableVisitor::visitAff_stmt(ifccParser::Aff_stmtContext *ctx)
     return 0;
 }
 
-std::any VariableVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx){
+std::any VariableVisitor::visitExpr_comp(ifccParser::Expr_compContext *ctx)
+{
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx){
+std::any VariableVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx)
+{
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx){
+std::any VariableVisitor::visitExpr_minus(ifccParser::Expr_minusContext *ctx)
+{
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx){
+std::any VariableVisitor::visitExpr_mult(ifccParser::Expr_multContext *ctx)
+{
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx){
+std::any VariableVisitor::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx)
+{
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx){
+std::any VariableVisitor::visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx)
+{
     return visitChildren(ctx);
 }
 
-std::any VariableVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx){
+std::any VariableVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
+{
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) == varOffsets.end())
     {
@@ -106,7 +113,8 @@ std::any VariableVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx){
     return 0;
 }
 
-std::any VariableVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx){
+std::any VariableVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx)
+{
     std::string varName = ctx->VAR()->getText();
     if (varOffsets.find(varName) == varOffsets.end())
     {

@@ -54,7 +54,8 @@ int main(int argn, const char **argv)
 	VariableVisitor vv;
 	vv.visit(tree);
 
-	if (vv.getError()){
+	if (vv.getError())
+	{
 		exit(1);
 	}
 
