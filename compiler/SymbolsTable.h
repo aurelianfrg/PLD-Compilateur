@@ -10,14 +10,21 @@ using namespace std;
 class SymbolsTable {
     public:
 
-        SymbolsTable() {}
+        SymbolsTable() {
+            this->currentOffset = 0;
+            this->temporaryVarCount = 0;
+        }
         SymbolsTable(Block* block) {
             this->block = block;
+            this->currentOffset = 0;
+            this->temporaryVarCount = 0;
         }
         SymbolsTable(const SymbolsTable & st) {
             this->block = st.block;
             this->inheritedSymbols = st.inheritedSymbols;
             this->localSymbols = st.localSymbols;
+            this->currentOffset = st.currentOffset;
+            this->temporaryVarCount = st.temporaryVarCount;
         }
 
         bool contains(const string & name) {
@@ -99,6 +106,6 @@ class SymbolsTable {
         unordered_map<string,Symbol> inheritedSymbols;  // symbols originating from a parent block    
         unordered_map<string,Symbol> localSymbols;      // symbols originating from inside the block or a sibling block (ex : the blocks before and after a if/else statement are sibling = they share the same scope)
         
-        int currentOffset = 0;
-        int temporaryVarCount = 0;
+        int currentOffset;
+        int temporaryVarCount;
 };

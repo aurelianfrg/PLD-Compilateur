@@ -28,7 +28,7 @@ std::any IRVisitor::visitFunction_def(ifccParser::Function_defContext *ctx) {
     }
 
     // add the newly declared functions to the function table
-    cfg->functionsTable.add(Function(function_name, paramsType, typeFromString.at(return_type)));
+    cfg->functionsTable.add(Function(function_name, typeFromString.at(return_type), paramsType, paramsName));
 
     // create the first block for this function and start filling it with intructions from its content
     FunctionBlock* fb = cfg->createFunctionBlock(function_name, paramsType, paramsName);
@@ -67,6 +67,25 @@ std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
     cfg->current_block->add_IRInstr(IRInstr::ret, Type::INT, {tempVarName});
     return 0;
 }
+
+std::any IRVisitor::visitCall(ifccParser::CallContext *ctx) {
+    string functionName = ctx->VAR()->getText();
+    Function & callee = cfg->functionsTable.access(functionName);
+    Type returnType = callee.getType();
+
+    Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(returnType);
+
+    vector<string> callArgs = {functionName, tempVar.getName()};
+    // resolve value for all parameters expressions
+    for (auto expr : ctx->expr()) {
+        callArgs.push_back( any_cast<string>(this->visit(expr)) );
+    }
+
+    cfg->current_block->add_IRInstr(IRInstr::call, returnType, callArgs);
+    return tempVar.getName();
+
+}
+
 
 std::any IRVisitor::visitExpr_const(ifccParser::Expr_constContext *ctx)
 {
@@ -258,7 +277,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     SymbolsTable inheritedSymbols = start_bb->symbolsTable;
 
     BasicBlock* end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);    
-    BasicBlock* test_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock* test_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
     start_bb->exit_true = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr(0)));
@@ -272,7 +291,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     BasicBlock* prev_test_bb_i = test_bb;
     for (int i = 1; i < elseif_count+1; ++i) {
         // chain previous false exit to new test block
-        BasicBlock* test_bb_i = cfg->createChildBasicBlock(inheritedSymbols);
+        BasicBlock* test_bb_i = cfg->createSiblingBasicBlock(inheritedSymbols);
         prev_test_bb_i->exit_false = test_bb_i;
 
         condVarName = any_cast<string>(this->visit(ctx->expr(i)));
@@ -313,11 +332,11 @@ std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 
 std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
-    BasicBlock* start_bb = dynamic_cast<BasicBlock*>(cfg->current_block);
+    Block* start_bb = cfg->current_block;
     SymbolsTable inheritedSymbols = start_bb->symbolsTable;
     BasicBlock* end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
     
-    BasicBlock* test_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock* test_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
     start_bb->exit_true = test_bb;
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;

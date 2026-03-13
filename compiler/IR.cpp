@@ -90,6 +90,8 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 	return os;
 }
 
+
+
 // --- BLOCK METHODS ---
 
 BasicBlock::BasicBlock(CFG *cfg, string label, SymbolsTable currentSymbolsTable, bool isAChild)
@@ -115,7 +117,10 @@ BasicBlock::BasicBlock(CFG *cfg, string label, SymbolsTable currentSymbolsTable,
 
 FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, vector<string> paramsName)
 {
+	this->exit_false = nullptr;
+	this->exit_true = nullptr;
 	this->label = label;
+	this->test_var_name = "";
 	this->cfg = cfg;
 
 	// initialize with a new SymbolsTable containing the parameters
@@ -148,6 +153,7 @@ void Block::gen_block_linking_asm(ostream &os) {
 		os << "    movq    %rbp, %rsp" << endl;
 		os << "    popq    %rbp" << endl;
 		os << "    ret" << endl;
+		os << endl; // make function ending more visible 
 	}
 	else
 	{
@@ -180,6 +186,15 @@ void FunctionBlock::gen_asm(ostream &os) {
 	os << "    pushq   %rbp" << endl;
 	os << "    movq    %rsp, %rbp" << endl;
 	os << "    subq    " << local_stack_size_string << ", %rsp" << endl;
+
+	// copy eventual passed parameters to local variables
+	vector<string> paramsRegisters = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+	vector<string> paramsName = this->cfg->functionsTable.access(this->label).getParamsName();
+	for (int i = 0; i < paramsName.size(); ++i ) {
+		Symbol & param = this->symbolsTable.access(paramsName.at(i));
+		string reg = paramsRegisters.at(i);
+		os << "    movl    " << reg << ", " << param.getAdressx86() << endl;
+	}
 
 	// generate asm for internal instructions
 	for (IRInstr *instr : this->instrs)
@@ -290,6 +305,9 @@ void IRInstr::gen_asm(ostream &os)
 		break;
 	case IRInstr::bit_or:
 		this->gen_asm_or(os);
+		break;
+	case IRInstr::call:
+		this->gen_asm_call(os);
 		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
@@ -585,6 +603,32 @@ void IRInstr::gen_asm_or(ostream &os)
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
+void IRInstr::gen_asm_call(ostream &os) {
+	string functionName = params.at(0);
+	string destVarName = params.at(1);
+	Function & function = this->block->cfg->functionsTable.access(functionName);
+	Symbol & destVar = this->block->symbolsTable.access(destVarName);
+	
+	// max 6 arguments for now
+	vector<string> paramsRegisters = {"%edi", "%esi", "%edx", "%ecx", "%r8d", "%r9d"};
+	// move parameters to appropriate registers
+	for (int i = 2; i < params.size(); ++i) {
+		Symbol & param = this->block->symbolsTable.access(params.at(i));
+		string paramAddr = param.getAdressx86();
+		string reg = paramsRegisters.at(i-2);
+		os << "    movl    " << paramAddr << ", " << reg << endl;
+	}
+
+	// execute call
+	os << "    call    " << functionName << endl;
+
+	// handle return value 
+	if (function.getType() != VOID) {
+		os << "    movl    %eax, " << destVar.getAdressx86() << endl;
+	}
+}
+
+
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	os << "    ";
@@ -602,6 +646,9 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 	case IRInstr::add:
 		os << "add     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " + " << irInstr.params.at(2);
 		break;
+	case IRInstr::not_:
+		os << "add     " << irInstr.params.at(1) << " --> !" << irInstr.params.at(0);
+		break;
 	case IRInstr::neg:
 		os << "neg     -" << irInstr.params.at(0);
 		break;
@@ -609,13 +656,37 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 		os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " - " << irInstr.params.at(2);
 		break;
 	case IRInstr::mul:
-		os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " * " << irInstr.params.at(2);
+		os << "mul     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " * " << irInstr.params.at(2);
 		break;
 	case IRInstr::cmp_eq:
 		os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " == " << irInstr.params.at(2);
 		break;
 	case IRInstr::cmp_diff:
-		os << "cmp_eq  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " != " << irInstr.params.at(2);
+		os << "cmp_diff " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " != " << irInstr.params.at(2);
+		break;
+	case IRInstr::div:
+		os << "div     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " / " << irInstr.params.at(2);
+		break;
+	case IRInstr::mod:
+		os << "mod     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " % " << irInstr.params.at(2);
+		break;
+	case IRInstr::cmp_lt:
+		os << "cmp_lt  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " < " << irInstr.params.at(2);
+		break;
+	case IRInstr::cmp_le:
+		os << "cmp_le  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " <= " << irInstr.params.at(2);
+		break;
+	case IRInstr::bit_and:
+		os << "bit_and " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " & " << irInstr.params.at(2);
+		break;
+	case IRInstr::bit_xor:
+		os << "bit_xor " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " ^ " << irInstr.params.at(2);
+		break;
+	case IRInstr::bit_or:
+		os << "bit_or  " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " | " << irInstr.params.at(2);
+		break;
+	case IRInstr::call:
+		os << "call    " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
 		break;
 	default:
 		os << "(unknown instruction) ";

@@ -18,7 +18,7 @@ instruction:
 
 expr:
 	'(' expr ')'								# expr_parenthesis
-	| call_stmt									# expr_call
+	| call										# expr_call
 	| OP=('-' | '!') expr						# expr_minus_not
 	| expr OP = ('*' | '/' | '%') expr			# expr_mult_div_mod
 	| expr OP = ('+' | '-') expr				# expr_add_sub
@@ -44,7 +44,7 @@ if_stmt :
 while_stmt :
 	'while' '(' expr ')' bloc ;
 
-call_stmt : VAR '(' ((expr ',')* expr)? ')' ';' ; 
+call : VAR '(' ((expr ',')* expr)? ')' ; 
 
 type_function: 'void' | TYPE ;
 TYPE: 'int';

@@ -46,7 +46,7 @@ public:
 		mod,	  // VAR<-VAR%VAR  	[dest, v1, v2]
 		rmem,	  // VAR<-*ADDR	 	[var, addr]
 		wmem,	  // *ADDR<-VAR	 	[var, addr]
-		call,	  // TODO
+		call,	  // FUNC [->VAR] VAR*	[func, dest, param1, param2...]
 		cmp_eq,	  // VAR<-VAR==VAR 	[dest, v1, v2]
 		cmp_diff, // VAR<-VAR!=VAR 	[dest, v1, v2]
 		cmp_lt,	  // VAR<-VAR<VAR  	[dest, v1, v2]
@@ -80,6 +80,7 @@ public:
 	void gen_asm_and(ostream &os);
 	void gen_asm_xor(ostream &os);
 	void gen_asm_or(ostream &os);
+	void gen_asm_call(ostream &os);
 
 	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
@@ -132,8 +133,8 @@ public:
 	CFG *cfg;				  /** < the CFG where this block belongs */
 	vector<IRInstr *> instrs; /** < the instructions themselves. */
 	SymbolsTable symbolsTable;
-	BasicBlock *exit_true;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
-	BasicBlock *exit_false;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
+	BasicBlock *exit_true = nullptr;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
+	BasicBlock *exit_false = nullptr;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
 	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
 													store here the name of the variable that holds the value of expr */
 };
