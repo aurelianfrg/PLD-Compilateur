@@ -9,25 +9,33 @@ using namespace std;
 
 class Function {
     public:
-        Function(string name, vector<Type> params, Type type_retour) {
+        Function(string name, vector<Type> params, Type return_type) {
             this->name = name;
             this->params = params;
-            this->type_retour = type_retour;
+            this->return_type = return_type;
         }
 
         string getName() {return this->name;}
-        Type getType() {return this->type_retour;}
+        Type getType() {return this->return_type;}
         vector<Type> getParams() {return this->params;}
 
         friend ostream & operator << (ostream & os, const Function & f) {
-            os << string("Function (name=") << f.name << string(")");
+            os << typeToString.at(f.return_type) << " " << f.name << "(";
+            for (int i = 0; i+1 < f.params.size(); ++i) {   
+                // CAUTION : condition must be written this way because f.params.size() is unsigned, thus f.params.size()-1 caused an overflow
+                os << typeToString.at(f.params.at(i)) << ", ";
+            }
+            if (f.params.size() > 0) {
+                os << typeToString.at(f.params.back());
+            }
+            os << ")";
             return os;
         }
 
     protected:
 
         string name;
-        Type type_retour;
+        Type return_type;
         vector<Type> params;
 };
 

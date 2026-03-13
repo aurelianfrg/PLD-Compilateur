@@ -24,6 +24,7 @@ class IRInstr;
 #include "Type.h"
 #include "Symbol.h"
 #include "SymbolsTable.h"
+#include "FunctionsTable.h"
 
 
 //! The class for one 3-address instruction
@@ -186,6 +187,7 @@ public:
 	// block management
 	string new_BB_name();
 	Block *current_block;
+	FunctionsTable functionsTable;
 
 	friend ostream &operator<<(ostream &os, const CFG &cfg);
 

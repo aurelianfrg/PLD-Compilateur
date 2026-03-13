@@ -16,13 +16,21 @@ antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx)
 }
 
 std::any IRVisitor::visitFunction_def(ifccParser::Function_defContext *ctx) {
-    string function_name = ctx->VAR(0)->getText();
+    string function_name = ctx->VAR(0)->getText();  // first VAR is the function name
     string return_type = ctx->type_function()->getText();
 
-    // TODO : handle parameters and add them to the FunctionBlock SymbolsTable
+    // handle parameters and add them to the FunctionBlock SymbolsTable
     vector<Type> paramsType;
     vector<string> paramsName;
+    for (int i = 1; i < ctx->VAR().size(); ++i) {
+        paramsType.push_back(typeFromString.at(ctx->TYPE(i-1)->getText()));
+        paramsName.push_back(ctx->VAR(i)->getText());
+    }
 
+    // add the newly declared functions to the function table
+    cfg->functionsTable.add(Function(function_name, paramsType, typeFromString.at(return_type)));
+
+    // create the first block for this function and start filling it with intructions from its content
     FunctionBlock* fb = cfg->createFunctionBlock(function_name, paramsType, paramsName);
     this->visit(ctx->bloc());
 

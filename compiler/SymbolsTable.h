@@ -2,6 +2,7 @@
 
 #include "Symbol.h"
 #include "IR.h"
+#include "Type.h"
 #include <unordered_map>
 
 using namespace std;
@@ -100,7 +101,4 @@ class SymbolsTable {
         
         int currentOffset = 0;
         int temporaryVarCount = 0;
-        unordered_map<Type, int> typeSizes = {
-            {Type::INT, 4}
-        };
 };

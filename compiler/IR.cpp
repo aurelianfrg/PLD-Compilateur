@@ -85,6 +85,8 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 	{
 		os << *block << endl;
 	}
+	os << "FunctionsTable : " << endl;
+	os << cfg.functionsTable << endl;
 	return os;
 }
 
