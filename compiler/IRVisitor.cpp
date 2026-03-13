@@ -307,6 +307,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     if (else_bloc) {
         BasicBlock* else_bb = cfg->createChildBasicBlock(inheritedSymbols);
+        prev_test_bb_i->exit_false = else_bb;
         this->visit(ctx->bloc().back());
         else_bb->exit_true = end_bb;
     }
