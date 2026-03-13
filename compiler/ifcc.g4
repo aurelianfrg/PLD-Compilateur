@@ -14,6 +14,7 @@ instruction:
     | if_stmt 		# instruction_if_stmt
 	| while_stmt 	# instruction_while_stmt
 	| expr ';'		# instruction_expr 
+	| bloc			# instruction_bloc
 ;
 
 expr:

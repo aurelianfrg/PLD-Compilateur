@@ -59,6 +59,26 @@ antlrcpp::Any IRVisitor::visitBloc(ifccParser::BlocContext *ctx)
     return visitChildren(ctx);
 }
 
+std::any IRVisitor::visitInstruction_bloc(ifccParser::Instruction_blocContext *ctx) {
+
+    // create a new child block 
+    Block* start_bb = cfg->current_block;
+    SymbolsTable inheritedSymbols = start_bb->symbolsTable;
+    BasicBlock* end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    BasicBlock* new_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    start_bb->exit_true = new_bb;
+    new_bb->exit_true = end_bb;
+    
+    // fill block with its instructions
+    this->visit(ctx->bloc());    
+
+    // go back to end block with the rest
+    cfg->current_block = end_bb;
+
+    return 0;
+}
+
+
 std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
 {
     // cout << "visit return" << endl;

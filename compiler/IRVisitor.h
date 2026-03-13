@@ -22,6 +22,7 @@ class IRVisitor : public ifccBaseVisitor {
 		virtual std::any visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx) override;
 		virtual std::any visitInstruction_if_stmt(ifccParser::Instruction_if_stmtContext *context) override;
 		virtual std::any visitInstruction_while_stmt(ifccParser::Instruction_while_stmtContext *ctx) override;
+		virtual std::any visitInstruction_bloc(ifccParser::Instruction_blocContext *ctx) override;
 		virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
 		virtual std::any visitCall(ifccParser::CallContext *ctx) override;
 		virtual std::any visitExpr_const(ifccParser::Expr_constContext *ctx) override;
