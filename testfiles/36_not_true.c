@@ -1,4 +1,4 @@
 int main() {
-  int boolean = 1;
-  return !boolean;
+    int boolean = 1;
+    return !boolean;
 }

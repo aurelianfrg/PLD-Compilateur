@@ -1,8 +1,8 @@
 int main() {
-  int a = 0;
-  if (a == 0) {
-    return 0;
-  } else if (0) {
-    return 1;
-  }
+    int a = 0;
+    if (a == 0) {
+        return 0;
+    } else if (0) {
+        return 1;
+    }
 }

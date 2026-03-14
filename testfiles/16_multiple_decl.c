@@ -1,5 +1,5 @@
 int main() {
-  int y, a = 8, b;
-  y = a;
-  return y;
+    int y, a = 8, b;
+    y = a;
+    return y;
 }

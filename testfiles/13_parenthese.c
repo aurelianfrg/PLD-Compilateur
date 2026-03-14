@@ -1,1 +1,3 @@
-int main() { return 5 + 2 * 3 - (4 + 1) * 2; }
+int main() {
+    return 5 + 2 * 3 - (4 + 1) * 2;
+}
