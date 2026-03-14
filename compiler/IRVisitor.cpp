@@ -124,6 +124,14 @@ std::any IRVisitor::visitExpr_var(ifccParser::Expr_varContext *ctx)
     return value;
 }
 
+std::any IRVisitor::visitExpr_char(ifccParser::Expr_charContext *ctx) {
+  string value = ctx->CHAR()->getText();
+  Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+  cfg->current_block->add_IRInstr(IRInstr::ldchar, Type::INT, {value, tempVar.getName()});
+
+  return tempVar.getName();
+}
+
 std::any IRVisitor::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx)
 {
     return visit(ctx->expr());
@@ -372,4 +380,3 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     return 0;
 }
-
