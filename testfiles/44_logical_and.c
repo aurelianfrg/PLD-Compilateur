@@ -3,7 +3,7 @@ int main() {
     int b = 0;
     if (a && b) {
         return 42;
-    }; else {
+    } else {
         return 0;
     };
 }
