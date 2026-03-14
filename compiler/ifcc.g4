@@ -24,12 +24,11 @@ expr:
 	| expr OP = ('+' | '-') expr				# expr_add_sub
 	| expr OP = ('<=' | '<' | '>=' | '>') expr	# expr_comp
 	| expr OP = ('==' | '!=') expr				# expr_eq_diff
-	| expr '&&' expr							# expr_log_and
-	| expr '||' expr							# expr_log_or
 	| expr '&' expr								# expr_and
 	| expr '^' expr								# expr_xor
 	| expr '|' expr								# expr_or
-	| VAR '=' expr								# expr_aff // affectations should return a value
+	| expr '&&' expr							# expr_log_and
+	| expr '||' expr							# expr_log_or| VAR '=' expr								# expr_aff // affectations should return a value
 	| CONST										# expr_const
 	| VAR										# expr_var
 	| CHAR										# expr_char;
