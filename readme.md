@@ -51,13 +51,13 @@ pip install pre-commit
 pre-commit install 
 
 # 3. Install hook for commit messages formatting 
-pre-commit run --all-files
+pre-commit --hook-type commit-msg
 
 # 4. (optional) Launch manual formatting of all files 
-pre-commit --hook-type commit-msg e
+pre-commit run --all-files
 ```
 
 ```
 # bypassing pre-commit check when committing
-git commit -n  
+git commit -m <commit_msg> --no-verify
 ```
