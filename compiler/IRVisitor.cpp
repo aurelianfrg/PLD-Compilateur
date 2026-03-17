@@ -49,6 +49,10 @@ std::any IRVisitor::visitInstruction_while_stmt(ifccParser::Instruction_while_st
     return visitChildren(ctx);
 }
 
+std::any IRVisitor::visitInstruction_switch_stmt(ifccParser::Instruction_switch_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
+
 antlrcpp::Any IRVisitor::visitBloc(ifccParser::BlocContext *ctx) { return visitChildren(ctx); }
 
 std::any IRVisitor::visitInstruction_bloc(ifccParser::Instruction_blocContext *ctx) {
@@ -344,6 +348,42 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     test_bb->exit_false = end_bb;
     while_bb->exit_true = test_bb;
 
+    cfg->current_block = end_bb;
+
+    return 0;
+}
+
+std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
+    int case_count = ctx->case_item().size();
+    bool case_default = ctx->case_default() != nullptr;
+
+    Block *start_block = cfg->current_block;
+    SymbolsTable inheritedSymbols = start_block->symbolsTable;
+    Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    BasicBlock *case_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    start_block->exit_true = case_bb;
+
+    string condVarName = any_cast<string>(this->visit(ctx->expr()));
+    case_bb->test_var_name = condVarName;
+
+    BasicBlock *prev_case_bb_i = case_bb;
+    for (int i = 1; i < case_count; i++) {
+        // chain previous false exit to new case block
+        BasicBlock *case_bb_i = cfg->createSiblingBasicBlock(inheritedSymbols);
+        prev_case_bb_i->exit_false = case_bb_i;
+        this->visit(ctx->case_item(i));
+        // fall through
+        prev_case_bb_i->exit_true = case_bb_i;
+    }
+
+    if (case_default) {
+        BasicBlock *case_default_bb = cfg->createChildBasicBlock(inheritedSymbols);
+        prev_case_bb_i->exit_true = case_default_bb;
+        this->visit(ctx->case_default());
+        case_default_bb->exit_true = end_bb;
+    }
     cfg->current_block = end_bb;
 
     return 0;
