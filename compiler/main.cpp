@@ -8,7 +8,7 @@
 #include "generated/ifccParser.h"
 #include "generated/ifccBaseVisitor.h"
 
-#include "VariableVisitor.h"
+#include "VariableVisitorV2.h"
 #include "IRVisitor.h"
 
 using namespace antlr4;
@@ -51,7 +51,7 @@ int main(int argn, const char **argv)
 
 	// clog << "Analyse des variables : " << endl;
 
-	VariableVisitor vv;
+	VariableVisitorV2 vv;
 	vv.visit(tree);
 
 	if (vv.getError())
