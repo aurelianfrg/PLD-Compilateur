@@ -2,9 +2,9 @@ grammar ifcc;
 
 axiom: prog EOF;
 
-prog: 'int' 'main' '(' ')' bloc;
+prog: function_def+ ;
 
-function_def: TYPE_FUNCTION FUNCTION_NAME '(' ((TYPE VAR ',')* TYPE VAR)? ')' ; 
+function_def: type_function VAR '(' ((TYPE VAR ',')* TYPE VAR)? ')' bloc ; 
 
 bloc: '{' instruction* '}';
 
@@ -14,11 +14,12 @@ instruction:
     | if_stmt 		# instruction_if_stmt
 	| while_stmt 	# instruction_while_stmt
 	| expr ';'		# instruction_expr 
+	| bloc			# instruction_bloc
 ;
 
 expr:
 	'(' expr ')'								# expr_parenthesis
-	| call_stmt									# expr_call
+	| call										# expr_call
 	| OP=('-' | '!') expr						# expr_minus_not
 	| expr OP = ('*' | '/' | '%') expr			# expr_mult_div_mod
 	| expr OP = ('+' | '-') expr				# expr_add_sub
@@ -27,9 +28,13 @@ expr:
 	| expr '&' expr								# expr_and
 	| expr '^' expr								# expr_xor
 	| expr '|' expr								# expr_or
-	| VAR '=' expr								# expr_aff
-	| CONST										# expr_const
-	| VAR										# expr_var;
+	| expr '&&' expr							# expr_log_and
+	| expr '||' expr							# expr_log_or
+	| VAR '=' expr								# expr_aff // affectations should return a value
+	| CONST							            # expr_const
+	| VAR							            # expr_var
+	| CHAR      								# expr_char
+;
 
 return_stmt: RETURN expr ';';
 
@@ -44,15 +49,14 @@ if_stmt :
 while_stmt :
 	'while' '(' expr ')' bloc ;
 
-call_stmt : FUNCTION_NAME '(' ((expr ',')* expr)? ')' ';' ; 
+call : VAR '(' ((expr ',')* expr)? ')' ; 
 
-
+type_function: 'void' | TYPE ;
 TYPE: 'int';
-TYPE_FUNCTION: 'void' | TYPE ;
 RETURN: 'return';
 CONST: [0-9]+;
 VAR: [a-zA-Z_][a-zA-Z0-9_]*;
-FUNCTION_NAME: [a-zA-Z_][a-zA-Z0-9_]*;
+CHAR : '\''[a-zA-Z_]+'\'' ;
 
 COMMENT: '/*' .*? '*/' -> skip;
 DIRECTIVE: '#' .*? '\n' -> skip;

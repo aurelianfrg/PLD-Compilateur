@@ -1,4 +1,4 @@
-## Project setup 
+## Project setup
 
 ### antlr4 install on ubuntu or wsl
 ```
@@ -24,18 +24,40 @@ ANTLRLIB=/home/$USER/antlr4-install/lib/libantlr4-runtime.a
 EOF
 ```
 
-### Execute tests 
+### Execute tests
 ```
 make test
 ```
 To verbose :
 ```
 make testv
-``` 
+```
 
-### Formatter le code 
+### Formatter le code
 
 ctrl + maj + i (Anatole)
 maj + alt + f (les autres)
 
+### CI : Pre-commit
 
+In order to make sure code always well-formatted and commit messages respect standards, we will use `pre-commit`.
+
+__Installation __: 
+```
+# 1. Install tool
+pip install pre-commit 
+
+# 2. Install hooks (code formatting)
+pre-commit install 
+
+# 3. Install hook for commit messages formatting 
+pre-commit --hook-type commit-msg
+
+# 4. (optional) Launch manual formatting of all files 
+pre-commit run --all-files
+```
+
+```
+# bypassing pre-commit check when committing
+git commit -m <commit_msg> --no-verify
+```
