@@ -52,7 +52,7 @@ while_stmt: 'while' '(' expr ')' bloc;
 
 switch_stmt: 'switch' '(' expr ')' '{' (case_item)* (case_default)?'}';
 
-case_item: 'case' (CONST|CHAR) ( RANGE (CONST|CHAR))? ':' (instruction)*;
+case_item: 'case' VALUE=(CONST|CHAR) ( RANGE (CONST|CHAR))? ':' (instruction)*;
 case_default: 'default' ':' (instruction)*;
 
 call: VAR '(' ((expr ',')* expr)? ')';
