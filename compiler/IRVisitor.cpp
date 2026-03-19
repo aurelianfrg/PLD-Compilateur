@@ -377,18 +377,35 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     start_block->exit_true = test_bbs.at(0);
     // wire test chain
     for (int i = 0; i < case_count; i++) {
-        string caseValue = ctx->case_item(i)->VALUE->getText();
+        bool has_range = false;
+        string caseValueLow, caseValueHigh;
+        if (ctx->case_item(i)->RANGE() != nullptr) {
+            has_range = true;
+            caseValueHigh = ctx->case_item(i)->HIGH_VALUE->getText();
+        }
+        caseValueLow = ctx->case_item(i)->LOW_VALUE->getText();
         cfg->current_block = test_bbs.at(i);
         test_bbs.at(i)->test_var_name = condVarName;
 
         // load the case constant into a temporary variable first
-        Symbol &caseConstVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+        Symbol &caseConstVarLow = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
         cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
-                                        {caseValue, caseConstVar.getName()});
+                                        {caseValueLow, caseConstVarLow.getName()});
 
         // compare the condition variable with the case constant variable
-        cfg->current_block->add_IRInstr(IRInstr::cmp_eq, Type::INT,
-                                        {tempVar.getName(), condVarName, caseConstVar.getName()});
+        cfg->current_block->add_IRInstr(
+            IRInstr::cmp_eq, Type::INT,
+            {tempVar.getName(), condVarName, caseConstVarLow.getName()});
+
+        if (has_range) {
+            Symbol &caseConstVarHigh =
+                cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
+                                            {caseValueHigh, caseConstVarHigh.getName()});
+            cfg->current_block->add_IRInstr(
+                IRInstr::cmp_le, Type::INT,
+                {tempVar.getName(), condVarName, caseConstVarHigh.getName()});
+        }
         test_bbs.at(i)->exit_true = code_bbs.at(i);
         test_bbs.at(i)->exit_false = (i < case_count - 1) ? test_bbs.at(i + 1) : default_bb;
     }
