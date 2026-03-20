@@ -317,12 +317,31 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     return 0;
 }
 
-std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
+std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
+{
     string varName = ctx->VAR()->getText();
-    string exprResultAddress = any_cast<string>(visit(ctx->expr()));
-
-    cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprResultAddress});
-
+    string op = ctx->OP->getText();
+    string exprAddress = any_cast<string>(visit(ctx->expr()));
+    if (op == "=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprAddress});
+    }
+    else if (op == "+=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::add, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "-=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::sub, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "*=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::mul, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "/=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::div, Type::INT, {varName, varName, exprAddress});
+    }
     // return the newly affected variable so that affectations can be chained
     return varName;
 }
