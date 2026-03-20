@@ -191,7 +191,30 @@ public:
 	Block *current_block;
 	FunctionsTable functionsTable;
 
-  friend ostream &operator<<(ostream &os, const CFG &cfg);
+  	friend ostream &operator<<(ostream &os, const CFG &cfg);
+
+	void pushContinueBlock(Block* block) {
+		continueBlocks.push(block);
+	}
+	void pushBreakBlock(Block* block) {
+		breakBlocks.push(block);
+	}
+	Block* popContinueBlock() {
+		Block* topBlock = continueBlocks.top();
+		continueBlocks.pop();
+		return topBlock;
+	}
+	Block* popBreakBlock() {
+		Block* topBlock = breakBlocks.top();
+		breakBlocks.pop();
+		return topBlock;
+	}
+	size_t getContinueBlocksSize() {
+		return continueBlocks.size();
+	}
+	size_t getBreakBlocksSize() {
+		return breakBlocks.size();
+	}
 
 protected:
 	

@@ -336,6 +336,7 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "while");
     start_bb->exit_true = test_bb;
+
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
 
