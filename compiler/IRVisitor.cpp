@@ -141,10 +141,24 @@ std::any IRVisitor::visitExpr_minus_not(ifccParser::Expr_minus_notContext *ctx) 
         cfg->current_block->add_IRInstr(IRInstr::bit_not, Type::INT, {tempVar.getName(), tempVarName});
     }
     if (op == string("++")) {
-        cfg->current_block->add_IRInstr(IRInstr::incr, Type::INT, {tempVarName});
+        cfg->current_block->add_IRInstr(IRInstr::incr_prefix, Type::INT, {tempVarName});
     }
     if (op == string("--")) {
-        cfg->current_block->add_IRInstr(IRInstr::decr, Type::INT, {tempVarName});
+        cfg->current_block->add_IRInstr(IRInstr::decr_prefix, Type::INT, {tempVarName});
+    }
+    return tempVar.getName();
+}
+
+std::any IRVisitor::visitExpr_postfix(ifccParser::Expr_postfixContext *ctx) {
+    string op = ctx->OP->getText();
+    string VarName = any_cast<string>(this->visit(ctx->expr()));
+    Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+
+    if (op == string("++")) {
+        cfg->current_block->add_IRInstr(IRInstr::incr_postfix, Type::INT, {tempVar.getName(), VarName});
+    }
+    if (op == string("--")) {
+        cfg->current_block->add_IRInstr(IRInstr::decr_postfix, Type::INT, {tempVar.getName(), VarName});
     }
     return tempVar.getName();
 }

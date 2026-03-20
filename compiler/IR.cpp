@@ -312,11 +312,17 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::shr:
 		this->gen_asm_shr(os);
 		break;
-	case IRInstr::incr:
-		this->gen_asm_incr(os);
+	case IRInstr::incr_prefix:
+		this->gen_asm_incr_prefix(os);
 		break;
-	case IRInstr::decr:
-		this->gen_asm_decr(os);
+	case IRInstr::decr_prefix:
+		this->gen_asm_decr_prefix(os);
+		break;
+	case IRInstr::incr_postfix:
+		this->gen_asm_incr_postfix(os);
+		break;
+	case IRInstr::decr_postfix:
+		this->gen_asm_decr_postfix(os);
 		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
@@ -697,7 +703,7 @@ void IRInstr::gen_asm_shr(ostream &os) {
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_incr(ostream &os) {
+void IRInstr::gen_asm_incr_prefix(ostream &os) {
 	string varName = params.at(0);
 	Symbol &var = block->symbolsTable.access(varName);
 	string varAddress = to_string(var.getOffset()) + "(%rbp)";
@@ -706,13 +712,43 @@ void IRInstr::gen_asm_incr(ostream &os) {
 	os << "    movl    " << "%eax" << ", " << varAddress << endl;
 }
 
-void IRInstr::gen_asm_decr(ostream &os) {
+void IRInstr::gen_asm_decr_prefix(ostream &os) {
 	string varName = params.at(0);
 	Symbol &var = block->symbolsTable.access(varName);
 	string varAddress = to_string(var.getOffset()) + "(%rbp)";
 	os << "    movl    " << varAddress << ", " << "%eax" << endl;
 	os << "    decl    " << "%eax" << endl;
 	os << "    movl    " << "%eax" << ", " << varAddress << endl;
+}
+
+void IRInstr::gen_asm_incr_postfix(ostream &os) {
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+    os << "    incl    " << "%eax" << endl;
+    os << "    movl    " << "%eax" << ", " << srcAddress << endl;
+}
+
+void IRInstr::gen_asm_decr_postfix(ostream &os) {
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+    os << "    decl    " << "%eax" << endl;
+    os << "    movl    " << "%eax" << ", " << srcAddress << endl;
 }
 
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
@@ -786,10 +822,16 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 	case IRInstr::shr:
 		os << "shr     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " >> " << irInstr.params.at(2);
 		break;
-	case IRInstr::incr:
+	case IRInstr::incr_prefix:
+		os << "incr    " << "++" << irInstr.params.at(0);
+		break;
+	case IRInstr::decr_prefix:
+		os << "decr    " << "--" << irInstr.params.at(0);
+		break;
+	case IRInstr::incr_postfix:
 		os << "incr    " << irInstr.params.at(0) << "++";
 		break;
-	case IRInstr::decr:
+	case IRInstr::decr_postfix:
 		os << "decr    " << irInstr.params.at(0) << "--";
 		break;
 	default:

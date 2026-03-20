@@ -50,6 +50,7 @@ class IRVisitor : public ifccBaseVisitor {
     virtual std::any visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) override;
     virtual std::any visitExpr_log_and(ifccParser::Expr_log_andContext *ctx) override;
     virtual std::any visitExpr_log_or(ifccParser::Expr_log_orContext *ctx) override;
+        virtual std::any visitExpr_postfix(ifccParser::Expr_postfixContext *ctx) override;
 
     CFG *cfg;
 };
