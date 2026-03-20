@@ -8,31 +8,6 @@ CFG::CFG(tree::ParseTree *ast)
 	nextBBnumber = 0;
 }
 
-// void CFG::gen_asm_prologue(ostream &os)
-// {
-// #ifdef __APPLE__
-// 	os << ".globl _main\n";
-// 	os << " _main: \n";
-// #else
-// 	os << ".globl main\n";
-// 	os << " main: \n";
-// #endif
-
-// 	// prologue
-// 	os << "prologue:\n";
-// 	os << "    pushq   %rbp\n";
-// 	os << "    movq    %rsp, %rbp\n";
-// 	os << "\n";
-// }
-
-// void CFG::gen_asm_epilogue(ostream &os)
-// {
-// 	os << "\n";
-// 	os << "epilogue:\n";
-// 	os << "    popq    %rbp\n";
-// 	os << "    ret\n";
-// }
-
 void CFG::gen_asm(ostream &os)
 {
 	//this->gen_asm_prologue(os);
@@ -130,7 +105,7 @@ FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, ve
 	}
 }
 
-void Block::gen_block_linking_asm(ostream &os) {
+void Block::gen_block_linking_asm(ostream &os, IRInstr* lastInstr) {
 	// BLOCK JUMP LOGIC
 	if (this->exit_true != nullptr and this->exit_false == nullptr)
 	{
@@ -149,11 +124,17 @@ void Block::gen_block_linking_asm(ostream &os) {
 	}
 	else if (this->exit_true == nullptr and this->exit_false == nullptr)
 	{
-		// generate block epilogue
-		os << "    movq    %rbp, %rsp" << endl;
-		os << "    popq    %rbp" << endl;
-		os << "    ret" << endl;
-		os << endl; // make function ending more visible 
+		// check if previous instruction in block was a return statement : in that case, no need to write block exit assembly
+		if (lastInstr != nullptr && lastInstr->getOp() == IRInstr::ret) {
+			return;
+		}
+		else {
+			// generate block epilogue
+			os << "    movq    %rbp, %rsp" << endl;
+			os << "    popq    %rbp" << endl;
+			os << "    ret" << endl;
+			os << endl; // make function ending more visible 
+		}
 	}
 	else
 	{
@@ -164,13 +145,16 @@ void Block::gen_block_linking_asm(ostream &os) {
 
 void BasicBlock::gen_asm(ostream &os)
 {
+	IRInstr* lastInstr = nullptr; // trick to avoid writing return instructions twice in a block ending after a return
+
 	os << this->label << ":" << endl;
 	for (IRInstr *instr : this->instrs)
 	{
 		instr->gen_asm(os);
+		lastInstr = instr;
 	}
 
-	gen_block_linking_asm(os);
+	gen_block_linking_asm(os, lastInstr);
 }
 
 void FunctionBlock::gen_asm(ostream &os) {
@@ -197,12 +181,14 @@ void FunctionBlock::gen_asm(ostream &os) {
 	}
 
 	// generate asm for internal instructions
+	IRInstr* lastInstr;
 	for (IRInstr *instr : this->instrs)
 	{
 		instr->gen_asm(os);
+		lastInstr = instr;
 	}
 
-	gen_block_linking_asm(os);
+	gen_block_linking_asm(os, lastInstr);
 }
 
 void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params)
@@ -249,6 +235,11 @@ IRInstr::IRInstr(Block *b, Operation op, Type t, vector<string> params)
 	this->t = t;
 	this->params = params;
 }
+
+IRInstr::Operation IRInstr::getOp() {
+	return this->op;
+}
+
 
 void IRInstr::gen_asm(ostream &os)
 {

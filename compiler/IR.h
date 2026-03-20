@@ -84,6 +84,8 @@ public:
 
   friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
+	Operation getOp();
+
 private:
 	Block *block; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
 	Operation op;
@@ -119,7 +121,7 @@ class Block
 {
 public:
 	virtual void gen_asm(ostream &os) = 0; 
-	void gen_block_linking_asm(ostream &os);
+	void gen_block_linking_asm(ostream &os, IRInstr* lastInstr);
 
   void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
