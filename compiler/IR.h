@@ -199,6 +199,12 @@ public:
 	void pushBreakBlock(Block* block) {
 		breakBlocks.push(block);
 	}
+	Block* topContinueBlock() {
+		return continueBlocks.top();
+	}
+	Block* topBreakBlock() {
+		return breakBlocks.top();
+	}
 	Block* popContinueBlock() {
 		Block* topBlock = continueBlocks.top();
 		continueBlocks.pop();
