@@ -273,6 +273,9 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::not_:
 		this->gen_asm_not(os);
 		break;
+	case IRInstr::bit_not:
+		this->gen_asm_bit_not(os);
+		break;
 	case IRInstr::sub:
 		this->gen_asm_sub(os);
 		break;
@@ -317,6 +320,12 @@ void IRInstr::gen_asm(ostream &os)
 		break;
 	case IRInstr::shr:
 		this->gen_asm_shr(os);
+		break;
+	case IRInstr::incr:
+		this->gen_asm_incr(os);
+		break;
+	case IRInstr::decr:
+		this->gen_asm_decr(os);
 		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
@@ -481,6 +490,20 @@ void IRInstr::gen_asm_not(ostream &os)
 	os << "    cmpl    " << "$0" << ", " << srcAddress << endl;
 	os << "    sete    %al" << endl;	   // sete %al to 1 if equal
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+	os << "    movl    %eax, " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_bit_not(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    notl    " << "%eax" << endl;
 	os << "    movl    %eax, " << destAddress << endl;
 }
 
@@ -683,6 +706,24 @@ void IRInstr::gen_asm_shr(ostream &os) {
 	os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
+void IRInstr::gen_asm_incr(ostream &os) {
+	string varName = params.at(0);
+	Symbol &var = block->symbolsTable.access(varName);
+	string varAddress = to_string(var.getOffset()) + "(%rbp)";
+	os << "    movl    " << varAddress << ", " << "%eax" << endl;
+	os << "    incl    " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << varAddress << endl;
+}
+
+void IRInstr::gen_asm_decr(ostream &os) {
+	string varName = params.at(0);
+	Symbol &var = block->symbolsTable.access(varName);
+	string varAddress = to_string(var.getOffset()) + "(%rbp)";
+	os << "    movl    " << varAddress << ", " << "%eax" << endl;
+	os << "    decl    " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << varAddress << endl;
+}
+
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	os << "    ";
@@ -705,6 +746,9 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 		break;
 	case IRInstr::neg:
 		os << "neg     -" << irInstr.params.at(0);
+		break;
+	case IRInstr::bit_not:
+		os << "bit_not " << irInstr.params.at(1) << " --> ~" << irInstr.params.at(0);
 		break;
 	case IRInstr::sub:
 		os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " - " << irInstr.params.at(2);
@@ -750,6 +794,12 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 		break;
 	case IRInstr::shr:
 		os << "shr     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " >> " << irInstr.params.at(2);
+		break;
+	case IRInstr::incr:
+		os << "incr    " << irInstr.params.at(0) << "++";
+		break;
+	case IRInstr::decr:
+		os << "decr    " << irInstr.params.at(0) << "--";
 		break;
 	default:
 		os << "(unknown instruction) ";

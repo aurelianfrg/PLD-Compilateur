@@ -129,10 +129,19 @@ std::any IRVisitor::visitExpr_minus_not(ifccParser::Expr_minus_notContext *ctx) 
 
     if (op == string("-")) {
         cfg->current_block->add_IRInstr(IRInstr::neg, Type::INT, {tempVar.getName(), tempVarName});
-    } else {
+    } 
+    else if (op == string("!")) {
         cfg->current_block->add_IRInstr(IRInstr::not_, Type::INT, {tempVar.getName(), tempVarName});
     }
-
+    else if (op == string("~")) {
+        cfg->current_block->add_IRInstr(IRInstr::bit_not, Type::INT, {tempVar.getName(), tempVarName});
+    }
+    if (op == string("++")) {
+        cfg->current_block->add_IRInstr(IRInstr::incr, Type::INT, {tempVarName});
+    }
+    if (op == string("--")) {
+        cfg->current_block->add_IRInstr(IRInstr::decr, Type::INT, {tempVarName});
+    }
     return tempVar.getName();
 }
 

@@ -51,12 +51,15 @@ public:
 		cmp_le,	    // VAR<-VAR<=VAR 	      [dest, v1, v2]
 		neg,	      // VAR<- -VAR    	      [dest, source]
 		not_,	      // VAR<- !VAR    	      [dest, source]
+		bit_not,	// VAR<- ~VAR    	      [dest, source]
 		bit_and,    // VAR<-VAR&VAR 	      [dest, v1, v2]
 		bit_xor,    // VAR<-VAR^VAR 	      [dest, v1, v2]
 		bit_or,	    // VAR<-VAR|VAR 	      [dest, v1, v2]
 		shl,	      // VAR<-VAR<<VAR 	      [dest, v1, v2]
 		shr,	      // VAR<-VAR>>VAR 	      [dest, v1, v2]
-    ldchar      // VAR<-CHAR            [char, var]
+    	ldchar,      // VAR<-CHAR            [char, var]
+		incr,		// VAR = VAR + 1       [var]
+		decr		// VAR = VAR - 1       [var]
 	} Operation;
 
 	/**  constructor */
@@ -74,6 +77,7 @@ public:
 	void gen_asm_mod(ostream &os);
 	void gen_asm_neg(ostream &os);
 	void gen_asm_not(ostream &os);
+	void gen_asm_bit_not(ostream &os);
 	void gen_asm_eq(ostream &os);
 	void gen_asm_diff(ostream &os);
 	void gen_asm_lt(ostream &os);
@@ -85,6 +89,8 @@ public:
 	void gen_asm_ldchar(ostream &os);
 	void gen_asm_shl(ostream &os);
 	void gen_asm_shr(ostream &os);
+	void gen_asm_incr(ostream &os);
+	void gen_asm_decr(ostream &os);
 
   friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 
