@@ -8,31 +8,6 @@ CFG::CFG(tree::ParseTree *ast)
 	nextBBnumber = 0;
 }
 
-// void CFG::gen_asm_prologue(ostream &os)
-// {
-// #ifdef __APPLE__
-// 	os << ".globl _main\n";
-// 	os << " _main: \n";
-// #else
-// 	os << ".globl main\n";
-// 	os << " main: \n";
-// #endif
-
-// 	// prologue
-// 	os << "prologue:\n";
-// 	os << "    pushq   %rbp\n";
-// 	os << "    movq    %rsp, %rbp\n";
-// 	os << "\n";
-// }
-
-// void CFG::gen_asm_epilogue(ostream &os)
-// {
-// 	os << "\n";
-// 	os << "epilogue:\n";
-// 	os << "    popq    %rbp\n";
-// 	os << "    ret\n";
-// }
-
 void CFG::gen_asm(ostream &os)
 {
 	//this->gen_asm_prologue(os);
@@ -130,7 +105,7 @@ FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, ve
 	}
 }
 
-void Block::gen_block_linking_asm(ostream &os) {
+void Block::gen_block_linking_asm(ostream &os, IRInstr* lastInstr) {
 	// BLOCK JUMP LOGIC
 	if (this->exit_true != nullptr and this->exit_false == nullptr)
 	{
@@ -149,11 +124,17 @@ void Block::gen_block_linking_asm(ostream &os) {
 	}
 	else if (this->exit_true == nullptr and this->exit_false == nullptr)
 	{
-		// generate block epilogue
-		os << "    movq    %rbp, %rsp" << endl;
-		os << "    popq    %rbp" << endl;
-		os << "    ret" << endl;
-		os << endl; // make function ending more visible 
+		// check if previous instruction in block was a return statement : in that case, no need to write block exit assembly
+		if (lastInstr != nullptr && lastInstr->getOp() == IRInstr::ret) {
+			return;
+		}
+		else {
+			// generate block epilogue
+			os << "    movq    %rbp, %rsp" << endl;
+			os << "    popq    %rbp" << endl;
+			os << "    ret" << endl;
+			os << endl; // make function ending more visible 
+		}
 	}
 	else
 	{
@@ -164,13 +145,16 @@ void Block::gen_block_linking_asm(ostream &os) {
 
 void BasicBlock::gen_asm(ostream &os)
 {
+	IRInstr* lastInstr = nullptr; // trick to avoid writing return instructions twice in a block ending after a return
+
 	os << this->label << ":" << endl;
 	for (IRInstr *instr : this->instrs)
 	{
 		instr->gen_asm(os);
+		lastInstr = instr;
 	}
 
-	gen_block_linking_asm(os);
+	gen_block_linking_asm(os, lastInstr);
 }
 
 void FunctionBlock::gen_asm(ostream &os) {
@@ -197,12 +181,14 @@ void FunctionBlock::gen_asm(ostream &os) {
 	}
 
 	// generate asm for internal instructions
+	IRInstr* lastInstr;
 	for (IRInstr *instr : this->instrs)
 	{
 		instr->gen_asm(os);
+		lastInstr = instr;
 	}
 
-	gen_block_linking_asm(os);
+	gen_block_linking_asm(os, lastInstr);
 }
 
 void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params)
@@ -250,6 +236,11 @@ IRInstr::IRInstr(Block *b, Operation op, Type t, vector<string> params)
 	this->params = params;
 }
 
+IRInstr::Operation IRInstr::getOp() {
+	return this->op;
+}
+
+
 void IRInstr::gen_asm(ostream &os)
 {
 	// SPECIFIC LOGIC FOR INSTRUCTIONS
@@ -272,6 +263,9 @@ void IRInstr::gen_asm(ostream &os)
 		break;
 	case IRInstr::not_:
 		this->gen_asm_not(os);
+		break;
+	case IRInstr::bit_not:
+		this->gen_asm_bit_not(os);
 		break;
 	case IRInstr::sub:
 		this->gen_asm_sub(os);
@@ -311,6 +305,24 @@ void IRInstr::gen_asm(ostream &os)
 		break;
 	case IRInstr::ldchar:
 		this->gen_asm_ldchar(os);
+		break;
+	case IRInstr::shl:
+		this->gen_asm_shl(os);
+		break;
+	case IRInstr::shr:
+		this->gen_asm_shr(os);
+		break;
+	case IRInstr::incr_prefix:
+		this->gen_asm_incr_prefix(os);
+		break;
+	case IRInstr::decr_prefix:
+		this->gen_asm_decr_prefix(os);
+		break;
+	case IRInstr::incr_postfix:
+		this->gen_asm_incr_postfix(os);
+		break;
+	case IRInstr::decr_postfix:
+		this->gen_asm_decr_postfix(os);
 		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
@@ -475,6 +487,20 @@ void IRInstr::gen_asm_not(ostream &os)
 	os << "    cmpl    " << "$0" << ", " << srcAddress << endl;
 	os << "    sete    %al" << endl;	   // sete %al to 1 if equal
 	os << "    movzbl  %al, %eax" << endl; // move with conversion from byte to int
+	os << "    movl    %eax, " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_bit_not(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    notl    " << "%eax" << endl;
 	os << "    movl    %eax, " << destAddress << endl;
 }
 
@@ -657,6 +683,90 @@ void IRInstr::gen_asm_ldchar(ostream &os) {
 	os << "    movl    " << char_value << ", " << address << endl;
 }
 
+void IRInstr::gen_asm_shl(ostream &os) {
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    movl    " << v2Address << ", " << "%ecx" << endl;
+	os << "    sall    " << "%cl" << ", " << "%eax"<< endl;		// cl est l'octet bas de ecx
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_shr(ostream &os) {
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    movl    " << v2Address << ", " << "%ecx" << endl; 
+	os << "    sarl    " << "%cl" << ", " << "%eax"<< endl;	// cl est l'octet bas de ecx
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_incr_prefix(ostream &os) {
+	string varName = params.at(0);
+	Symbol &var = block->symbolsTable.access(varName);
+	string varAddress = to_string(var.getOffset()) + "(%rbp)";
+	os << "    movl    " << varAddress << ", " << "%eax" << endl;
+	os << "    incl    " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << varAddress << endl;
+}
+
+void IRInstr::gen_asm_decr_prefix(ostream &os) {
+	string varName = params.at(0);
+	Symbol &var = block->symbolsTable.access(varName);
+	string varAddress = to_string(var.getOffset()) + "(%rbp)";
+	os << "    movl    " << varAddress << ", " << "%eax" << endl;
+	os << "    decl    " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << varAddress << endl;
+}
+
+void IRInstr::gen_asm_incr_postfix(ostream &os) {
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+    os << "    incl    " << "%eax" << endl;
+    os << "    movl    " << "%eax" << ", " << srcAddress << endl;
+}
+
+void IRInstr::gen_asm_decr_postfix(ostream &os) {
+	string dest = params.at(0);
+	string src = params.at(1);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &srcVar = block->symbolsTable.access(src);
+	string srcAddress = to_string(srcVar.getOffset()) + "(%rbp)";
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	
+	os << "    movl    " << srcAddress << ", " << "%eax" << endl;
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+    os << "    decl    " << "%eax" << endl;
+    os << "    movl    " << "%eax" << ", " << srcAddress << endl;
+}
+
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	os << "    ";
@@ -679,6 +789,9 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 		break;
 	case IRInstr::neg:
 		os << "neg     -" << irInstr.params.at(0);
+		break;
+	case IRInstr::bit_not:
+		os << "bit_not " << irInstr.params.at(1) << " --> ~" << irInstr.params.at(0);
 		break;
 	case IRInstr::sub:
 		os << "sub     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " - " << irInstr.params.at(2);
@@ -718,6 +831,24 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 		break;
 	case IRInstr::ldchar:
 		os << "ldchar  " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
+		break;
+	case IRInstr::shl:
+		os << "shl     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " << " << irInstr.params.at(2);
+		break;
+	case IRInstr::shr:
+		os << "shr     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " >> " << irInstr.params.at(2);
+		break;
+	case IRInstr::incr_prefix:
+		os << "incr    " << "++" << irInstr.params.at(0);
+		break;
+	case IRInstr::decr_prefix:
+		os << "decr    " << "--" << irInstr.params.at(0);
+		break;
+	case IRInstr::incr_postfix:
+		os << "incr    " << irInstr.params.at(0) << "++";
+		break;
+	case IRInstr::decr_postfix:
+		os << "decr    " << irInstr.params.at(0) << "--";
 		break;
 	default:
 		os << "(unknown instruction) ";
