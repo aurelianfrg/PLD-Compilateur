@@ -15,6 +15,8 @@ instruction:
 	| if_stmt		# instruction_if_stmt
 	| while_stmt	# instruction_while_stmt
 	| switch_stmt	# instruction_switch_stmt
+	| break_stmt 	# instruction_break_stmt
+	| continue_stmt # instruction_continue_stmt
 	| expr ';'		# instruction_expr
 	| bloc			# instruction_bloc;
 
@@ -41,6 +43,9 @@ expr:
 
 return_stmt: RETURN expr ';';
 
+break_stmt : BREAK ';';
+continue_stmt : CONTINUE ';';
+
 aff_stmt: VAR '=' expr ';';
 
 def_stmt: TYPE def_item (',' def_item)* ';';
@@ -63,6 +68,8 @@ call: VAR '(' ((expr ',')* expr)? ')';
 type_function: 'void' | TYPE;
 TYPE: 'int';
 RETURN: 'return';
+BREAK : 'break';
+CONTINUE : 'continue';
 CONST: [0-9]+;
 VAR: [a-zA-Z_][a-zA-Z0-9_]*;
 CHAR: '\'' [a-zA-Z_]+ '\'';
