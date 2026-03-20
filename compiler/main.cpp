@@ -65,6 +65,8 @@ int main(int argn, const char **argv) {
   // cfg debugging
   ofstream debug_ofs("debug.ir");
   debug_ofs << *(irVisitor.cfg) << endl;
+  ofstream dot_ofs("cfg.dot");
+  irVisitor.cfg->toDot(dot_ofs);
 
   return 0;
 }

@@ -91,3 +91,5 @@ test:
 	python3 ../ifcc-test.py ../testfiles
 testv:
 	python3 ../ifcc-test.py ../testfiles --verbose
+dot:
+	dot -Tpng cfg.dot -O

@@ -71,6 +71,15 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 	return os;
 }
 
+void CFG::toDot(ostream & os) {
+	os << "digraph CFG {" << endl;
+	for (Block *block : this->blocks)
+	{
+		block->toDot(os);
+		os << endl;
+	}
+	os << "}" << endl;
+}
 
 
 // --- BLOCK METHODS ---
@@ -237,6 +246,19 @@ ostream &operator<<(ostream &os, const Block &b)
 {
 	b.print(os);
 	return os;
+}
+
+void Block::toDot(ostream & os) {
+	if (this->exit_true != nullptr and this->exit_false == nullptr) {
+		os << "    " << this->label << " -> " << this->exit_true->label << endl;
+	}
+	else if (this->exit_true != nullptr and this->exit_false != nullptr) {
+		os << "    " << this->label << " -> " << this->exit_true->label << "[label=\"true\"]" << endl;
+		os << "    " << this->label << " -> " << this->exit_false->label << "[label=\"false\"]" << endl;
+	}
+	else if (this->exit_true == nullptr and this->exit_false == nullptr) {
+		os << "    " << this->label << endl;
+	}
 }
 
 // --- IRInstr METHODS ---

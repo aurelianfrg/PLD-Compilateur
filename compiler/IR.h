@@ -96,7 +96,8 @@ public:
 	void gen_asm_incr_postfix(ostream &os);
 	void gen_asm_decr_postfix(ostream &os);
 
-  friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
+  	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
+	void toDot(ostream & os); // generate graph in dot format 
 
 	Operation getOp();
 
@@ -143,6 +144,7 @@ public:
 
 	virtual void print(ostream& os) const = 0;
 	friend ostream &operator<<(ostream &os, const Block &b);
+	void toDot(ostream & os); // generate graph in dot format 
 
 	string label;			  /**< label of the BB, also will be the label in the generated code */
 	CFG *cfg;				  /** < the CFG where this block belongs */
@@ -208,7 +210,8 @@ public:
 	Block *current_block;
 	FunctionsTable functionsTable;
 
-  friend ostream &operator<<(ostream &os, const CFG &cfg);
+  	friend ostream &operator<<(ostream &os, const CFG &cfg);
+	void toDot(ostream & os); // generate graph in dot format 
 
 protected:
 	
