@@ -21,7 +21,7 @@ instruction:
 expr:
 	'(' expr ')'								# expr_parenthesis
 	| call										# expr_call
-	| OP = ('-' | '!') expr						# expr_minus_not
+	| OP=('-' | '!' | '~' | '++' | '--') expr				# expr_minus_not
 	| expr OP = ('*' | '/' | '%') expr			# expr_mult_div_mod
 	| expr OP = ('+' | '-') expr				# expr_add_sub
 	| expr OP = ('<=' | '<' | '>=' | '>') expr	# expr_comp
@@ -31,10 +31,12 @@ expr:
 	| expr '|' expr								# expr_or
 	| expr '&&' expr							# expr_log_and
 	| expr '||' expr							# expr_log_or
-	| VAR '=' expr								# expr_aff // affectations should return a value
-	| CONST										# expr_const
-	| VAR										# expr_var
-	| CHAR										# expr_char;
+	| VAR OP = ('=' | '+=' | '-=' | '*=' | '/=' | '%=' 
+			| '&=' | '^=' | '|=' | '<<=' | '>>=') expr			# expr_aff // affectations should return a value
+	| CONST							            # expr_const
+	| VAR							            # expr_var
+	| CHAR      								# expr_char
+;
 
 return_stmt: RETURN expr ';';
 

@@ -133,10 +133,19 @@ std::any IRVisitor::visitExpr_minus_not(ifccParser::Expr_minus_notContext *ctx) 
 
     if (op == string("-")) {
         cfg->current_block->add_IRInstr(IRInstr::neg, Type::INT, {tempVar.getName(), tempVarName});
-    } else {
+    } 
+    else if (op == string("!")) {
         cfg->current_block->add_IRInstr(IRInstr::not_, Type::INT, {tempVar.getName(), tempVarName});
     }
-
+    else if (op == string("~")) {
+        cfg->current_block->add_IRInstr(IRInstr::bit_not, Type::INT, {tempVar.getName(), tempVarName});
+    }
+    if (op == string("++")) {
+        cfg->current_block->add_IRInstr(IRInstr::incr, Type::INT, {tempVarName});
+    }
+    if (op == string("--")) {
+        cfg->current_block->add_IRInstr(IRInstr::decr, Type::INT, {tempVarName});
+    }
     return tempVar.getName();
 }
 
@@ -321,12 +330,55 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     return 0;
 }
 
-std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
+std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
+{
     string varName = ctx->VAR()->getText();
-    string exprResultAddress = any_cast<string>(visit(ctx->expr()));
-
-    cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprResultAddress});
-
+    string op = ctx->OP->getText();
+    string exprAddress = any_cast<string>(visit(ctx->expr()));
+    if (op == "=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprAddress});
+    }
+    else if (op == "+=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::add, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "-=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::sub, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "*=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::mul, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "/=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::div, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "%=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::mod, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "&=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::bit_and, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "^=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::bit_xor, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "|=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::bit_or, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "<<=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::shl, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == ">>=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::shr, Type::INT, {varName, varName, exprAddress});
+    }
     // return the newly affected variable so that affectations can be chained
     return varName;
 }
