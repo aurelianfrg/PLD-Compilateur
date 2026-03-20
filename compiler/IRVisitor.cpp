@@ -336,9 +336,10 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "while");
     start_bb->exit_true = test_bb;
-    // add while test blocks to stacks of blocks we can continue or break to
-    cfg->pushBreakBlock(test_bb);
-    cfg->pushContinueBlock(test_bb);
+
+    // add while test blocks to stacks of blocks we can "continue" or "break" to
+    cfg->pushBreakBlock(end_bb);   
+    cfg->pushContinueBlock(test_bb);    
 
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
@@ -349,6 +350,11 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     test_bb->exit_false = end_bb;
     while_bb->exit_true = test_bb;
 
+    // when leaving the inside of the while block, remove the possibility to "continue" or "break" from this "while"
+    cfg->popBreakBlock();
+    cfg->popContinueBlock();
+
+    // reassign next block to be filled with incoming instructions
     cfg->current_block = end_bb;
 
     return 0;
@@ -364,6 +370,8 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     // evaluate source expr
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_block);
+
+    cfg->pushBreakBlock(end_bb);
 
     // create blocks
     vector<BasicBlock *> test_bbs;
@@ -422,6 +430,8 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
         default_bb->exit_true = end_bb;
     }
     cfg->current_block = end_bb;
+
+    cfg->popBreakBlock();
 
     return 0;
 }
