@@ -312,6 +312,12 @@ void IRInstr::gen_asm(ostream &os)
 	case IRInstr::ldchar:
 		this->gen_asm_ldchar(os);
 		break;
+	case IRInstr::shl:
+		this->gen_asm_shl(os);
+		break;
+	case IRInstr::shr:
+		this->gen_asm_shr(os);
+		break;
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
 	}
@@ -641,6 +647,42 @@ void IRInstr::gen_asm_ldchar(ostream &os) {
 	os << "    movl    " << char_value << ", " << address << endl;
 }
 
+void IRInstr::gen_asm_shl(ostream &os) {
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    movl    " << v2Address << ", " << "%ecx" << endl;
+	os << "    sall    " << "%cl" << ", " << "%eax"<< endl;		// cl est l'octet bas de ecx
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
+void IRInstr::gen_asm_shr(ostream &os) {
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
+
+	Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &v1Var = block->symbolsTable.access(v1);
+	Symbol &v2Var = block->symbolsTable.access(v2);
+
+	string destAddress = to_string(destVar.getOffset()) + "(%rbp)";
+	string v1Address = to_string(v1Var.getOffset()) + "(%rbp)";
+	string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
+	os << "    movl    " << v1Address << ", " << "%eax" << endl;
+	os << "    movl    " << v2Address << ", " << "%ecx" << endl; 
+	os << "    sarl    " << "%cl" << ", " << "%eax"<< endl;	// cl est l'octet bas de ecx
+	os << "    movl    " << "%eax" << ", " << destAddress << endl;
+}
+
 ostream &operator<<(ostream &os, const IRInstr &irInstr)
 {
 	os << "    ";
@@ -702,6 +744,12 @@ ostream &operator<<(ostream &os, const IRInstr &irInstr)
 		break;
 	case IRInstr::ldchar:
 		os << "ldchar  " << irInstr.params.at(0) << " --> " << irInstr.params.at(1);
+		break;
+	case IRInstr::shl:
+		os << "shl     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " << " << irInstr.params.at(2);
+		break;
+	case IRInstr::shr:
+		os << "shr     " << irInstr.params.at(0) << " = " << irInstr.params.at(1) << " >> " << irInstr.params.at(2);
 		break;
 	default:
 		os << "(unknown instruction) ";

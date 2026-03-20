@@ -54,6 +54,8 @@ public:
 		bit_and,    // VAR<-VAR&VAR 	      [dest, v1, v2]
 		bit_xor,    // VAR<-VAR^VAR 	      [dest, v1, v2]
 		bit_or,	    // VAR<-VAR|VAR 	      [dest, v1, v2]
+		shl,	      // VAR<-VAR<<VAR 	      [dest, v1, v2]
+		shr,	      // VAR<-VAR>>VAR 	      [dest, v1, v2]
     ldchar      // VAR<-CHAR            [char, var]
 	} Operation;
 
@@ -81,6 +83,8 @@ public:
 	void gen_asm_or(ostream &os);
 	void gen_asm_call(ostream &os);
 	void gen_asm_ldchar(ostream &os);
+	void gen_asm_shl(ostream &os);
+	void gen_asm_shr(ostream &os);
 
   friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 

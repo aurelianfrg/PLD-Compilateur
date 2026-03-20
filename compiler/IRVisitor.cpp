@@ -342,6 +342,30 @@ std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx)
     {
         cfg->current_block->add_IRInstr(IRInstr::div, Type::INT, {varName, varName, exprAddress});
     }
+    else if (op == "%=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::mod, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "&=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::bit_and, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "^=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::bit_xor, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "|=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::bit_or, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == "<<=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::shl, Type::INT, {varName, varName, exprAddress});
+    }
+    else if (op == ">>=")
+    {
+        cfg->current_block->add_IRInstr(IRInstr::shr, Type::INT, {varName, varName, exprAddress});
+    }
     // return the newly affected variable so that affectations can be chained
     return varName;
 }

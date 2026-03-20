@@ -30,7 +30,8 @@ expr:
 	| expr '|' expr								# expr_or
 	| expr '&&' expr							# expr_log_and
 	| expr '||' expr							# expr_log_or
-	| VAR OP = ('=' | '+=' | '-=' | '*=' | '/=') expr			# expr_aff // affectations should return a value
+	| VAR OP = ('=' | '+=' | '-=' | '*=' | '/=' | '%=' 
+			| '&=' | '^=' | '|=' | '<<=' | '>>=') expr			# expr_aff // affectations should return a value
 	| CONST							            # expr_const
 	| VAR							            # expr_var
 	| CHAR      								# expr_char
