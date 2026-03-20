@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <vector>
+#include <set>
 
 #include "antlr4-runtime.h"
 #include "generated/ifccBaseVisitor.h"
@@ -15,6 +16,7 @@ class VariableVisitorV2 : public ifccBaseVisitor
 {
 public:
     virtual std::any visitProg(ifccParser::ProgContext *ctx) override;
+    virtual std::any visitFunction_def(ifccParser::Function_defContext *ctx) override;
     virtual std::any visitBloc(ifccParser::BlocContext *ctx) override;
     virtual std::any visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx) override;
     virtual std::any visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx) override;
@@ -31,6 +33,9 @@ public:
     virtual std::any visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx) override;
     virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;
     virtual std::any visitExpr_const(ifccParser::Expr_constContext *ctx) override;
+    virtual std::any visitExpr_call(ifccParser::Expr_callContext *ctx) override;
+
+    virtual std::any visitCall(ifccParser::CallContext *ctx) override;
 
     void newVariableTable(); //Create a new VariableTable and adds it on the list
     void delVariableTable(); //Destroy the last VariableTable and check the use of variables
@@ -50,5 +55,7 @@ protected:
     
     std::vector<VariablesTable*> variablesTableVector;
     std::map<std::string, std::list<int>> indexVariables; // map variables and the index of their VariablesTable
+    std::map<std::string,int> functionTable;
+    bool firstBloc = false;
     bool error = false;
 };
