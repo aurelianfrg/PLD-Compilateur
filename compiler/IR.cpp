@@ -609,7 +609,20 @@ void IRInstr::gen_asm_or(ostream &os)
 void IRInstr::gen_asm_call(ostream &os) {
 	string functionName = params.at(0);
 	string destVarName = params.at(1);
-	Function & function = this->block->cfg->functionsTable.access(functionName);
+	Type returnType = VOID;
+	if (functionName != "putchar" && functionName != "getchar"){
+		Function & function = this->block->cfg->functionsTable.access(functionName);
+		returnType = function.getType();
+	}
+	else if (functionName == "putchar"){
+		functionName = "putchar@PLT";
+		returnType = INT;
+	}
+	else {
+		functionName = "getchar@PLT";
+		returnType = INT;
+	}
+	
 	Symbol & destVar = this->block->symbolsTable.access(destVarName);
 	
 	// max 6 arguments for now
@@ -626,7 +639,10 @@ void IRInstr::gen_asm_call(ostream &os) {
 	os << "    call    " << functionName << endl;
 
 	// handle return value 
-	if (function.getType() != VOID) {
+	if (functionName == "putchar@PLT"){
+		os <<"movl	$0, %eax"<< endl;
+	}
+	else if (returnType != VOID) {
 		os << "    movl    %eax, " << destVar.getAdressx86() << endl;
 	}
 }
