@@ -51,10 +51,15 @@ public:
 		cmp_le,	    // VAR<-VAR<=VAR 	      [dest, v1, v2]
 		neg,	      // VAR<- -VAR    	      [dest, source]
 		not_,	      // VAR<- !VAR    	      [dest, source]
+		bit_not,	// VAR<- ~VAR    	      [dest, source]
 		bit_and,    // VAR<-VAR&VAR 	      [dest, v1, v2]
 		bit_xor,    // VAR<-VAR^VAR 	      [dest, v1, v2]
 		bit_or,	    // VAR<-VAR|VAR 	      [dest, v1, v2]
-    ldchar      // VAR<-CHAR            [char, var]
+		shl,	      // VAR<-VAR<<VAR 	      [dest, v1, v2]
+		shr,	      // VAR<-VAR>>VAR 	      [dest, v1, v2]
+    	ldchar,      // VAR<-CHAR            [char, var]
+		incr,		// VAR = VAR + 1       [var]
+		decr		// VAR = VAR - 1       [var]
 	} Operation;
 
 	/**  constructor */
@@ -72,6 +77,7 @@ public:
 	void gen_asm_mod(ostream &os);
 	void gen_asm_neg(ostream &os);
 	void gen_asm_not(ostream &os);
+	void gen_asm_bit_not(ostream &os);
 	void gen_asm_eq(ostream &os);
 	void gen_asm_diff(ostream &os);
 	void gen_asm_lt(ostream &os);
@@ -81,8 +87,14 @@ public:
 	void gen_asm_or(ostream &os);
 	void gen_asm_call(ostream &os);
 	void gen_asm_ldchar(ostream &os);
+	void gen_asm_shl(ostream &os);
+	void gen_asm_shr(ostream &os);
+	void gen_asm_incr(ostream &os);
+	void gen_asm_decr(ostream &os);
 
   friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
+
+	Operation getOp();
 
 private:
 	Block *block; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
@@ -119,7 +131,7 @@ class Block
 {
 public:
 	virtual void gen_asm(ostream &os) = 0; 
-	void gen_block_linking_asm(ostream &os);
+	void gen_block_linking_asm(ostream &os, IRInstr* lastInstr);
 
   void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
