@@ -84,9 +84,15 @@ std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
 
 std::any IRVisitor::visitCall(ifccParser::CallContext *ctx) {
     string functionName = ctx->VAR()->getText();
-    Function &callee = cfg->functionsTable.access(functionName);
-    Type returnType = callee.getType();
-
+    Type returnType = VOID;
+    if (functionName != "putchar" || functionName != "getchar"){
+        returnType = INT;
+    }
+    else {
+        Function &callee = cfg->functionsTable.access(functionName);
+        returnType = callee.getType();
+    }
+    
     Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(returnType);
 
     vector<string> callArgs = {functionName, tempVar.getName()};
