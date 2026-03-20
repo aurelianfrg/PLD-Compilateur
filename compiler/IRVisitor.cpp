@@ -4,6 +4,10 @@ using namespace std;
 
 IRVisitor::IRVisitor(tree::ParseTree *parseTree) { cfg = new CFG(parseTree); }
 
+IRVisitor::~IRVisitor() {
+    delete cfg;
+}
+
 antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx) {
     for (auto &function_def : ctx->function_def()) {
         this->visit(function_def);

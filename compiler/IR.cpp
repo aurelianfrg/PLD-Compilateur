@@ -8,6 +8,12 @@ CFG::CFG(tree::ParseTree *ast)
 	nextBBnumber = 0;
 }
 
+CFG::~CFG() {
+	for (Block* b : blocks) {
+		delete b;
+	}
+}
+
 void CFG::gen_asm(ostream &os)
 {
 	//this->gen_asm_prologue(os);
@@ -68,6 +74,12 @@ ostream &operator<<(ostream &os, const CFG &cfg)
 
 
 // --- BLOCK METHODS ---
+
+Block::~Block() {
+	for (IRInstr* instr : this->instrs) {
+		delete instr;
+	}
+}
 
 BasicBlock::BasicBlock(CFG *cfg, string label, SymbolsTable currentSymbolsTable, bool isAChild)
 {

@@ -134,10 +134,12 @@ followed by a conditional jump to the exit_false branch
 class Block
 {
 public:
+	virtual ~Block();
+
 	virtual void gen_asm(ostream &os) = 0; 
 	void gen_block_linking_asm(ostream &os, IRInstr* lastInstr);
 
-  void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
+  	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
 	virtual void print(ostream& os) const = 0;
 	friend ostream &operator<<(ostream &os, const Block &b);
@@ -182,9 +184,10 @@ The exit block is the one with both exit pointers equal to nullptr.
 */
 class CFG {
 public:
-  CFG(tree::ParseTree *ast);
+  	CFG(tree::ParseTree *ast);
+	virtual ~CFG();
 
-  tree::ParseTree *ast; /**< The AST this CFG comes from */
+ 	tree::ParseTree *ast; /**< The AST this CFG comes from */
 
 	void add_block(Block *b);
 	BasicBlock *createChildBasicBlock(const SymbolsTable & parentSymbolsTable);								// create a new basicblock that inherits its parents Symbols and has a new local table
