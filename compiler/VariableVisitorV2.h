@@ -5,12 +5,33 @@
 #include <list>
 #include <vector>
 #include <set>
+#include <utility>
 
 #include "antlr4-runtime.h"
 #include "generated/ifccBaseVisitor.h"
 
 #include "VariablesTable.h"
 #include "Variable.h"
+
+// Définition du set statique
+const unordered_set<string> keywords = {
+    // Standard C keywords
+    "alignas", "alignof", "auto", "bool", "break", "case", "char", "const",
+    "constexpr", "continue", "default", "do", "double", "else", "enum",
+    "extern", "false", "float", "for", "goto", "if", "inline", "int",
+    "long", "nullptr", "register", "restrict", "return", "short", "signed",
+    "sizeof", "static", "static_assert", "struct", "switch", "thread_local",
+    "true", "typedef", "typeof", "typeof_unqual", "union", "unsigned",
+    "void", "volatile", "while",
+    
+    // Underscore-prefixed keywords
+    "_Alignas", "_Alignof", "_Atomic", "_BitInt", "_Bool", "_Complex",
+    "_Decimal32", "_Decimal64", "_Decimal128", "_Generic", "_Imaginary",
+    "_Noreturn", "_Static_assert", "_Thread_local", "_Pragma",
+    
+    // Extensions
+    "asm", "fortran"
+};
 
 class VariableVisitorV2 : public ifccBaseVisitor
 {
@@ -34,6 +55,7 @@ public:
     virtual std::any visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx) override;
     virtual std::any visitExpr_const(ifccParser::Expr_constContext *ctx) override;
     virtual std::any visitExpr_call(ifccParser::Expr_callContext *ctx) override;
+    virtual std::any visitExpr_char(ifccParser::Expr_charContext *ctx) override;
 
     virtual std::any visitCall(ifccParser::CallContext *ctx) override;
 
@@ -48,14 +70,15 @@ public:
     
     int getCurrentIndex() {return variablesTableVector.size() - 1;};
 
-
     bool getError() { return error; }
+
+    bool isKeyword(string& name) { return keywords.find(name) != keywords.end(); }
 
 protected:
     
     std::vector<VariablesTable*> variablesTableVector;
     std::map<std::string, std::list<int>> indexVariables; // map variables and the index of their VariablesTable
-    std::map<std::string,int> functionTable;
+    std::map<std::string,std::pair<int,string>> functionTable;
     bool firstBloc = false;
     bool error = false;
 };

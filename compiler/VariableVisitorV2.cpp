@@ -24,10 +24,17 @@ std::any VariableVisitorV2::visitFunction_def(ifccParser::Function_defContext *c
 
 
     newVariableTable();
+    string functionType;
+    if(ctx -> type_function() -> TYPE() == nullptr){
+        functionType = ctx -> type_function() -> getText();
+    }
+    else{
+        functionType = ctx -> type_function() -> TYPE() -> getText();
+    }
 
     std::string functionName = ctx -> VAR(0) -> getText();
     if(functionTable.find(functionName) == functionTable.end() ){
-        functionTable[functionName] = (ctx -> VAR()).size() - 1;
+        functionTable[functionName] = std::pair<int,string>((ctx -> VAR()).size() - 1,functionType);
     }
 
     else{
@@ -99,10 +106,18 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
     std::string varName = ctx->VAR()->getText();
     int line = ctx->getStart()->getLine();
 
+    if (isKeyword(varName))
+    {
+        std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' is a reserved keyword." << std::endl;
+        error = true;
+        return 0;
+    }
+    
     if (getLastIndexOfVariablesTable(varName) == getCurrentIndex())
     {
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' already declared in this scope." << std::endl;
         error = true;
+        return 0;
     }
 
     variablesTableVector.back() -> add(Variable(varName, line));
@@ -111,7 +126,15 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
     if (ctx->expr() != nullptr)
     {
         std::string varNameExpr = any_cast<string>(this->visit(ctx->expr()));
-        if(varNameExpr != "0")
+        if(varNameExpr == "void")
+        {
+            int line = ctx->getStart()->getLine();
+            std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m The function is of type 'void' and cannot be assigned to a variable.\n";
+            error = true;
+            return varName;
+        }
+        
+        else if(varNameExpr != "int" && varNameExpr != "0")
         {
             Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varNameExpr)] -> access(varNameExpr);
             var.use();
@@ -153,17 +176,27 @@ std::any VariableVisitorV2::visitExpr_add_sub(ifccParser::Expr_add_subContext *c
 
 std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 {
+
     std::string varName = ctx->VAR()->getText();
     if (indexVariables.find(varName) == indexVariables.end())
     {
         int line = ctx->getStart()->getLine();
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' not declared in this scope.\n";
         error = true;
+        return string("0");
     }
-    
+
     std::string varNameExpr = any_cast<string>(this->visit(ctx->expr()));
 
-    if(varNameExpr != "0")
+    if(varNameExpr == "void")
+    {
+        int line = ctx->getStart()->getLine();
+        std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m The function is of type 'void' and cannot be assigned to a variable.\n";
+        error = true;
+        return varName;
+    }
+    
+    else if(varNameExpr != "int" && varNameExpr != "0")
     {
         Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varNameExpr)] -> access(varNameExpr);
         var.use();
@@ -178,8 +211,7 @@ std::any VariableVisitorV2::visitExpr_const(ifccParser::Expr_constContext *ctx){
 
 std::any VariableVisitorV2::visitExpr_call(ifccParser::Expr_callContext *ctx){
     
-    this -> visit(ctx -> call());
-    return string("0");
+    return this -> visit(ctx -> call());
 }
 
 std::any VariableVisitorV2::visitExpr_var(ifccParser::Expr_varContext *ctx)
@@ -219,9 +251,10 @@ std::any VariableVisitorV2::visitCall(ifccParser::CallContext *ctx){
     {
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Function '" << functionName << "' undefined.\n";
         error = true;
+        return string("0");
     }
     else{
-        int NbParameters = functionTable[functionName];
+        int NbParameters = functionTable[functionName].first;
         if((ctx -> expr()).size() != NbParameters)
         {
             std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m " << NbParameters << " parameters expected but only "<<(ctx -> expr()).size()<<" are given.\n";
@@ -229,9 +262,12 @@ std::any VariableVisitorV2::visitCall(ifccParser::CallContext *ctx){
         }
     }
 
-    return 0;
+    return functionTable[functionName].second;
 }
 
+std::any VariableVisitorV2::visitExpr_char(ifccParser::Expr_charContext *ctx){
+    return string("0");
+}
 
 
 void VariableVisitorV2::newVariableTable()
