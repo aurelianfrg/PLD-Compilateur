@@ -58,8 +58,10 @@ public:
 		shl,	      // VAR<-VAR<<VAR 	      [dest, v1, v2]
 		shr,	      // VAR<-VAR>>VAR 	      [dest, v1, v2]
     	ldchar,      // VAR<-CHAR            [char, var]
-		incr,		// VAR = VAR + 1       [var]
-		decr		// VAR = VAR - 1       [var]
+		incr_prefix,		// ++VAR      			[var]
+		decr_prefix,		// --VAR       			[var]
+		incr_postfix,	// VAR++      			[dest, source]
+		decr_postfix	// VAR--       			[dest, source]
 	} Operation;
 
 	/**  constructor */
@@ -89,8 +91,10 @@ public:
 	void gen_asm_ldchar(ostream &os);
 	void gen_asm_shl(ostream &os);
 	void gen_asm_shr(ostream &os);
-	void gen_asm_incr(ostream &os);
-	void gen_asm_decr(ostream &os);
+	void gen_asm_incr_prefix(ostream &os);
+	void gen_asm_decr_prefix(ostream &os);
+	void gen_asm_incr_postfix(ostream &os);
+	void gen_asm_decr_postfix(ostream &os);
 
   friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
 

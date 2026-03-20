@@ -20,6 +20,7 @@ instruction:
 expr:
 	'(' expr ')'								# expr_parenthesis
 	| call										# expr_call
+	| expr OP = ('++' | '--')   				# expr_postfix
 	| OP=('-' | '!' | '~' | '++' | '--') expr				# expr_minus_not
 	| expr OP = ('*' | '/' | '%') expr			# expr_mult_div_mod
 	| expr OP = ('+' | '-') expr				# expr_add_sub
