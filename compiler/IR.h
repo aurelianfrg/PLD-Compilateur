@@ -171,8 +171,8 @@ public:
   tree::ParseTree *ast; /**< The AST this CFG comes from */
 
 	void add_block(Block *b);
-	BasicBlock *createChildBasicBlock(const SymbolsTable & parentSymbolsTable);								// create a new basicblock that inherits its parents Symbols and has a new local table
-	BasicBlock *createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable);							// create a new basicblock that copies its siblings symbols
+	BasicBlock *createChildBasicBlock(Block* parentBlock);												// create a new basicblock that inherits its parents Symbols and has a new local table
+	BasicBlock *createSiblingBasicBlock(Block* siblingBlock);											// create a new basicblock that copies its siblings symbols
 	FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); 	// create a new function block, with a completely new symbolsTable initialized with its parameters
 
   // x86 code generation: could be encapsulated in a processor class in a

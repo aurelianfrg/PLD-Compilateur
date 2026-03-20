@@ -53,19 +53,21 @@ void CFG::add_block(Block *b)
 	nextBBnumber++;
 	current_block = b;
 }
-BasicBlock *CFG::createChildBasicBlock(const SymbolsTable & parentSymbolsTable)
+BasicBlock *CFG::createChildBasicBlock(Block* parentBlock)
 {
+	const SymbolsTable & parentSymbolsTable = parentBlock->symbolsTable;
 	string name = new_BB_name();
-	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable, true);
+	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable, true);		// isAChild = true
 	bb->symbolsTable.setBlock(bb);
 	add_block(bb);
 	return bb;
 }
 
-BasicBlock *CFG::createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable)
+BasicBlock *CFG::createSiblingBasicBlock(Block* siblingBlock)
 {
+	const SymbolsTable & siblingSymbolsTable = siblingBlock->symbolsTable;
 	string name = new_BB_name();
-	BasicBlock *bb = new BasicBlock(this, name, siblingSymbolsTable, false);
+	BasicBlock *bb = new BasicBlock(this, name, siblingSymbolsTable, false); 	// isAChild = false
 	bb->symbolsTable.setBlock(bb);
 	add_block(bb);
 	return bb;

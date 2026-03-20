@@ -59,9 +59,8 @@ std::any IRVisitor::visitInstruction_bloc(ifccParser::Instruction_blocContext *c
 
     // create a new child block
     Block *start_bb = cfg->current_block;
-    SymbolsTable inheritedSymbols = start_bb->symbolsTable;
-    BasicBlock *end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
-    BasicBlock *new_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
+    BasicBlock *new_bb = cfg->createChildBasicBlock(start_bb);
     start_bb->exit_true = new_bb;
     new_bb->exit_true = end_bb;
 
@@ -276,16 +275,15 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
     // create a new testing block
     Block *start_bb = cfg->current_block;
-    SymbolsTable inheritedSymbols = start_bb->symbolsTable;
 
-    BasicBlock *end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb);
     start_bb->exit_true = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr(0)));
     test_bb->test_var_name = condVarName;
 
-    BasicBlock *true_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock *true_bb = cfg->createChildBasicBlock(start_bb);
     this->visit(ctx->bloc(0));
     test_bb->exit_true = true_bb;
     true_bb->exit_true = end_bb;
@@ -293,13 +291,13 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     BasicBlock *prev_test_bb_i = test_bb;
     for (int i = 1; i < elseif_count + 1; ++i) {
         // chain previous false exit to new test block
-        BasicBlock *test_bb_i = cfg->createSiblingBasicBlock(inheritedSymbols);
+        BasicBlock *test_bb_i = cfg->createSiblingBasicBlock(start_bb);
         prev_test_bb_i->exit_false = test_bb_i;
 
         condVarName = any_cast<string>(this->visit(ctx->expr(i)));
         test_bb_i->test_var_name = condVarName;
 
-        BasicBlock *true_bb_i = cfg->createChildBasicBlock(inheritedSymbols);
+        BasicBlock *true_bb_i = cfg->createChildBasicBlock(start_bb);
         this->visit(ctx->bloc(i));
         test_bb_i->exit_true = true_bb_i;
         true_bb_i->exit_true = end_bb;
@@ -308,7 +306,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     }
 
     if (else_bloc) {
-        BasicBlock *else_bb = cfg->createChildBasicBlock(inheritedSymbols);
+        BasicBlock *else_bb = cfg->createChildBasicBlock(start_bb);
         prev_test_bb_i->exit_false = else_bb;
         this->visit(ctx->bloc().back());
         else_bb->exit_true = end_bb;
@@ -334,15 +332,14 @@ std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
 std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
 
     Block *start_bb = cfg->current_block;
-    SymbolsTable inheritedSymbols = start_bb->symbolsTable;
-    BasicBlock *end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
 
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb);
     start_bb->exit_true = test_bb;
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
 
-    BasicBlock *while_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock *while_bb = cfg->createChildBasicBlock(start_bb);
     this->visit(ctx->bloc());
     test_bb->exit_true = while_bb;
     test_bb->exit_false = end_bb;
@@ -359,21 +356,20 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
 
     Block *start_block = cfg->current_block;
     Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
-    SymbolsTable inheritedSymbols = start_block->symbolsTable;
 
     // evaluate source expr
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
-    BasicBlock *end_bb = cfg->createSiblingBasicBlock(inheritedSymbols);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_block);
 
     // create blocks
     vector<BasicBlock *> test_bbs;
     vector<BasicBlock *> code_bbs;
     for (int i = 0; i < case_count; i++) {
-        test_bbs.push_back(cfg->createSiblingBasicBlock(inheritedSymbols));
-        code_bbs.push_back(cfg->createSiblingBasicBlock(inheritedSymbols));
+        test_bbs.push_back(cfg->createSiblingBasicBlock(start_block));
+        code_bbs.push_back(cfg->createSiblingBasicBlock(start_block));
     }
 
-    BasicBlock *default_bb = has_default ? cfg->createSiblingBasicBlock(inheritedSymbols) : end_bb;
+    BasicBlock *default_bb = has_default ? cfg->createSiblingBasicBlock(start_block) : end_bb;
     start_block->exit_true = test_bbs.at(0);
     // wire test chain
     for (int i = 0; i < case_count; i++) {
@@ -433,12 +429,11 @@ std::any IRVisitor::visitExpr_log_and(ifccParser::Expr_log_andContext *ctx) {
 
     Block *test_left = cfg->current_block;
     Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
-    SymbolsTable inheritedSymbols = cfg->current_block->symbolsTable;
 
     cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {tempVar.getName(), leftVarName});
 
-    BasicBlock *eval_right = cfg->createChildBasicBlock(inheritedSymbols);
-    BasicBlock *end_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock *eval_right = cfg->createSiblingBasicBlock(test_left);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(test_left);
 
     test_left->test_var_name = leftVarName;
 
@@ -464,12 +459,11 @@ std::any IRVisitor::visitExpr_log_or(ifccParser::Expr_log_orContext *ctx) {
 
     Block *test_left = cfg->current_block;
     Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
-    SymbolsTable inheritedSymbols = cfg->current_block->symbolsTable;
 
     cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {tempVar.getName(), leftVarName});
 
-    BasicBlock *eval_right = cfg->createChildBasicBlock(inheritedSymbols);
-    BasicBlock *end_bb = cfg->createChildBasicBlock(inheritedSymbols);
+    BasicBlock *eval_right = cfg->createChildBasicBlock(test_left);
+    BasicBlock *end_bb = cfg->createChildBasicBlock(test_left);
 
     test_left->test_var_name = leftVarName;
 
