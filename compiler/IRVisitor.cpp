@@ -277,7 +277,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     Block *start_bb = cfg->current_block;
 
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "if");
     start_bb->exit_true = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr(0)));
@@ -334,7 +334,7 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     Block *start_bb = cfg->current_block;
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
 
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "while");
     start_bb->exit_true = test_bb;
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
@@ -462,8 +462,8 @@ std::any IRVisitor::visitExpr_log_or(ifccParser::Expr_log_orContext *ctx) {
 
     cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {tempVar.getName(), leftVarName});
 
-    BasicBlock *eval_right = cfg->createChildBasicBlock(test_left);
-    BasicBlock *end_bb = cfg->createChildBasicBlock(test_left);
+    BasicBlock *eval_right = cfg->createSiblingBasicBlock(test_left);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(test_left);
 
     test_left->test_var_name = leftVarName;
 

@@ -126,14 +126,16 @@ public:
 	virtual void print(ostream& os) const = 0;
 	friend ostream &operator<<(ostream &os, const Block &b);
 
-	string label;			  /**< label of the BB, also will be the label in the generated code */
-	CFG *cfg;				  /** < the CFG where this block belongs */
-	vector<IRInstr *> instrs; /** < the instructions themselves. */
+	string label;			  			/**< label of the BB, also will be the label in the generated code */
+	CFG *cfg;				  			/** < the CFG where this block belongs */
+	vector<IRInstr *> instrs; 			/** < the instructions themselves. */
 	SymbolsTable symbolsTable;
-	BasicBlock *exit_true = nullptr;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
-	BasicBlock *exit_false = nullptr;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
-	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
-													store here the name of the variable that holds the value of expr */
+	BasicBlock *exit_true = nullptr;	/**< pointer to the next basic block, true branch. If nullptr, return from procedure */
+	BasicBlock *exit_false = nullptr;	/**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
+	Block* parentBlock = nullptr;		// pointer to the parent block from which this scope origins
+	Block* endBlock = nullptr;			// pointer to ending block when the block is a while or switch statement
+	string test_var_name;	  			/** < when generating IR code for an if(expr) or while(expr) etc,
+											store here the name of the variable that holds the value of expr */
 };
 
 class BasicBlock : public Block
@@ -171,8 +173,8 @@ public:
   tree::ParseTree *ast; /**< The AST this CFG comes from */
 
 	void add_block(Block *b);
-	BasicBlock *createChildBasicBlock(Block* parentBlock);												// create a new basicblock that inherits its parents Symbols and has a new local table
-	BasicBlock *createSiblingBasicBlock(Block* siblingBlock);											// create a new basicblock that copies its siblings symbols
+	BasicBlock *createChildBasicBlock(Block* parentBlock, string namePrefix = "block");						// create a new basicblock that inherits its parents Symbols and has a new local table
+	BasicBlock *createSiblingBasicBlock(Block* siblingBlock, string namePrefix = "block");					// create a new basicblock that copies its siblings symbols
 	FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); 	// create a new function block, with a completely new symbolsTable initialized with its parameters
 
   // x86 code generation: could be encapsulated in a processor class in a
@@ -181,11 +183,11 @@ public:
   string IR_reg_to_asm(
       string reg); /**< helper method: inputs a IR reg or input variable,
                       returns e.g. "-24(%rbp)" for the proper value of 24 */
-  void gen_asm_prologue(ostream &os);
-  void gen_asm_epilogue(ostream &os);
 
 	// block management
-	string new_BB_name();
+	string new_BB_name(string prefix="block") {
+		return prefix + "_" + to_string(nextBBnumber);
+	}
 	Block *current_block;
 	FunctionsTable functionsTable;
 

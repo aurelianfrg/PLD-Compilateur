@@ -43,30 +43,26 @@ void CFG::gen_asm(ostream &os)
 	//this->gen_asm_epilogue(os);
 }
 
-string CFG::new_BB_name()
-{
-	return "bloc_" + to_string(nextBBnumber);
-}
 void CFG::add_block(Block *b)
 {
 	blocks.push_back(b);
 	nextBBnumber++;
 	current_block = b;
 }
-BasicBlock *CFG::createChildBasicBlock(Block* parentBlock)
+BasicBlock *CFG::createChildBasicBlock(Block* parentBlock, string namePrefix)
 {
 	const SymbolsTable & parentSymbolsTable = parentBlock->symbolsTable;
-	string name = new_BB_name();
+	string name = new_BB_name(namePrefix);
 	BasicBlock *bb = new BasicBlock(this, name, parentSymbolsTable, true);		// isAChild = true
 	bb->symbolsTable.setBlock(bb);
 	add_block(bb);
 	return bb;
 }
 
-BasicBlock *CFG::createSiblingBasicBlock(Block* siblingBlock)
+BasicBlock *CFG::createSiblingBasicBlock(Block* siblingBlock, string namePrefix)
 {
 	const SymbolsTable & siblingSymbolsTable = siblingBlock->symbolsTable;
-	string name = new_BB_name();
+	string name = new_BB_name(namePrefix);
 	BasicBlock *bb = new BasicBlock(this, name, siblingSymbolsTable, false); 	// isAChild = false
 	bb->symbolsTable.setBlock(bb);
 	add_block(bb);
@@ -74,7 +70,6 @@ BasicBlock *CFG::createSiblingBasicBlock(Block* siblingBlock)
 }
 FunctionBlock *CFG::createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName)
 {
-	// TODO : check name of block does not already exists
 	FunctionBlock *fb = new FunctionBlock(this, label, paramsType, paramsName);
 	fb->symbolsTable.setBlock(fb);
 	add_block(fb);
