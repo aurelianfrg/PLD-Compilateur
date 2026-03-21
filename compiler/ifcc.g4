@@ -11,12 +11,12 @@ bloc: '{' instruction* '}';
 
 instruction:
 	return_stmt		# instruction_return_stmt
+	| break_stmt 	# instruction_break_stmt
+	| continue_stmt # instruction_continue_stmt
 	| def_stmt		# instruction_def_stmt
 	| if_stmt		# instruction_if_stmt
 	| while_stmt	# instruction_while_stmt
 	| switch_stmt	# instruction_switch_stmt
-	| break_stmt 	# instruction_break_stmt
-	| continue_stmt # instruction_continue_stmt
 	| expr ';'		# instruction_expr
 	| bloc			# instruction_bloc;
 

@@ -55,6 +55,15 @@ std::any IRVisitor::visitInstruction_switch_stmt(ifccParser::Instruction_switch_
     return visitChildren(ctx);
 }
 
+std::any IRVisitor::visitInstruction_break_stmt(ifccParser::Instruction_break_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
+
+std::any
+IRVisitor::visitInstruction_continue_stmt(ifccParser::Instruction_continue_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
+
 antlrcpp::Any IRVisitor::visitBloc(ifccParser::BlocContext *ctx) { return visitChildren(ctx); }
 
 std::any IRVisitor::visitInstruction_bloc(ifccParser::Instruction_blocContext *ctx) {
@@ -80,6 +89,19 @@ std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
     // resolve return value expression
     string tempVarName = any_cast<string>(this->visit(ctx->expr()));
     cfg->current_block->add_IRInstr(IRInstr::ret, Type::INT, {tempVarName});
+    return 0;
+}
+
+std::any IRVisitor::visitBreak_stmt(ifccParser::Break_stmtContext *ctx) {
+    // cout << "current block before break: " << cfg->current_block << endl;
+    cfg->current_block->exit_true = (BasicBlock *)cfg->topBreakBlock();
+    cfg->current_block = cfg->topBreakBlock();
+    // cout << "current block after break: " << cfg->current_block << endl;
+    return 0;
+}
+
+std::any IRVisitor::visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) {
+    cfg->current_block->exit_true = (BasicBlock *)cfg->topContinueBlock();
     return 0;
 }
 
@@ -400,10 +422,10 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     test_bb->test_var_name = condVarName;
 
     BasicBlock *while_bb = cfg->createChildBasicBlock(start_bb);
-    this->visit(ctx->bloc());
     test_bb->exit_true = while_bb;
     test_bb->exit_false = end_bb;
     while_bb->exit_true = test_bb;
+    this->visit(ctx->bloc());
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"
@@ -476,14 +498,14 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     // wire code chain
     for (int i = 0; i < case_count; i++) {
         cfg->current_block = code_bbs.at(i);
-        this->visit(ctx->case_item(i));
         code_bbs.at(i)->exit_true = (i < case_count - 1) ? code_bbs.at(i + 1) : default_bb;
+        this->visit(ctx->case_item(i));
     }
     // wire default block
     if (has_default) {
         cfg->current_block = default_bb;
-        this->visit(ctx->case_default());
         default_bb->exit_true = end_bb;
+        this->visit(ctx->case_default());
     }
     cfg->current_block = end_bb;
 
