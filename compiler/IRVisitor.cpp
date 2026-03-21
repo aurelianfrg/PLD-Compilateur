@@ -93,15 +93,20 @@ std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
 }
 
 std::any IRVisitor::visitBreak_stmt(ifccParser::Break_stmtContext *ctx) {
-    // cout << "current block before break: " << cfg->current_block << endl;
-    cfg->current_block->exit_true = (BasicBlock *)cfg->topBreakBlock();
-    cfg->current_block = cfg->topBreakBlock();
-    // cout << "current block after break: " << cfg->current_block << endl;
+    Block *target_break_bb = cfg->topBreakBlock();
+    cfg->current_block->exit_true = (BasicBlock *)target_break_bb;
+    // make remaining instructions in this block unreachable by moving current_block to a dead
+    // sibling
+    cfg->current_block = cfg->createSiblingBasicBlock(cfg->current_block, "dead");
     return 0;
 }
 
 std::any IRVisitor::visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) {
-    cfg->current_block->exit_true = (BasicBlock *)cfg->topContinueBlock();
+    Block *target_continue_bb = cfg->topContinueBlock();
+    cfg->current_block->exit_true = (BasicBlock *)target_continue_bb;
+    cfg->current_block = cfg->createSiblingBasicBlock(cfg->current_block, "dead");
+    // cout << "current_block in visitContinue_stmt :" << cfg->current_block << " with label " <<
+    // cfg->current_block->label << endl;
     return 0;
 }
 
@@ -414,18 +419,29 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "while");
     start_bb->exit_true = test_bb;
 
-    // add while test blocks to stacks of blocks we can "continue" or "break" to
-    cfg->pushBreakBlock(end_bb);
-    cfg->pushContinueBlock(test_bb);
+    cfg->current_block = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
 
-    BasicBlock *while_bb = cfg->createChildBasicBlock(start_bb);
+    BasicBlock *while_bb = cfg->createChildBasicBlock(test_bb);
     test_bb->exit_true = while_bb;
     test_bb->exit_false = end_bb;
     while_bb->exit_true = test_bb;
+    cfg->current_block = while_bb;
+    // cout << "end bb :" << end_bb << " with label " << end_bb->label << endl;
+    // cout << "while bb :" << while_bb << " with label " << while_bb->label << endl;
+    // add while test blocks to stacks of blocks we can "continue" or "break" to
+    cfg->pushBreakBlock(end_bb);
+    cfg->pushContinueBlock(test_bb);
+
     this->visit(ctx->bloc());
+
+    // cout << "current_block after visiting : " << cfg->current_block << " with label " <<
+    // cfg->current_block->label << endl;
+    if (cfg->current_block->exit_true == nullptr) {
+        cfg->current_block->exit_true = test_bb;
+    }
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"

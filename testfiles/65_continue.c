@@ -4,11 +4,10 @@ int main() {
         if (a == 1) {
             a = 15;
             continue;
+            a = a + 1;
         }
         i++;
         a++;
-
-        /* a = a + 1; */
     }
     return a;
 }
