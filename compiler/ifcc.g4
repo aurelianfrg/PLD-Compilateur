@@ -23,7 +23,8 @@ instruction:
 expr:
 	'(' expr ')'								# expr_parenthesis
 	| call										# expr_call
-	| OP = ('-' | '!') expr						# expr_minus_not
+	| expr OP = ('++' | '--')   				# expr_postfix
+	| OP=('-' | '!' | '~' | '++' | '--') expr				# expr_minus_not
 	| expr OP = ('*' | '/' | '%') expr			# expr_mult_div_mod
 	| expr OP = ('+' | '-') expr				# expr_add_sub
 	| expr OP = ('<=' | '<' | '>=' | '>') expr	# expr_comp
@@ -33,15 +34,17 @@ expr:
 	| expr '|' expr								# expr_or
 	| expr '&&' expr							# expr_log_and
 	| expr '||' expr							# expr_log_or
-	| VAR '=' expr								# expr_aff // affectations should return a value
-	| CONST										# expr_const
-	| VAR										# expr_var
-	| CHAR										# expr_char;
+	| VAR OP = ('=' | '+=' | '-=' | '*=' | '/=' | '%=' 
+			| '&=' | '^=' | '|=' | '<<=' | '>>=') expr			# expr_aff // affectations should return a value
+	| CONST							            # expr_const
+	| VAR							            # expr_var
+	| CHAR      								# expr_char
+;
 
 return_stmt: RETURN expr ';';
 
-break_stmt: BREAK ';';
-continue_stmt: CONTINUE ';';
+break_stmt : BREAK ';';
+continue_stmt : CONTINUE ';';
 
 aff_stmt: VAR '=' expr ';';
 
@@ -65,8 +68,8 @@ call: VAR '(' ((expr ',')* expr)? ')';
 type_function: 'void' | TYPE;
 TYPE: 'int';
 RETURN: 'return';
-BREAK: 'break';
-CONTINUE: 'continue';
+BREAK : 'break';
+CONTINUE : 'continue';
 CONST: [0-9]+;
 VAR: [a-zA-Z_][a-zA-Z0-9_]*;
 CHAR: '\'' [a-zA-Z_]+ '\'';

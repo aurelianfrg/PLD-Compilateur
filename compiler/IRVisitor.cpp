@@ -4,6 +4,8 @@ using namespace std;
 
 IRVisitor::IRVisitor(tree::ParseTree *parseTree) { cfg = new CFG(parseTree); }
 
+IRVisitor::~IRVisitor() { delete cfg; }
+
 antlrcpp::Any IRVisitor::visitProg(ifccParser::ProgContext *ctx) {
     for (auto &function_def : ctx->function_def()) {
         this->visit(function_def);
@@ -83,8 +85,13 @@ std::any IRVisitor::visitReturn_stmt(ifccParser::Return_stmtContext *ctx) {
 
 std::any IRVisitor::visitCall(ifccParser::CallContext *ctx) {
     string functionName = ctx->VAR()->getText();
-    Function &callee = cfg->functionsTable.access(functionName);
-    Type returnType = callee.getType();
+    Type returnType = VOID;
+    if (functionName != "putchar" || functionName != "getchar") {
+        returnType = INT;
+    } else {
+        Function &callee = cfg->functionsTable.access(functionName);
+        returnType = callee.getType();
+    }
 
     Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(returnType);
 
@@ -132,10 +139,34 @@ std::any IRVisitor::visitExpr_minus_not(ifccParser::Expr_minus_notContext *ctx) 
 
     if (op == string("-")) {
         cfg->current_block->add_IRInstr(IRInstr::neg, Type::INT, {tempVar.getName(), tempVarName});
-    } else {
+    } else if (op == string("!")) {
         cfg->current_block->add_IRInstr(IRInstr::not_, Type::INT, {tempVar.getName(), tempVarName});
+    } else if (op == string("~")) {
+        cfg->current_block->add_IRInstr(IRInstr::bit_not, Type::INT,
+                                        {tempVar.getName(), tempVarName});
     }
+    if (op == string("++")) {
+        cfg->current_block->add_IRInstr(IRInstr::incr_prefix, Type::INT, {tempVarName});
+    }
+    if (op == string("--")) {
+        cfg->current_block->add_IRInstr(IRInstr::decr_prefix, Type::INT, {tempVarName});
+    }
+    return tempVar.getName();
+}
 
+std::any IRVisitor::visitExpr_postfix(ifccParser::Expr_postfixContext *ctx) {
+    string op = ctx->OP->getText();
+    string VarName = any_cast<string>(this->visit(ctx->expr()));
+    Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+
+    if (op == string("++")) {
+        cfg->current_block->add_IRInstr(IRInstr::incr_postfix, Type::INT,
+                                        {tempVar.getName(), VarName});
+    }
+    if (op == string("--")) {
+        cfg->current_block->add_IRInstr(IRInstr::decr_postfix, Type::INT,
+                                        {tempVar.getName(), VarName});
+    }
     return tempVar.getName();
 }
 
@@ -321,10 +352,34 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
 
 std::any IRVisitor::visitExpr_aff(ifccParser::Expr_affContext *ctx) {
     string varName = ctx->VAR()->getText();
-    string exprResultAddress = any_cast<string>(visit(ctx->expr()));
-
-    cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprResultAddress});
-
+    string op = ctx->OP->getText();
+    string exprAddress = any_cast<string>(visit(ctx->expr()));
+    if (op == "=") {
+        cfg->current_block->add_IRInstr(IRInstr::copy, Type::INT, {varName, exprAddress});
+    } else if (op == "+=") {
+        cfg->current_block->add_IRInstr(IRInstr::add, Type::INT, {varName, varName, exprAddress});
+    } else if (op == "-=") {
+        cfg->current_block->add_IRInstr(IRInstr::sub, Type::INT, {varName, varName, exprAddress});
+    } else if (op == "*=") {
+        cfg->current_block->add_IRInstr(IRInstr::mul, Type::INT, {varName, varName, exprAddress});
+    } else if (op == "/=") {
+        cfg->current_block->add_IRInstr(IRInstr::div, Type::INT, {varName, varName, exprAddress});
+    } else if (op == "%=") {
+        cfg->current_block->add_IRInstr(IRInstr::mod, Type::INT, {varName, varName, exprAddress});
+    } else if (op == "&=") {
+        cfg->current_block->add_IRInstr(IRInstr::bit_and, Type::INT,
+                                        {varName, varName, exprAddress});
+    } else if (op == "^=") {
+        cfg->current_block->add_IRInstr(IRInstr::bit_xor, Type::INT,
+                                        {varName, varName, exprAddress});
+    } else if (op == "|=") {
+        cfg->current_block->add_IRInstr(IRInstr::bit_or, Type::INT,
+                                        {varName, varName, exprAddress});
+    } else if (op == "<<=") {
+        cfg->current_block->add_IRInstr(IRInstr::shl, Type::INT, {varName, varName, exprAddress});
+    } else if (op == ">>=") {
+        cfg->current_block->add_IRInstr(IRInstr::shr, Type::INT, {varName, varName, exprAddress});
+    }
     // return the newly affected variable so that affectations can be chained
     return varName;
 }
@@ -338,8 +393,8 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     start_bb->exit_true = test_bb;
 
     // add while test blocks to stacks of blocks we can "continue" or "break" to
-    cfg->pushBreakBlock(end_bb);   
-    cfg->pushContinueBlock(test_bb);    
+    cfg->pushBreakBlock(end_bb);
+    cfg->pushContinueBlock(test_bb);
 
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
@@ -350,7 +405,8 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     test_bb->exit_false = end_bb;
     while_bb->exit_true = test_bb;
 
-    // when leaving the inside of the while block, remove the possibility to "continue" or "break" from this "while"
+    // when leaving the inside of the while block, remove the possibility to "continue" or "break"
+    // from this "while"
     cfg->popBreakBlock();
     cfg->popContinueBlock();
 

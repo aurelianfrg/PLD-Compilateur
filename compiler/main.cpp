@@ -8,8 +8,8 @@
 #include "generated/ifccLexer.h"
 #include "generated/ifccParser.h"
 
+#include "VariableVisitorV2.h"
 #include "IRVisitor.h"
-#include "VariableVisitor.h"
 
 using namespace antlr4;
 using namespace std;
@@ -45,13 +45,13 @@ int main(int argn, const char **argv) {
 
   // clog << "Analyse des variables : " << endl;
 
-  // VariableVisitor vv;
-  // vv.visit(tree);
+	VariableVisitorV2 vv;
+	vv.visit(tree);
 
-  // if (vv.getError())
-  // {
-  // 	exit(1);
-  // }
+	if (vv.getError())
+	{
+		exit(1);
+	}
 
   // clog << endl << "Sortie : " << endl;
 
@@ -65,6 +65,8 @@ int main(int argn, const char **argv) {
   // cfg debugging
   ofstream debug_ofs("debug.ir");
   debug_ofs << *(irVisitor.cfg) << endl;
+  ofstream dot_ofs("cfg.dot");
+  irVisitor.cfg->toDot(dot_ofs);
 
   return 0;
 }

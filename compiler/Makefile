@@ -17,7 +17,8 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccLexer.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
-	build/VariableVisitor.o \
+	build/VariableVisitorV2.o \
+	build/VariablesTable.o \
 	build/IR.o \
 	build/IRVisitor.o \
 	build/main.o
@@ -90,3 +91,5 @@ test:
 	python3 ../ifcc-test.py ../testfiles
 testv:
 	python3 ../ifcc-test.py ../testfiles --verbose
+dot:
+	dot -Tpng cfg.dot -O

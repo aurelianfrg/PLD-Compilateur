@@ -15,3 +15,5 @@ compiler/.antlr/
 ifcc-test-output
 
 .vscode
+*.dot
+*.png
