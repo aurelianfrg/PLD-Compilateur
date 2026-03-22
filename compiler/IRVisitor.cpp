@@ -51,6 +51,15 @@ std::any IRVisitor::visitInstruction_while_stmt(ifccParser::Instruction_while_st
     return visitChildren(ctx);
 }
 
+std::any
+IRVisitor::visitInstruction_dowhile_stmt(ifccParser::Instruction_dowhile_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
+
+std::any IRVisitor::visitInstruction_for_stmt(ifccParser::Instruction_for_stmtContext *ctx) {
+    return visitChildren(ctx);
+}
+
 std::any IRVisitor::visitInstruction_switch_stmt(ifccParser::Instruction_switch_stmtContext *ctx) {
     return visitChildren(ctx);
 }
@@ -441,6 +450,87 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     // cfg->current_block->label << endl;
     if (cfg->current_block->exit_true == nullptr) {
         cfg->current_block->exit_true = test_bb;
+    }
+
+    // when leaving the inside of the while block, remove the possibility to "continue" or "break"
+    // from this "while"
+    cfg->popBreakBlock();
+    cfg->popContinueBlock();
+
+    // reassign next block to be filled with incoming instructions
+    cfg->current_block = end_bb;
+
+    return 0;
+}
+
+std::any IRVisitor::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) {
+
+    Block *start_bb = cfg->current_block;
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
+    BasicBlock *dowhile_bb = cfg->createChildBasicBlock(start_bb, "dowhile");
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(dowhile_bb);
+
+    start_bb->exit_true = dowhile_bb;
+    dowhile_bb->exit_true = test_bb;
+    test_bb->exit_true = dowhile_bb;
+    test_bb->exit_false = end_bb;
+
+    cfg->current_block = dowhile_bb;
+
+    cfg->pushBreakBlock(end_bb);
+    cfg->pushContinueBlock(test_bb);
+    this->visit(ctx->bloc());
+
+    cfg->current_block = test_bb;
+
+    string condVarName = any_cast<string>(this->visit(ctx->expr()));
+    test_bb->test_var_name = condVarName;
+
+    // when leaving the inside of the while block, remove the possibility to "continue" or "break"
+    // from this "while"
+    cfg->popBreakBlock();
+    cfg->popContinueBlock();
+
+    // reassign next block to be filled with incoming instructions
+    cfg->current_block = end_bb;
+
+    return 0;
+}
+
+std::any IRVisitor::visitFor_stmt(ifccParser::For_stmtContext *ctx) {
+
+    Block *start_bb = cfg->current_block;
+
+    if (ctx->for_init() != nullptr) {
+        this->visit(ctx->for_init()); // handle initialization expression before entering the loop
+    }
+
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb);
+    BasicBlock *for_bb = cfg->createChildBasicBlock(test_bb, "for");
+    BasicBlock *inc_bb = cfg->createSiblingBasicBlock(for_bb);
+    BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
+
+    start_bb->exit_true = test_bb;
+    test_bb->exit_true = for_bb;
+    test_bb->exit_false = end_bb;
+    for_bb->exit_true = inc_bb;
+    inc_bb->exit_true = test_bb;
+
+    cfg->current_block = test_bb;
+    if (ctx->COND != nullptr) {
+        string condVarName = any_cast<string>(this->visit(ctx->COND));
+        test_bb->test_var_name = condVarName;
+    }
+
+    cfg->pushBreakBlock(end_bb);
+    cfg->pushContinueBlock(inc_bb);
+
+    cfg->current_block = for_bb;
+    this->visit(ctx->bloc());
+
+    cfg->current_block = inc_bb;
+    if (ctx->POST != nullptr) {
+        this->visit(ctx->POST); // update expression
     }
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"

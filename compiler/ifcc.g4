@@ -16,6 +16,8 @@ instruction:
 	| def_stmt		# instruction_def_stmt
 	| if_stmt		# instruction_if_stmt
 	| while_stmt	# instruction_while_stmt
+	| dowhile_stmt	# instruction_dowhile_stmt
+	| for_stmt 		# instruction_for_stmt
 	| switch_stmt	# instruction_switch_stmt
 	| expr ';'		# instruction_expr
 	| bloc			# instruction_bloc;
@@ -57,6 +59,11 @@ if_stmt:
 	)?;
 
 while_stmt: 'while' '(' expr ')' bloc;
+
+dowhile_stmt: 'do' bloc 'while' '(' expr ')' ';';
+
+for_stmt: 'for' '(' for_init? ';' COND=expr? ';' POST=expr? ')' bloc;
+for_init: TYPE def_item (',' def_item)* | expr(',' expr)* ;
 
 switch_stmt: 'switch' '(' expr ')' '{' (case_item)* (case_default)?'}';
 
