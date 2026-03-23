@@ -29,6 +29,11 @@ public:
     return to_string(offset) + "(%rbp)";
   }
 
+  string getAdressAarch64() const
+  {
+    return "[sp, "+to_string(offset)+"]";
+  }
+
   friend ostream &operator<<(ostream &ofs, const Symbol &s)
   {
     ofs << "Symbol (name=" << s.name << ", offset=" << s.offset << ", affected=" << s._affected << ", used=" << s._used;

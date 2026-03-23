@@ -27,6 +27,12 @@ int main(int argn, const char **argv) {
     cerr << "usage: ifcc path/to/file.c" << endl;
     exit(1);
   }
+  TargetArchi archi = amd64;
+  if (argn == 3) {
+	string target(argv[2]);
+	if (argv[2] == "amd64") 		archi == amd64;
+	else if (argv[2] == "aarch64") 	archi == aarch64;
+  }
 
   ANTLRInputStream input(in.str());
 
@@ -59,8 +65,21 @@ int main(int argn, const char **argv) {
   irVisitor.visit(tree);
   // asm output
   ofstream ofs("output.s");
-  irVisitor.cfg->gen_asm(ofs);
-  irVisitor.cfg->gen_asm(cout);
+  switch (archi)
+  {
+  case amd64:
+  	irVisitor.cfg->gen_asm_amd64(ofs);
+  	irVisitor.cfg->gen_asm_amd64(cout);
+	break;
+  case aarch64:
+  	irVisitor.cfg->gen_asm_aarch64(ofs);
+  	irVisitor.cfg->gen_asm_aarch64(cout);
+	break;
+  
+  default:
+	break;
+  }
+  
 
   // cfg debugging
   ofstream debug_ofs("debug.ir");

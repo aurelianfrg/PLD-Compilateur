@@ -13,12 +13,12 @@ CFG::~CFG() {
     }
 }
 
-void CFG::gen_asm(ostream &os) {
-    // this->gen_asm_prologue(os);
-    for (Block *b : blocks) {
-        b->gen_asm(os);
-    }
-    // this->gen_asm_epilogue(os);
+void CFG::gen_asm_amd64(ostream &os)
+{
+	for (Block *b : blocks)
+	{
+		b->gen_asm_amd64(os);
+	}
 }
 
 void CFG::add_block(Block *b) {
@@ -112,20 +112,25 @@ FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType,
     }
 }
 
-void Block::gen_block_linking_asm(ostream &os, IRInstr *lastInstr) {
-    // BLOCK JUMP LOGIC
-    if (this->exit_true != nullptr and this->exit_false == nullptr) {
-        // linear code
-        os << "    jmp     " << this->exit_true->label << endl;
-    } else if (this->exit_true != nullptr and this->exit_false != nullptr) {
-        string condVarName = this->test_var_name;
-        Symbol &condVar = symbolsTable.access(condVarName);
-        string address = to_string(condVar.getOffset()) + "(%rbp)";
-        os << "    movl    " << address << ", " << "%eax" << endl;
-        os << "    cmpl    " << "$0, %eax" << endl;
-        os << "    jne     " << this->exit_true->label << endl;
-        os << "    jmp     " << this->exit_false->label << endl;
-    } else if (this->exit_true == nullptr and this->exit_false == nullptr) {
+void Block::gen_block_linking_asm_amd64(ostream &os, IRInstr *lastInstr) {
+	// BLOCK JUMP LOGIC
+	if (this->exit_true != nullptr and this->exit_false == nullptr)
+	{
+		// linear code
+		os << "    jmp     " << this->exit_true->label << endl;
+	}
+	else if (this->exit_true != nullptr and this->exit_false != nullptr)
+	{
+		string condVarName = this->test_var_name;
+		Symbol &condVar = symbolsTable.access(condVarName);
+		string address = to_string(condVar.getOffset()) + "(%rbp)";
+		os << "    movl    " << address << ", " << "%eax" << endl;
+		os << "    cmpl    " << "$0, %eax" << endl;
+		os << "    jne     " << this->exit_true->label << endl;
+		os << "    jmp     " << this->exit_false->label << endl;
+	}
+	else if (this->exit_true == nullptr and this->exit_false == nullptr)
+	{
         // check if previous instruction in block was a return statement : in that case, no need to
         // write block exit assembly
         if (lastInstr != nullptr && lastInstr->getOp() == IRInstr::ret) {
@@ -137,28 +142,30 @@ void Block::gen_block_linking_asm(ostream &os, IRInstr *lastInstr) {
             os << "    ret" << endl;
             os << endl; // make function ending more visible
         }
-    } else {
+    } else 
+	{
         cerr << "INTERNAL ERROR : Unproper block linking" << endl;
     }
 }
 
-void BasicBlock::gen_asm(ostream &os) {
-    IRInstr *lastInstr = nullptr; // trick to avoid writing return instructions twice in a block
+void BasicBlock::gen_asm_amd64(ostream &os)
+{
+	IRInstr *lastInstr = nullptr; // trick to avoid writing return instructions twice in a block
                                   // ending after a return
+	os << this->label << ":" << endl;
+	for (IRInstr *instr : this->instrs)
+	{
+		instr->gen_asm_amd64(os);
+		lastInstr = instr;
+	}
 
-    os << this->label << ":" << endl;
-    for (IRInstr *instr : this->instrs) {
-        instr->gen_asm(os);
-        lastInstr = instr;
-    }
-
-    gen_block_linking_asm(os, lastInstr);
+	gen_block_linking_asm_amd64(os, lastInstr);
 }
 
-void FunctionBlock::gen_asm(ostream &os) {
-    // get the local size to move return stack pointer accordingly
-    int local_stack_size = this->symbolsTable.getLocalSize();
-    string local_stack_size_string = string("$") + to_string(local_stack_size);
+void FunctionBlock::gen_asm_amd64(ostream &os) {
+	// get the local size to move return stack pointer accordingly 
+	int local_stack_size = this->symbolsTable.getLocalSize();
+	string local_stack_size_string = string("$") + to_string(local_stack_size);
 
     os << ".globl  " << label << endl;
     os << ".type   " << label << ", @function" << endl;
@@ -178,14 +185,15 @@ void FunctionBlock::gen_asm(ostream &os) {
         os << "    movl    " << reg << ", " << param.getAdressx86() << endl;
     }
 
-    // generate asm for internal instructions
-    IRInstr *lastInstr;
-    for (IRInstr *instr : this->instrs) {
-        instr->gen_asm(os);
+	// generate asm for internal instructions
+    IRInstr *lastInstr = nullptr;
+	for (IRInstr *instr : this->instrs)
+	{
+		instr->gen_asm_amd64(os);
         lastInstr = instr;
-    }
+	}
 
-    gen_block_linking_asm(os, lastInstr);
+	gen_block_linking_asm_amd64(os, lastInstr);
 }
 
 void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params) {
@@ -239,98 +247,77 @@ IRInstr::IRInstr(Block *b, Operation op, Type t, vector<string> params) {
     this->params = params;
 }
 
-IRInstr::Operation IRInstr::getOp() { return this->op; }
-
-void IRInstr::gen_asm(ostream &os) {
-    // SPECIFIC LOGIC FOR INSTRUCTIONS
-    switch (this->op) {
-    case IRInstr::ldconst:
-        this->gen_asm_ldconst(os);
-        break;
-    case IRInstr::ret:
-        this->gen_asm_ret(os);
-        break;
-    case IRInstr::copy:
-        this->gen_asm_copy(os);
-        break;
-    case IRInstr::add:
-        this->gen_asm_add(os);
-        break;
-    case IRInstr::neg:
-        this->gen_asm_neg(os);
-        break;
-    case IRInstr::not_:
-        this->gen_asm_not(os);
-        break;
-    case IRInstr::bit_not:
-        this->gen_asm_bit_not(os);
-        break;
-    case IRInstr::sub:
-        this->gen_asm_sub(os);
-        break;
-    case IRInstr::mul:
-        this->gen_asm_mul(os);
-        break;
-    case IRInstr::div:
-        this->gen_asm_div(os);
-        break;
-    case IRInstr::mod:
-        this->gen_asm_mod(os);
-        break;
-    case IRInstr::cmp_eq:
-        this->gen_asm_eq(os);
-        break;
-    case IRInstr::cmp_diff:
-        this->gen_asm_diff(os);
-        break;
-    case IRInstr::cmp_lt:
-        this->gen_asm_lt(os);
-        break;
-    case IRInstr::cmp_le:
-        this->gen_asm_le(os);
-        break;
-    case IRInstr::bit_and:
-        this->gen_asm_and(os);
-        break;
-    case IRInstr::bit_xor:
-        this->gen_asm_xor(os);
-        break;
-    case IRInstr::bit_or:
-        this->gen_asm_or(os);
-        break;
-    case IRInstr::call:
-        this->gen_asm_call(os);
-        break;
-    case IRInstr::ldchar:
-        this->gen_asm_ldchar(os);
-        break;
-    case IRInstr::shl:
-        this->gen_asm_shl(os);
-        break;
-    case IRInstr::shr:
-        this->gen_asm_shr(os);
-        break;
-    case IRInstr::incr_prefix:
-        this->gen_asm_incr_prefix(os);
-        break;
-    case IRInstr::decr_prefix:
-        this->gen_asm_decr_prefix(os);
-        break;
-    case IRInstr::incr_postfix:
-        this->gen_asm_incr_postfix(os);
-        break;
-    case IRInstr::decr_postfix:
-        this->gen_asm_decr_postfix(os);
-        break;
-    default:
-        cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op
-             << "\"encountered when generating assembly" << endl;
-    }
+void IRInstr::gen_asm_amd64(ostream &os)
+{
+	// SPECIFIC LOGIC FOR INSTRUCTIONS
+	switch (this->op)
+	{
+	case IRInstr::ldconst:
+		this->gen_asm_ldconst_amd64(os);
+		break;
+	case IRInstr::ret:
+		this->gen_asm_ret_amd64(os);
+		break;
+	case IRInstr::copy:
+		this->gen_asm_copy_amd64(os);
+		break;
+	case IRInstr::add:
+		this->gen_asm_add_amd64(os);
+		break;
+	case IRInstr::neg:
+		this->gen_asm_neg_amd64(os);
+		break;
+	case IRInstr::not_:
+		this->gen_asm_not_amd64(os);
+		break;
+	case IRInstr::sub:
+		this->gen_asm_sub_amd64(os);
+		break;
+	case IRInstr::mul:
+		this->gen_asm_mul_amd64(os);
+		break;
+	case IRInstr::div:
+		this->gen_asm_div_amd64(os);
+		break;
+	case IRInstr::mod:
+		this->gen_asm_mod_amd64(os);
+		break;
+	case IRInstr::cmp_eq:
+		this->gen_asm_eq_amd64(os);
+		break;
+	case IRInstr::cmp_diff:
+		this->gen_asm_diff_amd64(os);
+		break;
+	case IRInstr::cmp_lt:
+		this->gen_asm_lt_amd64(os);
+		break;
+	case IRInstr::cmp_le:
+		this->gen_asm_le_amd64(os);
+		break;
+	case IRInstr::bit_and:
+		this->gen_asm_and_amd64(os);
+		break;
+	case IRInstr::bit_xor:
+		this->gen_asm_xor_amd64(os);
+		break;
+	case IRInstr::bit_or:
+		this->gen_asm_or_amd64(os);
+		break;
+	case IRInstr::call:
+		this->gen_asm_call_amd64(os);
+		break;
+	case IRInstr::ldchar:
+		this->gen_asm_ldchar_amd64(os);
+		break;
+	default:
+		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
+	}
 }
 
-void IRInstr::gen_asm_ldconst(ostream &os) {
-    string value = params.at(0);
-    string tempVarName = params.at(1);
+void IRInstr::gen_asm_ldconst_amd64(ostream &os)
+{
+	string value = params.at(0);
+	string tempVarName = params.at(1);
 
     Symbol &tempVar = block->symbolsTable.access(tempVarName);
     string address = to_string(tempVar.getOffset()) + "(%rbp)";
@@ -338,11 +325,12 @@ void IRInstr::gen_asm_ldconst(ostream &os) {
     os << "    movl    " << const_value << ", " << address << endl;
 }
 
-void IRInstr::gen_asm_ret(ostream &os) {
-    string tempVarName = params.at(0);
-    Symbol &tempVar = block->symbolsTable.access(tempVarName);
-    string address = to_string(tempVar.getOffset()) + "(%rbp)";
-    os << "    movl    " << address << ", " << "%eax" << endl;
+void IRInstr::gen_asm_ret_amd64(ostream &os)
+{
+	string tempVarName = params.at(0);
+	Symbol &tempVar = block->symbolsTable.access(tempVarName);
+	string address = to_string(tempVar.getOffset()) + "(%rbp)";
+	os << "    movl    " << address << ", " << "%eax" << endl;
 
     // TEMPORARY WAY OF HANDLING RETURNS ANYWHERE
     os << "    movq    %rbp, %rsp" << endl;
@@ -350,16 +338,17 @@ void IRInstr::gen_asm_ret(ostream &os) {
     os << "    ret" << endl;
 }
 
-void IRInstr::gen_asm_eq(ostream &os) {
-    string resultVarName = params.at(0);
-    string tempVarName1 = params.at(1);
-    string tempVarName2 = params.at(2);
-    Symbol &resultVar = block->symbolsTable.access(resultVarName);
-    Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
-    Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
-    string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
-    string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
-    string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+void IRInstr::gen_asm_eq_amd64(ostream &os)
+{
+	string resultVarName = params.at(0);
+	string tempVarName1 = params.at(1);
+	string tempVarName2 = params.at(2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
+	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
     os << "    movl    " << tempVar1Address << ", %eax" << endl;
     os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
@@ -368,16 +357,17 @@ void IRInstr::gen_asm_eq(ostream &os) {
     os << "    movl    %eax, " << resultAddress << endl;
 }
 
-void IRInstr::gen_asm_diff(ostream &os) {
-    string resultVarName = params.at(0);
-    string tempVarName1 = params.at(1);
-    string tempVarName2 = params.at(2);
-    Symbol &resultVar = block->symbolsTable.access(resultVarName);
-    Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
-    Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
-    string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
-    string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
-    string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+void IRInstr::gen_asm_diff_amd64(ostream &os)
+{
+	string resultVarName = params.at(0);
+	string tempVarName1 = params.at(1);
+	string tempVarName2 = params.at(2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
+	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
     os << "    movl    " << tempVar1Address << ", %eax" << endl;
     os << "    cmpl    " << "%eax" << ", " << tempVar2Address << endl;
@@ -386,16 +376,17 @@ void IRInstr::gen_asm_diff(ostream &os) {
     os << "    movl    %eax, " << resultAddress << endl;
 }
 
-void IRInstr::gen_asm_lt(ostream &os) {
-    string resultVarName = params.at(0);
-    string tempVarName1 = params.at(1);
-    string tempVarName2 = params.at(2);
-    Symbol &resultVar = block->symbolsTable.access(resultVarName);
-    Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
-    Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
-    string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
-    string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
-    string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+void IRInstr::gen_asm_lt_amd64(ostream &os)
+{
+	string resultVarName = params.at(0);
+	string tempVarName1 = params.at(1);
+	string tempVarName2 = params.at(2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
+	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
     os << "    movl    " << tempVar2Address << ", %eax" << endl;
     os << "    cmpl    " << "%eax" << ", " << tempVar1Address << endl;
@@ -404,16 +395,17 @@ void IRInstr::gen_asm_lt(ostream &os) {
     os << "    movl    %eax, " << resultAddress << endl;
 }
 
-void IRInstr::gen_asm_le(ostream &os) {
-    string resultVarName = params.at(0);
-    string tempVarName1 = params.at(1);
-    string tempVarName2 = params.at(2);
-    Symbol &resultVar = block->symbolsTable.access(resultVarName);
-    Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
-    Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
-    string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
-    string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
-    string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
+void IRInstr::gen_asm_le_amd64(ostream &os)
+{
+	string resultVarName = params.at(0);
+	string tempVarName1 = params.at(1);
+	string tempVarName2 = params.at(2);
+	Symbol &resultVar = block->symbolsTable.access(resultVarName);
+	Symbol &tempVar1 = block->symbolsTable.access(tempVarName1);
+	Symbol &tempVar2 = block->symbolsTable.access(tempVarName2);
+	string resultAddress = to_string(resultVar.getOffset()) + "(%rbp)";
+	string tempVar1Address = to_string(tempVar1.getOffset()) + "(%rbp)";
+	string tempVar2Address = to_string(tempVar2.getOffset()) + "(%rbp)";
 
     os << "    movl    " << tempVar2Address << ", %eax" << endl;
     os << "    cmpl    " << "%eax" << ", " << tempVar1Address << endl;
@@ -422,9 +414,10 @@ void IRInstr::gen_asm_le(ostream &os) {
     os << "    movl    %eax, " << resultAddress << endl;
 }
 
-void IRInstr::gen_asm_copy(ostream &os) {
-    string dest = params.at(0);
-    string src = params.at(1);
+void IRInstr::gen_asm_copy_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &srcVar = block->symbolsTable.access(src);
@@ -434,10 +427,11 @@ void IRInstr::gen_asm_copy(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_add(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_add_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
@@ -451,9 +445,10 @@ void IRInstr::gen_asm_add(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_neg(ostream &os) {
-    string dest = params.at(0);
-    string src = params.at(1);
+void IRInstr::gen_asm_neg_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &srcVar = block->symbolsTable.access(src);
@@ -464,9 +459,10 @@ void IRInstr::gen_asm_neg(ostream &os) {
     os << "    movl    %eax, " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_not(ostream &os) {
-    string dest = params.at(0);
-    string src = params.at(1);
+void IRInstr::gen_asm_not_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string src = params.at(1);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &srcVar = block->symbolsTable.access(src);
@@ -479,7 +475,7 @@ void IRInstr::gen_asm_not(ostream &os) {
     os << "    movl    %eax, " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_bit_not(ostream &os) {
+void IRInstr::gen_asm_bit_not_amd64(ostream &os) {
     string dest = params.at(0);
     string src = params.at(1);
 
@@ -492,10 +488,11 @@ void IRInstr::gen_asm_bit_not(ostream &os) {
     os << "    movl    %eax, " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_sub(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_sub_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
@@ -509,10 +506,11 @@ void IRInstr::gen_asm_sub(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_mul(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_mul_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
@@ -526,10 +524,11 @@ void IRInstr::gen_asm_mul(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_div(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_div_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
@@ -544,10 +543,11 @@ void IRInstr::gen_asm_div(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl; // quotient is in %eax
 }
 
-void IRInstr::gen_asm_mod(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_mod_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
@@ -562,10 +562,11 @@ void IRInstr::gen_asm_mod(ostream &os) {
     os << "    movl    " << "%edx" << ", " << destAddress << endl; // Remainder is in %edx
 }
 
-void IRInstr::gen_asm_and(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_and_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
     Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
@@ -579,12 +580,13 @@ void IRInstr::gen_asm_and(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_xor(ostream &os) {
-    string dest = params.at(0);
-    string v1 = params.at(1);
-    string v2 = params.at(2);
+void IRInstr::gen_asm_xor_amd64(ostream &os)
+{
+	string dest = params.at(0);
+	string v1 = params.at(1);
+	string v2 = params.at(2);
 
-    Symbol &destVar = block->symbolsTable.access(dest);
+	Symbol &destVar = block->symbolsTable.access(dest);
     Symbol &v1Var = block->symbolsTable.access(v1);
     Symbol &v2Var = block->symbolsTable.access(v2);
 
@@ -596,7 +598,7 @@ void IRInstr::gen_asm_xor(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_or(ostream &os) {
+void IRInstr::gen_asm_or_amd64(ostream &os) {
     string dest = params.at(0);
     string v1 = params.at(1);
     string v2 = params.at(2);
@@ -613,10 +615,10 @@ void IRInstr::gen_asm_or(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_call(ostream &os) {
-    string functionName = params.at(0);
-    string destVarName = params.at(1);
-    Type returnType = VOID;
+void IRInstr::gen_asm_call_amd64(ostream &os) {
+	string functionName = params.at(0);
+	string destVarName = params.at(1);
+	Type returnType = VOID;
     if (functionName != "putchar" && functionName != "getchar") {
         Function &function = this->block->cfg->functionsTable.access(functionName);
         returnType = function.getType();
@@ -651,17 +653,17 @@ void IRInstr::gen_asm_call(ostream &os) {
     }
 }
 
-void IRInstr::gen_asm_ldchar(ostream &os) {
-    string value = params.at(0);
-    int ascii = (int)value[1];
-    string tempVarName = params.at(1);
-    Symbol &tempVar = block->symbolsTable.access(tempVarName);
-    string address = to_string(tempVar.getOffset()) + "(%rbp)";
-    string char_value = string("$") + to_string(ascii);
-    os << "    movl    " << char_value << ", " << address << endl;
+void IRInstr::gen_asm_ldchar_amd64(ostream &os) {
+	string value = params.at(0);
+	int ascii = (int)value[1];
+	string tempVarName = params.at(1);
+	Symbol &tempVar = block->symbolsTable.access(tempVarName);
+	string address = to_string(tempVar.getOffset()) + "(%rbp)";
+	string char_value = string("$") + to_string(ascii);
+	os << "    movl    " << char_value << ", " << address << endl;
 }
 
-void IRInstr::gen_asm_shl(ostream &os) {
+void IRInstr::gen_asm_shl_amd64(ostream &os) {
     string dest = params.at(0);
     string v1 = params.at(1);
     string v2 = params.at(2);
@@ -679,7 +681,7 @@ void IRInstr::gen_asm_shl(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_shr(ostream &os) {
+void IRInstr::gen_asm_shr_amd64(ostream &os) {
     string dest = params.at(0);
     string v1 = params.at(1);
     string v2 = params.at(2);
@@ -697,7 +699,7 @@ void IRInstr::gen_asm_shr(ostream &os) {
     os << "    movl    " << "%eax" << ", " << destAddress << endl;
 }
 
-void IRInstr::gen_asm_incr_prefix(ostream &os) {
+void IRInstr::gen_asm_incr_prefix_amd64(ostream &os) {
     string varName = params.at(0);
     Symbol &var = block->symbolsTable.access(varName);
     string varAddress = to_string(var.getOffset()) + "(%rbp)";
@@ -706,7 +708,7 @@ void IRInstr::gen_asm_incr_prefix(ostream &os) {
     os << "    movl    " << "%eax" << ", " << varAddress << endl;
 }
 
-void IRInstr::gen_asm_decr_prefix(ostream &os) {
+void IRInstr::gen_asm_decr_prefix_amd64(ostream &os) {
     string varName = params.at(0);
     Symbol &var = block->symbolsTable.access(varName);
     string varAddress = to_string(var.getOffset()) + "(%rbp)";
@@ -715,7 +717,7 @@ void IRInstr::gen_asm_decr_prefix(ostream &os) {
     os << "    movl    " << "%eax" << ", " << varAddress << endl;
 }
 
-void IRInstr::gen_asm_incr_postfix(ostream &os) {
+void IRInstr::gen_asm_incr_postfix_amd64(ostream &os) {
     string dest = params.at(0);
     string src = params.at(1);
 
@@ -730,7 +732,7 @@ void IRInstr::gen_asm_incr_postfix(ostream &os) {
     os << "    movl    " << "%eax" << ", " << srcAddress << endl;
 }
 
-void IRInstr::gen_asm_decr_postfix(ostream &os) {
+void IRInstr::gen_asm_decr_postfix_amd64(ostream &os) {
     string dest = params.at(0);
     string src = params.at(1);
 
