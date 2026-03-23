@@ -26,6 +26,7 @@ void CFG::add_block(Block *b) {
     nextBBnumber++;
     current_block = b;
 }
+
 BasicBlock *CFG::createChildBasicBlock(Block *parentBlock, string namePrefix) {
     const SymbolsTable &parentSymbolsTable = parentBlock->symbolsTable;
     string name = new_BB_name(namePrefix);
@@ -110,6 +111,10 @@ FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType,
     for (int i = 0; i < paramsType.size(); ++i) {
         symbolsTable.create_new_var(paramsType.at(i), paramsName.at(i));
     }
+}
+
+IRInstr::Operation IRInstr::getOp() {
+	return this->op;
 }
 
 void Block::gen_block_linking_asm_amd64(ostream &os, IRInstr *lastInstr) {
@@ -309,6 +314,28 @@ void IRInstr::gen_asm_amd64(ostream &os)
 	case IRInstr::ldchar:
 		this->gen_asm_ldchar_amd64(os);
 		break;
+	case IRInstr::bit_not:
+		this->gen_asm_bit_not_amd64(os);
+		break;
+	case IRInstr::incr_prefix:
+		this->gen_asm_incr_prefix_amd64(os);
+		break;
+	case IRInstr::incr_postfix:
+		this->gen_asm_incr_postfix_amd64(os);
+		break;
+	case IRInstr::decr_prefix:
+		this->gen_asm_decr_prefix_amd64(os);
+		break;
+	case IRInstr::decr_postfix:
+		this->gen_asm_decr_postfix_amd64(os);
+		break;
+	case IRInstr::shr:
+		this->gen_asm_shr_amd64(os);
+		break;
+	case IRInstr::shl:
+		this->gen_asm_shl_amd64(os);
+		break;
+	
 	default:
 		cerr << "INTERNAL ERROR : Unknown instruction \"" << this->op << "\"encountered when generating assembly" << endl;
 	}

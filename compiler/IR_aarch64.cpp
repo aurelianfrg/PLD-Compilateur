@@ -12,7 +12,7 @@ void CFG::gen_asm_aarch64(ostream &os)
 
 // --- BLOCK METHODS ---
 
-void Block::gen_block_linking_asm_aarch64(ostream &os) {
+void Block::gen_block_linking_asm_aarch64(ostream &os, IRInstr *lastInstr) {
 	// BLOCK JUMP LOGIC
 	if (this->exit_true != nullptr and this->exit_false == nullptr)
 	{
@@ -45,12 +45,14 @@ void Block::gen_block_linking_asm_aarch64(ostream &os) {
 
 void BasicBlock::gen_asm_aarch64(ostream &os)
 {
+	IRInstr *lastInstr = nullptr; // trick to avoid writing return instructions twice in a block
 	os << this->label << ":" << endl;
 	for (IRInstr *instr : this->instrs)
 	{
 		instr->gen_asm_aarch64(os);
+		lastInstr = instr;
 	}
-	gen_block_linking_asm_aarch64(os);
+	gen_block_linking_asm_aarch64(os, lastInstr);
 }
 
 void FunctionBlock::gen_asm_aarch64(ostream &os) {
@@ -75,12 +77,14 @@ void FunctionBlock::gen_asm_aarch64(ostream &os) {
 	}
 
 	// generate asm for internal instructions
+	IRInstr *lastInstr = nullptr; // trick to avoid writing return instructions twice in a block
 	for (IRInstr *instr : this->instrs)
 	{
 		instr->gen_asm_aarch64(os);
+		lastInstr = instr;
 	}
 
-	gen_block_linking_asm_aarch64(os);
+	gen_block_linking_asm_aarch64(os, lastInstr);
 }
 
 void IRInstr::gen_asm_aarch64(ostream &os)
