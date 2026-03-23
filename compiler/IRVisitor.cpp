@@ -467,8 +467,8 @@ std::any IRVisitor::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) {
 
     Block *start_bb = cfg->current_block;
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
-    BasicBlock *dowhile_bb = cfg->createChildBasicBlock(start_bb, "dowhile");
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(dowhile_bb);
+    BasicBlock *dowhile_bb = cfg->createChildBasicBlock(start_bb);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(dowhile_bb, "dowhile");
 
     start_bb->exit_true = dowhile_bb;
     dowhile_bb->exit_true = test_bb;
@@ -505,8 +505,8 @@ std::any IRVisitor::visitFor_stmt(ifccParser::For_stmtContext *ctx) {
         this->visit(ctx->for_init()); // handle initialization expression before entering the loop
     }
 
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb);
-    BasicBlock *for_bb = cfg->createChildBasicBlock(test_bb, "for");
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "for");
+    BasicBlock *for_bb = cfg->createChildBasicBlock(test_bb);
     BasicBlock *inc_bb = cfg->createSiblingBasicBlock(for_bb);
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
 
