@@ -174,10 +174,22 @@ std::any VariableVisitorV2::visitExpr_add_sub(ifccParser::Expr_add_subContext *c
     return visitChildren(ctx);
 }
 
+std::any VariableVisitorV2::visitExpr_postfix(ifccParser::Expr_postfixContext *ctx)
+{
+    this -> visit(ctx -> expr());
+    return string("0");
+}
+
 std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 {
 
     std::string varName = ctx->VAR()->getText();
+
+    if(ctx -> OP -> getText() != "="){
+        Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varName)] -> access(varName);
+        var.use();
+    }
+
     if (indexVariables.find(varName) == indexVariables.end())
     {
         int line = ctx->getStart()->getLine();
