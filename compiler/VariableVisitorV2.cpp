@@ -233,16 +233,6 @@ std::any VariableVisitorV2::visitExpr_var(ifccParser::Expr_varContext *ctx)
     return varName;
 }
 
-// void VariableVisitorV2::printSymbolTable()
-// {
-//     std::cout << "Symbol Table:\n";
-//     for (const auto &[key, value] : varOffsets)
-//     {
-//         std::cout << "Variable: " << key << ", Offset: " << value << ", Already used: " << varUse[key] << "\n";
-//     }
-// }
-
-
 std::any VariableVisitorV2::visitCall(ifccParser::CallContext *ctx){
     int line = ctx->getStart()->getLine();
     std::string functionName = ctx -> VAR() -> getText();
@@ -319,4 +309,14 @@ void VariableVisitorV2::addIndexVariable(string name, int index){
     }
 
     indexVariables[name].push_back(index);
+}
+
+VariableVisitorV2::VariableVisitorV2(){
+    variablesTableVector = std::vector<VariablesTable*>();
+    indexVariables = std::map<std::string, std::list<int>>();
+    functionTable = std::map<std::string,std::pair<int,string>>();
+    functionTable["getchar"] = std::pair<int,string>(0,"int");
+    functionTable["putchar"] = std::pair<int,string>(1,"void");
+    firstBloc = false;
+    error = false;
 }

@@ -74,11 +74,13 @@ public:
 
     bool isKeyword(string& name) { return keywords.find(name) != keywords.end(); }
 
+    VariableVisitorV2();
+
 protected:
     
     std::vector<VariablesTable*> variablesTableVector;
     std::map<std::string, std::list<int>> indexVariables; // map variables and the index of their VariablesTable
     std::map<std::string,std::pair<int,string>> functionTable;
-    bool firstBloc = false;
-    bool error = false;
+    bool firstBloc;
+    bool error;
 };
