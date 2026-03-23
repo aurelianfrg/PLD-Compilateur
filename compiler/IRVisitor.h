@@ -28,9 +28,19 @@ class IRVisitor : public ifccBaseVisitor {
     virtual std::any
     visitInstruction_while_stmt(ifccParser::Instruction_while_stmtContext *ctx) override;
     virtual std::any
+    visitInstruction_dowhile_stmt(ifccParser::Instruction_dowhile_stmtContext *ctx) override;
+    virtual std::any
+    visitInstruction_for_stmt(ifccParser::Instruction_for_stmtContext *ctx) override;
+    virtual std::any
     visitInstruction_switch_stmt(ifccParser::Instruction_switch_stmtContext *ctx) override;
+    virtual std::any
+    visitInstruction_break_stmt(ifccParser::Instruction_break_stmtContext *ctx) override;
+    virtual std::any
+    visitInstruction_continue_stmt(ifccParser::Instruction_continue_stmtContext *ctx) override;
     virtual std::any visitInstruction_bloc(ifccParser::Instruction_blocContext *ctx) override;
     virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
+    virtual std::any visitBreak_stmt(ifccParser::Break_stmtContext *ctx) override;
+    virtual std::any visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) override;
     virtual std::any visitCall(ifccParser::CallContext *ctx) override;
     virtual std::any visitExpr_const(ifccParser::Expr_constContext *ctx) override;
     virtual std::any visitExpr_comp(ifccParser::Expr_compContext *context) override;
@@ -48,6 +58,8 @@ class IRVisitor : public ifccBaseVisitor {
     virtual std::any visitExpr_aff(ifccParser::Expr_affContext *ctx) override;
     virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
     virtual std::any visitWhile_stmt(ifccParser::While_stmtContext *ctx) override;
+    virtual std::any visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) override;
+    virtual std::any visitFor_stmt(ifccParser::For_stmtContext *ctx) override;
     virtual std::any visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) override;
     virtual std::any visitExpr_log_and(ifccParser::Expr_log_andContext *ctx) override;
     virtual std::any visitExpr_log_or(ifccParser::Expr_log_orContext *ctx) override;
