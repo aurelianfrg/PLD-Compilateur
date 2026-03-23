@@ -344,7 +344,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
     BasicBlock *true_bb = cfg->createChildBasicBlock(start_bb);
     this->visit(ctx->bloc(0));
     test_bb->exit_true = true_bb;
-    true_bb->exit_true = end_bb;
+    this->cfg->current_block->exit_true = end_bb;
 
     BasicBlock *prev_test_bb_i = test_bb;
     for (int i = 1; i < elseif_count + 1; ++i) {
@@ -358,7 +358,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         BasicBlock *true_bb_i = cfg->createChildBasicBlock(start_bb);
         this->visit(ctx->bloc(i));
         test_bb_i->exit_true = true_bb_i;
-        true_bb_i->exit_true = end_bb;
+        this->cfg->current_block->exit_true = end_bb;
 
         prev_test_bb_i = test_bb_i;
     }
@@ -367,7 +367,7 @@ std::any IRVisitor::visitIf_stmt(ifccParser::If_stmtContext *ctx) {
         BasicBlock *else_bb = cfg->createChildBasicBlock(start_bb);
         prev_test_bb_i->exit_false = else_bb;
         this->visit(ctx->bloc().back());
-        else_bb->exit_true = end_bb;
+        this->cfg->current_block->exit_true = end_bb;
     } else {
         prev_test_bb_i->exit_false = end_bb;
     }
