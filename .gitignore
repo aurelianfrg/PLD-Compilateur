@@ -4,5 +4,16 @@ compiler/config.mk
 # compiled files
 compiler/build/
 compiler/ifcc
+bin/
+compiler/bin
+*.s
+compiler/debug.ir
+
+#generated code
+compiler/generated/
+compiler/.antlr/
+ifcc-test-output
 
 .vscode
+*.dot
+*.png
