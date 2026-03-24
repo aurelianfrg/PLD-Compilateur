@@ -92,6 +92,8 @@ protected:
     std::vector<VariablesTable*> variablesTableVector;
     std::map<std::string, std::list<int>> indexVariables; // map variables and the index of their VariablesTable
     std::map<std::string,std::pair<int,string>> functionTable;
+    std::map<std::string, bool> varConst;
+    bool constVar = false;                   
     bool firstBloc;
     bool onLoopWithOwnVariableTable;
     bool onLoop;
