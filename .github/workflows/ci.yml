@@ -16,6 +16,9 @@ jobs:
 
       - name: install depedencies
         run: sudo apt-get update && sudo apt-get install python3
+      
+      - name: change location file
+        run: cd ./compiler
 
       - name: run tests
         run: make test
