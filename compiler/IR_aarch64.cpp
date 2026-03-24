@@ -57,7 +57,8 @@ void BasicBlock::gen_asm_aarch64(ostream &os)
 
 void FunctionBlock::gen_asm_aarch64(ostream &os) {
 	// get the local size to move return stack pointer accordingly 
-	int local_stack_size = this->symbolsTable.getLocalSize();
+	Function & currentFunction = cfg->functionsTable.access(this->label);
+	int local_stack_size = currentFunction.getLocalSize();
 	string local_stack_size_string = string("#") + to_string(local_stack_size);
 
 	os << ".globl  " << label << endl;

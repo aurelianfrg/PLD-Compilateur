@@ -19,10 +19,11 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccParser.o \
 	build/VariableVisitor.o \
 	build/VariablesTable.o \
+	build/SymbolsTable.o \
 	build/IR.o \
 	build/IR_aarch64.o \
 	build/IRVisitor.o \
-	build/main.o
+	build/main.o 
 
 
 
