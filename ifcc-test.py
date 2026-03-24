@@ -417,3 +417,7 @@ if not (all_ok or args.verbose):
     print(
         "Some test-cases failed. Run ifcc-test.py with option '--verbose' for more detailed feedback."
     )
+
+# adapt the exit code to tell github CI whether the test are validated or not
+if all_ok: exit(0) 
+else: exit(-1)

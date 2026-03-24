@@ -16,7 +16,8 @@ using namespace std;
 
 int main(int argn, const char **argv) {
   stringstream in;
-  if (argn == 2) {
+  TargetArchi archi = amd64;
+  if (argn >= 2 and argn <= 3) {
     ifstream lecture(argv[1]);
     if (!lecture.good()) {
       cerr << "error: cannot read file: " << argv[1] << endl;
@@ -24,8 +25,26 @@ int main(int argn, const char **argv) {
     }
     in << lecture.rdbuf();
   } else {
-    cerr << "usage: ifcc path/to/file.c" << endl;
+    cerr << "usage: ifcc path/to/file.c [target]" << endl;
     exit(1);
+  }
+  
+  if (argn == 3) {
+	string target(argv[2]);
+	if (target == "amd64") 		{ archi == amd64; }
+	else if (target == "aarch64")
+	{ 
+		archi == aarch64; 
+		cerr << "[WIP] aarch64 compilation is not yet implemented" << endl; 
+		exit(1); 
+	}
+	else 
+	{
+		cerr << "Invalid target. Compilation targets are" << endl;
+		cerr << " - amd64" << endl;
+		cerr << " - aarch64" << endl;
+    	exit(1);
+	}
   }
 
   ANTLRInputStream input(in.str());
@@ -59,8 +78,21 @@ int main(int argn, const char **argv) {
   irVisitor.visit(tree);
   // asm output
   ofstream ofs("output.s");
-  irVisitor.cfg->gen_asm(ofs);
-  irVisitor.cfg->gen_asm(cout);
+  switch (archi)
+  {
+  case amd64:
+  	irVisitor.cfg->gen_asm_amd64(ofs);
+  	irVisitor.cfg->gen_asm_amd64(cout);
+	break;
+  case aarch64:
+  	irVisitor.cfg->gen_asm_aarch64(ofs);
+  	irVisitor.cfg->gen_asm_aarch64(cout);
+	break;
+  
+  default:
+	break;
+  }
+  
 
   // cfg debugging
   ofstream debug_ofs("debug.ir");

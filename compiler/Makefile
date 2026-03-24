@@ -20,6 +20,7 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/VariableVisitorV2.o \
 	build/VariablesTable.o \
 	build/IR.o \
+	build/IR_aarch64.o \
 	build/IRVisitor.o \
 	build/main.o
 
