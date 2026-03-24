@@ -79,21 +79,6 @@ std::any VariableVisitorV2::visitBloc(ifccParser::BlocContext *ctx)
     return 0;
 }
 
-std::any VariableVisitorV2::visitInstruction_return_stmt(ifccParser::Instruction_return_stmtContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitInstruction_def_stmt(ifccParser::Instruction_def_stmtContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitReturn_stmt(ifccParser::Return_stmtContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
 std::any VariableVisitorV2::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 {
     for (auto item : ctx->def_item())
@@ -105,6 +90,8 @@ std::any VariableVisitorV2::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 
 std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
 {
+    std::string res = "0";
+    
     std::string varName = ctx->VAR()->getText();
     int line = ctx->getStart()->getLine();
 
@@ -112,19 +99,21 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
     {
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' is a reserved keyword." << std::endl;
         error = true;
-        return 0;
     }
     
-    if (getLastIndexOfVariablesTable(varName) == getCurrentIndex())
+    else if (getLastIndexOfVariablesTable(varName) == getCurrentIndex())
     {
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' already declared in this scope." << std::endl;
         error = true;
-        return 0;
     }
 
-    variablesTableVector.back() -> add(Variable(varName, line));
-    addIndexVariable(varName, getCurrentIndex());
-    
+    else {
+        variablesTableVector.back() -> add(Variable(varName, line));
+        addIndexVariable(varName, getCurrentIndex());
+        res = varName;
+    }
+
+
     if (ctx->expr() != nullptr)
     {
         std::string varNameExpr = any_cast<string>(this->visit(ctx->expr()));
@@ -133,7 +122,6 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
             int line = ctx->getStart()->getLine();
             std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m The function is of type 'void' and cannot be assigned to a variable.\n";
             error = true;
-            return varName;
         }
         
         else if(varNameExpr != "int" && varNameExpr != "0")
@@ -143,7 +131,7 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
         }
     }
 
-    return 0;
+    return res;
 }
 
 
@@ -258,35 +246,6 @@ std::any VariableVisitorV2::visitContinue_stmt(ifccParser::Continue_stmtContext 
 }
 
 //////////////////////////////////////////EXPRESSIONS ////////////////////////////////////////////
-std::any VariableVisitorV2::visitExpr_comp(ifccParser::Expr_compContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitExpr_parenthesis(ifccParser::Expr_parenthesisContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitExpr_minus_not(ifccParser::Expr_minus_notContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitExpr_mult_div_mod(ifccParser::Expr_mult_div_modContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitExpr_eq_diff(ifccParser::Expr_eq_diffContext *ctx)
-{
-    return visitChildren(ctx);
-}
-
-std::any VariableVisitorV2::visitExpr_add_sub(ifccParser::Expr_add_subContext *ctx)
-{
-    return visitChildren(ctx);
-}
 
 std::any VariableVisitorV2::visitExpr_postfix(ifccParser::Expr_postfixContext *ctx)
 {
@@ -296,20 +255,20 @@ std::any VariableVisitorV2::visitExpr_postfix(ifccParser::Expr_postfixContext *c
 
 std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 {
-
     std::string varName = ctx->VAR()->getText();
-
-    if(ctx -> OP -> getText() != "="){
-        Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varName)] -> access(varName);
-        var.use();
-    }
+    std::string res = varName;
 
     if (indexVariables.find(varName) == indexVariables.end())
     {
         int line = ctx->getStart()->getLine();
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' not declared in this scope.\n";
         error = true;
-        return string("0");
+        res = "0";
+    }
+    
+    else if(ctx -> OP -> getText() != "="){
+        Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varName)] -> access(varName);
+        var.use();
     }
 
     std::string varNameExpr = any_cast<string>(this->visit(ctx->expr()));
@@ -319,7 +278,6 @@ std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
         int line = ctx->getStart()->getLine();
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m The function is of type 'void' and cannot be assigned to a variable.\n";
         error = true;
-        return varName;
     }
     
     else if(varNameExpr != "int" && varNameExpr != "0")
@@ -328,7 +286,7 @@ std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
         var.use();
     }
 
-    return varName;
+    return res;
 }
 
 std::any VariableVisitorV2::visitExpr_const(ifccParser::Expr_constContext *ctx){
@@ -343,11 +301,14 @@ std::any VariableVisitorV2::visitExpr_call(ifccParser::Expr_callContext *ctx){
 std::any VariableVisitorV2::visitExpr_var(ifccParser::Expr_varContext *ctx)
 {
     std::string varName = ctx->VAR()->getText();
+    std::string res = varName;
+
     if (indexVariables.find(varName) == indexVariables.end())
     {
         int line = ctx->getStart()->getLine();
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' not declared in this scope.\n";
         error = true;
+        res = "0";
     }
 
     else
@@ -356,7 +317,7 @@ std::any VariableVisitorV2::visitExpr_var(ifccParser::Expr_varContext *ctx)
         var.use();
     }
 
-    return varName;
+    return res;
 }
 
 std::any VariableVisitorV2::visitCall(ifccParser::CallContext *ctx){
