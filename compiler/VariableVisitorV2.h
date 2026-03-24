@@ -44,6 +44,16 @@ public:
     virtual std::any visitReturn_stmt(ifccParser::Return_stmtContext *ctx) override;
     virtual std::any visitDef_stmt(ifccParser::Def_stmtContext *ctx) override;
     virtual std::any visitDef_item(ifccParser::Def_itemContext *ctx) override;
+    virtual std::any visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) override;
+    virtual std::any visitCase_item(ifccParser::Case_itemContext *ctx) override;
+    virtual std::any visitCase_default(ifccParser::Case_defaultContext *ctx) override;
+    virtual std::any visitWhile_stmt(ifccParser::While_stmtContext *ctx) override;
+    virtual std::any visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) override;
+    virtual std::any visitFor_stmt(ifccParser::For_stmtContext *ctx) override;
+    virtual std::any visitBreak_stmt(ifccParser::Break_stmtContext *ctx) override;
+    virtual std::any visitContinue_stmt(ifccParser::Continue_stmtContext *ctx) override;
+
+
 
     virtual std::any visitExpr_postfix(ifccParser::Expr_postfixContext *ctx) override;
     virtual std::any visitExpr_comp(ifccParser::Expr_compContext *ctx) override;
@@ -83,5 +93,8 @@ protected:
     std::map<std::string, std::list<int>> indexVariables; // map variables and the index of their VariablesTable
     std::map<std::string,std::pair<int,string>> functionTable;
     bool firstBloc;
+    bool onLoopWithOwnVariableTable;
+    bool onLoop;
+    bool onSwitch;
     bool error;
 };
