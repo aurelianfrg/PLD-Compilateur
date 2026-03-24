@@ -40,4 +40,4 @@ jobs:
           ANTLRLIB=$HOME/antlr4-install/lib/libantlr4-runtime.a
           EOF
           
-          make test
+          python3 ../ifcc-test.py ../testfiles/
