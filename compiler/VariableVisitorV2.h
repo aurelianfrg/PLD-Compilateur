@@ -79,6 +79,8 @@ protected:
     std::vector<VariablesTable*> variablesTableVector;
     std::map<std::string, std::list<int>> indexVariables; // map variables and the index of their VariablesTable
     std::map<std::string,std::pair<int,string>> functionTable;
+    std::map<std::string, bool> varConst;
     bool firstBloc = false;
     bool error = false;
+    bool constVar = false;                   // track if we are in a const variable declaration
 };
