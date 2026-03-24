@@ -436,21 +436,17 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     BasicBlock *while_bb = cfg->createChildBasicBlock(test_bb);
     test_bb->exit_true = while_bb;
     test_bb->exit_false = end_bb;
-    while_bb->exit_true = test_bb;
-    cfg->current_block = while_bb;
-    // cout << "end bb :" << end_bb << " with label " << end_bb->label << endl;
-    // cout << "while bb :" << while_bb << " with label " << while_bb->label << endl;
+
     // add while test blocks to stacks of blocks we can "continue" or "break" to
     cfg->pushBreakBlock(end_bb);
     cfg->pushContinueBlock(test_bb);
 
+    // fill while scope
+    cfg->current_block = while_bb;
     this->visit(ctx->bloc());
 
-    // cout << "current_block after visiting : " << cfg->current_block << " with label " <<
-    // cfg->current_block->label << endl;
-    if (cfg->current_block->exit_true == nullptr) {
-        cfg->current_block->exit_true = test_bb;
-    }
+    // link its last block back to the while
+    cfg->current_block->exit_true = test_bb;
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"
