@@ -21,92 +21,130 @@ class CFG;
 class IRInstr;
 
 // Declarations from the parser -- replace with your own
+#include "FunctionsTable.h"
 #include "Symbol.h"
 #include "SymbolsTable.h"
-#include "FunctionsTable.h"
 #include "Type.h"
+
+
+typedef enum {
+	amd64, 	// x86
+	aarch64 // ARM
+} TargetArchi;
 
 
 //! The class for one 3-address instruction
 class IRInstr {
-public:
-	/** The instructions themselves -- feel free to subclass instead */
-	typedef enum
-	{
-		// L'IR manipule les variables par leur nom (temporaire ou pas)
-		ldconst,    // VAR<-CONST 	        [const, var]
-		ret,	      // RETURN EXPR 	        [expr_address]
-		copy,	      // VAR<-VAR 	 	        [dest, source]
-		add,	      // VAR<-VAR+VAR  	      [dest, v1, v2]
-		sub,	      // VAR<-VAR-VAR  	      [dest, v1, v2]
-		mul,	      // VAR<-VAR*VAR  	      [dest, v1, v2]
-		div,	      // VAR<-VAR/VAR  	      [dest, v1, v2]
-		mod,	      // VAR<-VAR%VAR  	      [dest, v1, v2]
-		rmem,	      // VAR<-*ADDR	 	        [var, addr]
-		wmem,	      // *ADDR<-VAR	 	        [var, addr]
-		call,	      // FUNC [->VAR] VAR*	  [func, dest, param1, param2...]
-		cmp_eq,	    // VAR<-VAR==VAR 	      [dest, v1, v2]
-		cmp_diff,   // VAR<-VAR!=VAR 	      [dest, v1, v2]
-		cmp_lt,	    // VAR<-VAR<VAR  	      [dest, v1, v2]
-		cmp_le,	    // VAR<-VAR<=VAR 	      [dest, v1, v2]
-		neg,	      // VAR<- -VAR    	      [dest, source]
-		not_,	      // VAR<- !VAR    	      [dest, source]
-		bit_not,	// VAR<- ~VAR    	      [dest, source]
-		bit_and,    // VAR<-VAR&VAR 	      [dest, v1, v2]
-		bit_xor,    // VAR<-VAR^VAR 	      [dest, v1, v2]
-		bit_or,	    // VAR<-VAR|VAR 	      [dest, v1, v2]
-		shl,	      // VAR<-VAR<<VAR 	      [dest, v1, v2]
-		shr,	      // VAR<-VAR>>VAR 	      [dest, v1, v2]
-    	ldchar,      // VAR<-CHAR            [char, var]
-		incr_prefix,		// ++VAR      			[var]
-		decr_prefix,		// --VAR       			[var]
-		incr_postfix,	// VAR++      			[dest, source]
-		decr_postfix	// VAR--       			[dest, source]
-	} Operation;
+  public:
+    /** The instructions themselves -- feel free to subclass instead */
+    typedef enum {
+        // L'IR manipule les variables par leur nom (temporaire ou pas)
+        ldconst,      // VAR<-CONST 	        [const, var]
+        ret,          // RETURN EXPR 	        [expr_address]
+        copy,         // VAR<-VAR 	 	        [dest, source]
+        add,          // VAR<-VAR+VAR  	      [dest, v1, v2]
+        sub,          // VAR<-VAR-VAR  	      [dest, v1, v2]
+        mul,          // VAR<-VAR*VAR  	      [dest, v1, v2]
+        div,          // VAR<-VAR/VAR  	      [dest, v1, v2]
+        mod,          // VAR<-VAR%VAR  	      [dest, v1, v2]
+        rmem,         // VAR<-*ADDR	 	        [var, addr]
+        wmem,         // *ADDR<-VAR	 	        [var, addr]
+        call,         // FUNC [->VAR] VAR*	  [func, dest, param1, param2...]
+        cmp_eq,       // VAR<-VAR==VAR 	      [dest, v1, v2]
+        cmp_diff,     // VAR<-VAR!=VAR 	      [dest, v1, v2]
+        cmp_lt,       // VAR<-VAR<VAR  	      [dest, v1, v2]
+        cmp_le,       // VAR<-VAR<=VAR 	      [dest, v1, v2]
+        neg,          // VAR<- -VAR    	      [dest, source]
+        not_,         // VAR<- !VAR    	      [dest, source]
+        bit_not,      // VAR<- ~VAR    	      [dest, source]
+        bit_and,      // VAR<-VAR&VAR 	      [dest, v1, v2]
+        bit_xor,      // VAR<-VAR^VAR 	      [dest, v1, v2]
+        bit_or,       // VAR<-VAR|VAR 	      [dest, v1, v2]
+        shl,          // VAR<-VAR<<VAR 	      [dest, v1, v2]
+        shr,          // VAR<-VAR>>VAR 	      [dest, v1, v2]
+        ldchar,       // VAR<-CHAR            [char, var]
+        incr_prefix,  // ++VAR      			[var]
+        decr_prefix,  // --VAR       			[var]
+        incr_postfix, // VAR++      			[dest, source]
+        decr_postfix  // VAR--       			[dest, source]
+    } Operation;
 
-	/**  constructor */
-	IRInstr(Block *b, Operation op, Type t, vector<string> params);
+    /**  constructor */
+    IRInstr(Block *b, Operation op, Type t, vector<string> params);
 
-	/** Actual code generation */
-	void gen_asm(ostream &os); /**< x86 assembly code generation for this IR instruction */
-	void gen_asm_ldconst(ostream &os);
-	void gen_asm_ret(ostream &os);
-	void gen_asm_copy(ostream &os);
-	void gen_asm_add(ostream &os);
-	void gen_asm_sub(ostream &os);
-	void gen_asm_mul(ostream &os);
-	void gen_asm_div(ostream &os);
-	void gen_asm_mod(ostream &os);
-	void gen_asm_neg(ostream &os);
-	void gen_asm_not(ostream &os);
-	void gen_asm_bit_not(ostream &os);
-	void gen_asm_eq(ostream &os);
-	void gen_asm_diff(ostream &os);
-	void gen_asm_lt(ostream &os);
-	void gen_asm_le(ostream &os);
-	void gen_asm_and(ostream &os);
-	void gen_asm_xor(ostream &os);
-	void gen_asm_or(ostream &os);
-	void gen_asm_call(ostream &os);
-	void gen_asm_ldchar(ostream &os);
-	void gen_asm_shl(ostream &os);
-	void gen_asm_shr(ostream &os);
-	void gen_asm_incr_prefix(ostream &os);
-	void gen_asm_decr_prefix(ostream &os);
-	void gen_asm_incr_postfix(ostream &os);
-	void gen_asm_decr_postfix(ostream &os);
+	/** AMD64 code generation */
+	void gen_asm_amd64(ostream &os);
+	void gen_asm_ldconst_amd64(ostream &os);
+	void gen_asm_ret_amd64(ostream &os);
+	void gen_asm_copy_amd64(ostream &os);
+	void gen_asm_add_amd64(ostream &os);
+	void gen_asm_sub_amd64(ostream &os);
+	void gen_asm_mul_amd64(ostream &os);
+	void gen_asm_div_amd64(ostream &os);
+	void gen_asm_mod_amd64(ostream &os);
+	void gen_asm_neg_amd64(ostream &os);
+	void gen_asm_not_amd64(ostream &os);
+	void gen_asm_eq_amd64(ostream &os);
+	void gen_asm_diff_amd64(ostream &os);
+	void gen_asm_lt_amd64(ostream &os);
+	void gen_asm_le_amd64(ostream &os);
+	void gen_asm_and_amd64(ostream &os);
+	void gen_asm_xor_amd64(ostream &os);
+	void gen_asm_or_amd64(ostream &os);
+	void gen_asm_call_amd64(ostream &os);
+	void gen_asm_ldchar_amd64(ostream &os);
+	void gen_asm_bit_not_amd64(ostream &os);
+    void gen_asm_shl_amd64(ostream &os);
+    void gen_asm_shr_amd64(ostream &os);
+    void gen_asm_incr_prefix_amd64(ostream &os);
+    void gen_asm_decr_prefix_amd64(ostream &os);
+    void gen_asm_incr_postfix_amd64(ostream &os);
+    void gen_asm_decr_postfix_amd64(ostream &os);
 
-  	friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
-	void toDot(ostream & os); // generate graph in dot format 
+	/** AARCH64 code generation */
+	void gen_asm_aarch64(ostream &os);
+	void gen_asm_ldconst_aarch64(ostream &os);
+	void gen_asm_ret_aarch64(ostream &os);
+	void gen_asm_copy_aarch64(ostream &os);
+	void gen_asm_add_aarch64(ostream &os);
+	void gen_asm_sub_aarch64(ostream &os);
+	void gen_asm_mul_aarch64(ostream &os);
+	void gen_asm_div_aarch64(ostream &os);
+	void gen_asm_mod_aarch64(ostream &os);
+	void gen_asm_neg_aarch64(ostream &os);
+	void gen_asm_not_aarch64(ostream &os);
+	void gen_asm_eq_aarch64(ostream &os);
+	void gen_asm_diff_aarch64(ostream &os);
+	void gen_asm_lt_aarch64(ostream &os);
+	void gen_asm_le_aarch64(ostream &os);
+	void gen_asm_and_aarch64(ostream &os);
+	void gen_asm_xor_aarch64(ostream &os);
+	void gen_asm_or_aarch64(ostream &os);
+	void gen_asm_call_aarch64(ostream &os);
+	void gen_asm_ldchar_aarch64(ostream &os);
+	void gen_asm_bit_not_aarch64(ostream &os);
+    void gen_asm_shl_aarch64(ostream &os);
+    void gen_asm_shr_aarch64(ostream &os);
+    void gen_asm_incr_prefix_aarch64(ostream &os);
+    void gen_asm_decr_prefix_aarch64(ostream &os);
+    void gen_asm_incr_postfix_aarch64(ostream &os);
+    void gen_asm_decr_postfix_aarch64(ostream &os);
 
-	Operation getOp();
 
-private:
-	Block *block; /**< The BB this instruction belongs to, which provides a pointer to the CFG this instruction belong to */
-	Operation op;
-	Type t;
-	vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d, params;  for wmem and rmem: choose yourself */
-						   // if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very important) comment becomes useless: it would be a better design.
+    friend ostream &operator<<(ostream &os, const IRInstr &irInstr);
+    void toDot(ostream &os); // generate graph in dot format
+
+    Operation getOp();
+
+  private:
+    Block *block; /**< The BB this instruction belongs to, which provides a pointer to the CFG this
+                     instruction belong to */
+    Operation op;
+    Type t;
+    vector<string> params; /**< For 3-op instrs: d, x, y; for ldconst: d, c;  For call: label, d,
+                              params;  for wmem and rmem: choose yourself */
+    // if you subclass IRInstr, each IRInstr subclass has its parameters and the previous (very
+    // important) comment becomes useless: it would be a better design.
 };
 
 /**  The class for a basic block */
@@ -136,44 +174,51 @@ class Block
 {
 public:
 	virtual ~Block();
+	
+	virtual void gen_asm_amd64(ostream &os) = 0; 
+	virtual void gen_asm_aarch64(ostream &os) = 0; 
+	void gen_block_linking_asm_amd64(ostream &os, IRInstr *lastInstr);
+	void gen_block_linking_asm_aarch64(ostream &os, IRInstr *lastInstr);
 
-	virtual void gen_asm(ostream &os) = 0; 
-	void gen_block_linking_asm(ostream &os, IRInstr* lastInstr);
+    void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
 
-  	void add_IRInstr(IRInstr::Operation op, Type t, vector<string> params);
+    virtual void print(ostream &os) const = 0;
+    friend ostream &operator<<(ostream &os, const Block &b);
+    void toDot(ostream &os); // generate graph in dot format
 
-	virtual void print(ostream& os) const = 0;
-	friend ostream &operator<<(ostream &os, const Block &b);
-	void toDot(ostream & os); // generate graph in dot format 
-
-	string label;			  /**< label of the BB, also will be the label in the generated code */
-	CFG *cfg;				  /** < the CFG where this block belongs */
-	vector<IRInstr *> instrs; /** < the instructions themselves. */
-	SymbolsTable symbolsTable;
-	BasicBlock *exit_true = nullptr;	  /**< pointer to the next basic block, true branch. If nullptr, return from procedure */
-	BasicBlock *exit_false = nullptr;	  /**< pointer to the next basic block, false branch. If null_ptr, the basic block ends with an unconditional jump */
-	string test_var_name;	  /** < when generating IR code for an if(expr) or while(expr) etc,
-													store here the name of the variable that holds the value of expr */
+    string label;             /**< label of the BB, also will be the label in the generated code */
+    CFG *cfg;                 /** < the CFG where this block belongs */
+    vector<IRInstr *> instrs; /** < the instructions themselves. */
+    SymbolsTable symbolsTable;
+    BasicBlock *exit_true = nullptr; /**< pointer to the next basic block, true branch. If nullptr,
+                                        return from procedure */
+    BasicBlock *exit_false =
+        nullptr; /**< pointer to the next basic block, false branch. If null_ptr, the basic block
+                    ends with an unconditional jump */
+    string test_var_name; /** < when generating IR code for an if(expr) or while(expr) etc,
+                                                          store here the name of the variable that
+                             holds the value of expr */
 };
 
 class BasicBlock : public Block
 {
 public:
 	BasicBlock(CFG *cfg, string label, SymbolsTable currentSymbolsTable, bool isAChild);
-	void gen_asm(ostream &os) override; /**< x86 assembly code generation for this basic block (very simple) */
+	void gen_asm_amd64(ostream &os) override; 
+	void gen_asm_aarch64(ostream &os) override; 
 
-	virtual void print(ostream& os) const override;
+    virtual void print(ostream &os) const override;
 };
 
 class FunctionBlock : public Block
 {
 public:
 	FunctionBlock(CFG *cfg, string label, vector<Type> paramsType, vector<string> paramsName);
-	void gen_asm(ostream &os) override; 
+	void gen_asm_amd64(ostream &os) override; 
+	void gen_asm_aarch64(ostream &os) override; 
 
-	virtual void print(ostream& os) const override;
+    virtual void print(ostream &os) const override;
 };
-	
 
 /** The class for the control flow graph, also includes the symbol table */
 
@@ -185,37 +230,61 @@ The exit block is the one with both exit pointers equal to nullptr.
 
 */
 class CFG {
-public:
-  	CFG(tree::ParseTree *ast);
-	virtual ~CFG();
+  public:
+    CFG(tree::ParseTree *ast);
+    virtual ~CFG();
 
- 	tree::ParseTree *ast; /**< The AST this CFG comes from */
+    tree::ParseTree *ast; /**< The AST this CFG comes from */
 
-	void add_block(Block *b);
-	BasicBlock *createChildBasicBlock(const SymbolsTable & parentSymbolsTable);								// create a new basicblock that inherits its parents Symbols and has a new local table
-	BasicBlock *createSiblingBasicBlock(const SymbolsTable & siblingSymbolsTable);							// create a new basicblock that copies its siblings symbols
-	FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); 	// create a new function block, with a completely new symbolsTable initialized with its parameters
+    void add_block(Block *b);
+    BasicBlock *
+    createChildBasicBlock(Block *parentBlock,
+                          string namePrefix = "block"); // create a new basicblock that inherits its
+                                                        // parents Symbols and has a new local table
+    BasicBlock *createSiblingBasicBlock(
+        Block *siblingBlock,
+        string namePrefix = "block"); // create a new basicblock that copies its siblings symbols
+    FunctionBlock *createFunctionBlock(
+        string label, vector<Type> paramsType,
+        vector<string> paramsName); // create a new function block, with a completely new
+                                    // symbolsTable initialized with its parameters
 
-  // x86 code generation: could be encapsulated in a processor class in a
-  // retargetable compiler
-  void gen_asm(ostream &os);
-  string IR_reg_to_asm(
-      string reg); /**< helper method: inputs a IR reg or input variable,
-                      returns e.g. "-24(%rbp)" for the proper value of 24 */
-  void gen_asm_prologue(ostream &os);
-  void gen_asm_epilogue(ostream &os);
+	// x86 code generation: could be encapsulated in a processor class in a
+	// retargetable compiler
+	void gen_asm_amd64(ostream &os); 
+	void gen_asm_aarch64(ostream &os); 
 
-	// block management
-	string new_BB_name();
-	Block *current_block;
-	FunctionsTable functionsTable;
+    // block management
+    string new_BB_name(string prefix = "block") { return prefix + "_" + to_string(nextBBnumber); }
+    Block *current_block;
+    FunctionsTable functionsTable;
 
-  	friend ostream &operator<<(ostream &os, const CFG &cfg);
-	void toDot(ostream & os); // generate graph in dot format 
+    friend ostream &operator<<(ostream &os, const CFG &cfg);
+    void toDot(ostream &os); // generate graph in dot format
 
-protected:
-	
-	int nextBBnumber; /**< just for naming */
+    void pushContinueBlock(Block *block) { continueBlocks.push(block); }
+    void pushBreakBlock(Block *block) { breakBlocks.push(block); }
+    Block *topContinueBlock() { return continueBlocks.top(); }
+    Block *topBreakBlock() { return breakBlocks.top(); }
+    Block *popContinueBlock() {
+        Block *topBlock = continueBlocks.top();
+        continueBlocks.pop();
+        return topBlock;
+    }
+    Block *popBreakBlock() {
+        Block *topBlock = breakBlocks.top();
+        breakBlocks.pop();
+        return topBlock;
+    }
+    size_t getContinueBlocksSize() { return continueBlocks.size(); }
+    size_t getBreakBlocksSize() { return breakBlocks.size(); }
 
-	vector<Block *> blocks; /**< all the basic blocks of this CFG*/
+  protected:
+    int nextBBnumber; /**< just for naming */
+
+    vector<Block *> blocks; /**< all the basic blocks of this CFG*/
+    stack<Block *>
+        continueBlocks; // stack of Block to jump to when a "continue" statement is encountered;
+    stack<Block *>
+        breakBlocks; // stack of Block to jump to when a "break" statement is encountered;
 };

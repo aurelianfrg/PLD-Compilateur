@@ -2,6 +2,9 @@
 
 ### antlr4 install on ubuntu or wsl
 ```
+sudo apt update
+sudo apt upgrade
+sudo apt install cmake default-jdk unzip build-essential
 mkdir ~/antlr4-install
 cd ~/antlr4-install
 wget https://www.antlr.org/download/antlr-4.13.2-complete.jar
