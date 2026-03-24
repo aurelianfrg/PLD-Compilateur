@@ -17,7 +17,7 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccLexer.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
-	build/VariableVisitorV2.o \
+	build/VariableVisitor.o \
 	build/VariablesTable.o \
 	build/IR.o \
 	build/IR_aarch64.o \

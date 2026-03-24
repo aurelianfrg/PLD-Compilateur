@@ -48,7 +48,7 @@ return_stmt: RETURN expr ';';
 break_stmt : BREAK ';';
 continue_stmt : CONTINUE ';';
 
-def_stmt: TYPE def_item (',' def_item)* ';';
+def_stmt: ('const')? TYPE def_item (',' def_item)* ';';
 def_item: VAR ('=' expr)?;
 
 if_stmt:
@@ -77,7 +77,7 @@ BREAK : 'break';
 CONTINUE : 'continue';
 CONST: [0-9]+;
 VAR: [a-zA-Z_][a-zA-Z0-9_]*;
-CHAR: '\'' [a-zA-Z_]+ '\'';
+CHAR: '\'' [\u0000-\u007F]+ '\'';
 RANGE: '...';
 
 COMMENT: '/*' .*? '*/' -> skip;
