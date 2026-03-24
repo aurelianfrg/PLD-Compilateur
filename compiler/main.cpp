@@ -76,6 +76,14 @@ int main(int argn, const char **argv) {
 
   IRVisitor irVisitor(tree);
   irVisitor.visit(tree);
+
+  // cfg debugging
+  ofstream debug_ofs("debug.ir");
+  debug_ofs << *(irVisitor.cfg) << endl;
+  ofstream dot_ofs("cfg.dot");
+  irVisitor.cfg->toDot(dot_ofs);
+
+
   // asm output
   ofstream ofs("output.s");
   switch (archi)
@@ -92,13 +100,6 @@ int main(int argn, const char **argv) {
   default:
 	break;
   }
-  
-
-  // cfg debugging
-  ofstream debug_ofs("debug.ir");
-  debug_ofs << *(irVisitor.cfg) << endl;
-  ofstream dot_ofs("cfg.dot");
-  irVisitor.cfg->toDot(dot_ofs);
 
   return 0;
 }
