@@ -552,7 +552,6 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     bool has_default = ctx->case_default() != nullptr;
 
     Block *start_block = cfg->current_block;
-    Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
 
     // evaluate source expr
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
@@ -580,6 +579,8 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
         }
         caseValueLow = ctx->case_item(i)->LOW_VALUE->getText();
         cfg->current_block = test_bbs.at(i);
+
+        Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
         test_bbs.at(i)->test_var_name = condVarName;
 
         // load the case constant into a temporary variable first
@@ -587,19 +588,43 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
         cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
                                         {caseValueLow, caseConstVarLow.getName()});
 
-        // compare the condition variable with the case constant variable
-        cfg->current_block->add_IRInstr(
-            IRInstr::cmp_eq, Type::INT,
-            {tempVar.getName(), condVarName, caseConstVarLow.getName()});
-
         if (has_range) {
-            Symbol &caseConstVarHigh =
-                cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            // Check: caseValueLow <= condVar
+            Symbol &lowBound = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
             cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
-                                            {caseValueHigh, caseConstVarHigh.getName()});
+                                            {caseValueLow, lowBound.getName()});
+            Symbol &checkLow = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::cmp_le, Type::INT,
+                                            {checkLow.getName(), lowBound.getName(), condVarName});
+            //  low <= condVar
+
+            // Check: condVar <= caseValueHigh
+            Symbol &highBound = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
+                                            {caseValueHigh, highBound.getName()});
+            Symbol &checkHigh = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
             cfg->current_block->add_IRInstr(
                 IRInstr::cmp_le, Type::INT,
-                {tempVar.getName(), condVarName, caseConstVarHigh.getName()});
+                {checkHigh.getName(), condVarName, highBound.getName()});
+            //  condVar <= high
+
+            // checkLow + checkHigh -> sum (equals 2 only if both true)
+            Symbol &andVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(
+                IRInstr::bit_and, Type::INT,
+                {andVar.getName(), checkLow.getName(), checkHigh.getName()});
+
+            // load constant 1
+            Symbol &one = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT, {"1", one.getName()});
+
+            // tempVar = (and == 1)
+            cfg->current_block->add_IRInstr(IRInstr::cmp_eq, Type::INT,
+                                            {tempVar.getName(), andVar.getName(), one.getName()});
+        } else {
+            cfg->current_block->add_IRInstr(
+                IRInstr::cmp_eq, Type::INT,
+                {tempVar.getName(), condVarName, caseConstVarLow.getName()});
         }
         test_bbs.at(i)->exit_true = code_bbs.at(i);
         test_bbs.at(i)->exit_false = (i < case_count - 1) ? test_bbs.at(i + 1) : default_bb;
@@ -607,14 +632,15 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     // wire code chain
     for (int i = 0; i < case_count; i++) {
         cfg->current_block = code_bbs.at(i);
-        code_bbs.at(i)->exit_true = (i < case_count - 1) ? code_bbs.at(i + 1) : default_bb;
         this->visit(ctx->case_item(i));
+        this->cfg->current_block->exit_true =
+            (i < case_count - 1) ? code_bbs.at(i + 1) : default_bb;
     }
     // wire default block
     if (has_default) {
         cfg->current_block = default_bb;
-        default_bb->exit_true = end_bb;
         this->visit(ctx->case_default());
+        this->cfg->current_block->exit_true = end_bb;
     }
     cfg->current_block = end_bb;
 
