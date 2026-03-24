@@ -77,7 +77,7 @@ BREAK : 'break';
 CONTINUE : 'continue';
 CONST: [0-9]+;
 VAR: [a-zA-Z_][a-zA-Z0-9_]*;
-CHAR: '\'' [a-zA-Z_]+ '\'';
+CHAR: '\'' [\u0000-\u007F]+ '\'';
 RANGE: '...';
 
 COMMENT: '/*' .*? '*/' -> skip;

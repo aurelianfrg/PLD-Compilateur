@@ -4,8 +4,8 @@ void print_int(int x) {
         x = -x;
     }
     if (x / 10 != 0)
-        print_int(x / 10);
-    putchar(x % 10 + '0');
+        {print_int(x / 10);}
+    putchar(x % 10);
 }
 int main() {
     print_int(-273);
