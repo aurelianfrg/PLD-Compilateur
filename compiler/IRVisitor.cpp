@@ -500,38 +500,41 @@ std::any IRVisitor::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) {
 std::any IRVisitor::visitFor_stmt(ifccParser::For_stmtContext *ctx) {
 
     Block *start_bb = cfg->current_block;
+    BasicBlock *decl_bb = cfg->createChildBasicBlock(start_bb);
 
+    cfg->current_block = decl_bb;
     if (ctx->for_init() != nullptr) {
         this->visit(ctx->for_init()); // handle initialization expression before entering the loop
     }
 
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "for");
-    BasicBlock *for_bb = cfg->createChildBasicBlock(test_bb);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(decl_bb, "for");
+    BasicBlock *for_bb = cfg->createSiblingBasicBlock(test_bb);
     BasicBlock *inc_bb = cfg->createSiblingBasicBlock(for_bb);
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
 
-    start_bb->exit_true = test_bb;
-    test_bb->exit_true = for_bb;
-    test_bb->exit_false = end_bb;
-    for_bb->exit_true = inc_bb;
-    inc_bb->exit_true = test_bb;
+    start_bb->exit_true = decl_bb;
+    decl_bb->exit_true = test_bb;
 
     cfg->current_block = test_bb;
     if (ctx->COND != nullptr) {
         string condVarName = any_cast<string>(this->visit(ctx->COND));
         test_bb->test_var_name = condVarName;
     }
+    test_bb->exit_true = for_bb;
+    test_bb->exit_false = end_bb;
 
     cfg->pushBreakBlock(end_bb);
     cfg->pushContinueBlock(inc_bb);
 
     cfg->current_block = for_bb;
     this->visit(ctx->bloc());
+    this->cfg->current_block->exit_true = inc_bb;
 
     cfg->current_block = inc_bb;
     if (ctx->POST != nullptr) {
         this->visit(ctx->POST); // update expression
     }
+    inc_bb->exit_true = test_bb;
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"

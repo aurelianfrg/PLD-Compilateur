@@ -17,3 +17,4 @@ ifcc-test-output
 .vscode
 *.dot
 *.png
+a.out

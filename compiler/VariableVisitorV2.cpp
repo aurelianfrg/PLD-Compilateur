@@ -81,10 +81,17 @@ std::any VariableVisitorV2::visitBloc(ifccParser::BlocContext *ctx)
 
 std::any VariableVisitorV2::visitDef_stmt(ifccParser::Def_stmtContext *ctx)
 {
+
+    std::string fullText = ctx->getText();
+    if (fullText.size() >= 5 && fullText.substr(0, 5) == "const")
+    {
+        constVar = true;
+    }
     for (auto item : ctx->def_item())
     {
         this->visit(item);
     }
+    constVar = false;
     return 0;
 }
 
@@ -94,7 +101,7 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
     
     std::string varName = ctx->VAR()->getText();
     int line = ctx->getStart()->getLine();
-
+    varConst[varName] = constVar;
     if (isKeyword(varName))
     {
         std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' is a reserved keyword." << std::endl;
@@ -269,6 +276,13 @@ std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
     else if(ctx -> OP -> getText() != "="){
         Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varName)] -> access(varName);
         var.use();
+    }
+
+    if (varConst[varName])
+    {
+        int line = ctx->getStart()->getLine();
+        std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m Variable '" << varName << "' is constant and cannot be reassigned.\n";
+        error = true;
     }
 
     std::string varNameExpr = any_cast<string>(this->visit(ctx->expr()));
