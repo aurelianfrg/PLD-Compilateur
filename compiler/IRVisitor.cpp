@@ -471,20 +471,20 @@ std::any IRVisitor::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) {
     BasicBlock *test_bb = cfg->createSiblingBasicBlock(dowhile_bb, "dowhile");
 
     start_bb->exit_true = dowhile_bb;
-    dowhile_bb->exit_true = test_bb;
-    test_bb->exit_true = dowhile_bb;
-    test_bb->exit_false = end_bb;
 
     cfg->current_block = dowhile_bb;
 
     cfg->pushBreakBlock(end_bb);
     cfg->pushContinueBlock(test_bb);
     this->visit(ctx->bloc());
+    this->cfg->current_block->exit_true = test_bb;
 
     cfg->current_block = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
+    test_bb->exit_true = dowhile_bb;
+    test_bb->exit_false = end_bb;
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"
