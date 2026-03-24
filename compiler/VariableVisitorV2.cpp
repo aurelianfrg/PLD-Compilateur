@@ -63,7 +63,7 @@ std::any VariableVisitorV2::visitFunction_def(ifccParser::Function_defContext *c
 
 std::any VariableVisitorV2::visitBloc(ifccParser::BlocContext *ctx)
 {
-    if(not firstBloc){
+    if(not firstBloc and not onLoopWithOwnVariableTable){
         newVariableTable();
     }
     else{
@@ -72,7 +72,9 @@ std::any VariableVisitorV2::visitBloc(ifccParser::BlocContext *ctx)
     
     visitChildren(ctx);
     
-    delVariableTable();
+    if(not onLoopWithOwnVariableTable){
+        delVariableTable();
+    }
 
     return 0;
 }
@@ -151,6 +153,118 @@ std::any VariableVisitorV2::visitDef_item(ifccParser::Def_itemContext *ctx)
     return 0;
 }
 
+
+std::any VariableVisitorV2::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx){
+    bool onSwitchAct = onSwitch;
+    onSwitch = true;
+
+    visitChildren(ctx);
+
+    onSwitch = onSwitchAct;
+    return 0;
+}
+
+std::any VariableVisitorV2::visitCase_item(ifccParser::Case_itemContext *ctx){
+
+    newVariableTable();
+    
+    for(auto instr : ctx -> instruction())
+    {
+        this -> visit(instr);
+    }
+    
+    delVariableTable();
+
+    return 0;
+}
+
+std::any VariableVisitorV2::visitCase_default(ifccParser::Case_defaultContext *ctx){
+
+    newVariableTable();
+    
+    for(auto instr : ctx -> instruction())
+    {
+        this -> visit(instr);
+    }
+    
+    delVariableTable();
+
+    return 0;
+}
+
+
+std::any VariableVisitorV2::visitWhile_stmt(ifccParser::While_stmtContext *ctx){
+    bool onLoopAct = onLoop;
+    onLoop = true;
+
+    visitChildren(ctx);
+
+    onLoop = onLoopAct;
+    return 0;
+}
+
+std::any VariableVisitorV2::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx){
+    bool onLoopWithOwnVariableTableAct = onLoopWithOwnVariableTable;
+    bool onLoopAct = onLoop;
+    
+    onLoopWithOwnVariableTable = true;
+    onLoop = true;
+    
+    newVariableTable();
+    
+    this -> visit(ctx->bloc());
+    this -> visit(ctx->expr());
+    
+    delVariableTable();
+
+    onLoopWithOwnVariableTable = onLoopWithOwnVariableTableAct;
+    onLoop = onLoopAct;
+
+    return 0;
+}
+
+std::any VariableVisitorV2::visitFor_stmt(ifccParser::For_stmtContext *ctx){
+    bool onLoopWithOwnVariableTableAct = onLoopWithOwnVariableTable;
+    bool onLoopAct = onLoop;
+    
+    onLoopWithOwnVariableTable = true;
+    onLoop = true;
+    
+    newVariableTable();
+    
+    visitChildren(ctx);
+    
+    delVariableTable();
+
+    onLoopWithOwnVariableTable = onLoopWithOwnVariableTableAct;
+    onLoop = onLoopAct;
+
+    return 0;
+}
+
+std::any VariableVisitorV2::visitBreak_stmt(ifccParser::Break_stmtContext *ctx)
+{
+    if(not onLoop and not onSwitch){
+        int line = ctx->getStart()->getLine();
+        std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m a break statement may only be used within a loop or switch.\n";
+        error = true;
+    }
+
+    return 0;
+}
+
+std::any VariableVisitorV2::visitContinue_stmt(ifccParser::Continue_stmtContext *ctx)
+{
+    if(not onLoop){
+        int line = ctx->getStart()->getLine();
+        std::cerr << "\e[31mError:\e[39m \e[33mLigne " << line << ":\e[39m a continue statement may only be used within a loop.\n";
+        error = true;
+    }
+
+    return 0;
+}
+
+//////////////////////////////////////////EXPRESSIONS ////////////////////////////////////////////
 std::any VariableVisitorV2::visitExpr_comp(ifccParser::Expr_compContext *ctx)
 {
     return visitChildren(ctx);
@@ -181,10 +295,22 @@ std::any VariableVisitorV2::visitExpr_add_sub(ifccParser::Expr_add_subContext *c
     return visitChildren(ctx);
 }
 
+std::any VariableVisitorV2::visitExpr_postfix(ifccParser::Expr_postfixContext *ctx)
+{
+    this -> visit(ctx -> expr());
+    return string("0");
+}
+
 std::any VariableVisitorV2::visitExpr_aff(ifccParser::Expr_affContext *ctx)
 {
 
     std::string varName = ctx->VAR()->getText();
+
+    if(ctx -> OP -> getText() != "="){
+        Variable & var = variablesTableVector[getLastIndexOfVariablesTable(varName)] -> access(varName);
+        var.use();
+    }
+
     if (indexVariables.find(varName) == indexVariables.end())
     {
         int line = ctx->getStart()->getLine();
@@ -247,16 +373,6 @@ std::any VariableVisitorV2::visitExpr_var(ifccParser::Expr_varContext *ctx)
     return varName;
 }
 
-// void VariableVisitorV2::printSymbolTable()
-// {
-//     std::cout << "Symbol Table:\n";
-//     for (const auto &[key, value] : varOffsets)
-//     {
-//         std::cout << "Variable: " << key << ", Offset: " << value << ", Already used: " << varUse[key] << "\n";
-//     }
-// }
-
-
 std::any VariableVisitorV2::visitCall(ifccParser::CallContext *ctx){
     int line = ctx->getStart()->getLine();
     std::string functionName = ctx -> VAR() -> getText();
@@ -283,6 +399,7 @@ std::any VariableVisitorV2::visitExpr_char(ifccParser::Expr_charContext *ctx){
     return string("0");
 }
 
+//////////////////////////////////////////UTILS ////////////////////////////////////////////
 
 void VariableVisitorV2::newVariableTable()
 {
@@ -333,4 +450,17 @@ void VariableVisitorV2::addIndexVariable(string name, int index){
     }
 
     indexVariables[name].push_back(index);
+}
+
+VariableVisitorV2::VariableVisitorV2(){
+    variablesTableVector = std::vector<VariablesTable*>();
+    indexVariables = std::map<std::string, std::list<int>>();
+    functionTable = std::map<std::string,std::pair<int,string>>();
+    functionTable["getchar"] = std::pair<int,string>(0,"int");
+    functionTable["putchar"] = std::pair<int,string>(1,"void");
+    firstBloc = false;
+    onLoopWithOwnVariableTable = false;
+    onLoop = false;
+    onSwitch = false;
+    error = false;
 }

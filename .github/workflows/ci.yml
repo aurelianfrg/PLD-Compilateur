@@ -14,9 +14,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: install depedencies
-        run: sudo apt-get update && sudo apt-get install -y python3
+      - name: Install depedencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 cmake default-jdk unzip build-essential wget
 
-      - name: run tests
+      - name: Build ANTLR4 Runtime
+        run: |
+          mkdir -p $HOME/antlr4-install
+          cd $HOME/antlr4-install
+          wget -q https://www.antlr.org/download/antlr-4.13.2-complete.jar
+          wget -q https://www.antlr.org/download/antlr4-cpp-runtime-4.13.2-source.zip
+          unzip -q antlr4-cpp-runtime-4.13.2-source.zip
+          mkdir build && cd build
+          cmake -DCMAKE_INSTALL_PREFIX=$HOME/antlr4-install ..
+          make -j$(nproc)
+          make install
+
+      - name: Run tests
         working-directory: ./compiler
-        run: make test
+        run: |
+          cat <<EOF > config.mk
+          ANTLRJAR=$HOME/antlr4-install/antlr-4.13.2-complete.jar
+          ANTLRINC=$HOME/antlr4-install/include/antlr4-runtime/
+          ANTLRLIB=$HOME/antlr4-install/lib/libantlr4-runtime.a
+          EOF
+          
+          python3 ../ifcc-test.py ../testfiles/
