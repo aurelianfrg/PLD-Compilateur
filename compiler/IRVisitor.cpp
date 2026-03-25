@@ -2,7 +2,7 @@
 
 using namespace std;
 
-IRVisitor::IRVisitor(tree::ParseTree *parseTree) { cfg = new CFG(parseTree); }
+IRVisitor::IRVisitor(tree::ParseTree *parseTree) { cfg = new CFG(parseTree);}
 
 IRVisitor::~IRVisitor() { delete cfg; }
 
@@ -27,7 +27,9 @@ std::any IRVisitor::visitFunction_def(ifccParser::Function_defContext *ctx) {
 
     // add the newly declared functions to the function table
     cfg->functionsTable.add(
-        Function(function_name, typeFromString.at(return_type), paramsType, paramsName));
+        Function(function_name, typeFromString.at(return_type), paramsType, paramsName)
+    );
+    cfg->currentFunctionName = function_name;
 
     // create the first block for this function and start filling it with intructions from its
     // content

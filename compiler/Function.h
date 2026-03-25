@@ -14,7 +14,7 @@ class Function {
             this->returnType = returnType;
             this->paramsType = paramsType;
             this->paramsName = paramsName;
-
+            this->localSize = 0;
             // for now we can only handle 6 parameters at most
             if (paramsType.size() > 6) {
                 cerr << "Unable to handle function with more than 6 parameters for now" << endl;
@@ -25,6 +25,14 @@ class Function {
         Type getType() {return this->returnType;}
         vector<Type> getParamsType() {return this->paramsType;}
         vector<string> getParamsName() {return this->paramsName;}
+
+        unsigned int getLocalSize() {
+            // round total up to 16 bytes (AMD64 ABI REQUIREMENT)
+            return localSize + (16 - localSize % 16);
+        }
+        void addToLocalSize(Type type) {
+            this->localSize += typeSizes.at(type);
+        }
 
         friend ostream & operator << (ostream & os, const Function & f) {
             os << typeToString.at(f.returnType) << " " << f.name << "(";
@@ -45,6 +53,6 @@ class Function {
         Type returnType;
         vector<Type> paramsType;
         vector<string> paramsName;
-
+        unsigned int localSize;
 };
 
