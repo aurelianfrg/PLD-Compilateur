@@ -579,7 +579,7 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
         cfg->current_block = test_bbs.at(i);
 
         Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
-        test_bbs.at(i)->test_var_name = condVarName;
+        test_bbs.at(i)->test_var_name = tempVar.getName();
 
         // load the case constant into a temporary variable first
         Symbol &caseConstVarLow = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
