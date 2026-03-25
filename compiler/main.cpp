@@ -14,55 +14,93 @@
 using namespace antlr4;
 using namespace std;
 
-int main(int argn, const char **argv) {
-  stringstream in;
-  TargetArchi archi = amd64;
-  if (argn >= 2 and argn <= 3) {
-    ifstream lecture(argv[1]);
-    if (!lecture.good()) {
-      cerr << "error: cannot read file: " << argv[1] << endl;
-      exit(1);
-    }
-    in << lecture.rdbuf();
-  } else {
-    cerr << "usage: ifcc path/to/file.c [target]" << endl;
-    exit(1);
-  }
-  
-  if (argn == 3) {
-	string target(argv[2]);
-	if (target == "amd64") 		{ archi == amd64; }
-	else if (target == "aarch64")
-	{ 
-		archi == aarch64; 
-		cerr << "[WIP] aarch64 compilation is not yet implemented" << endl; 
-		exit(1); 
+// usage: ifcc path/to/file.c [options]
+
+// options :
+// -h / --help 
+// -t / --target x86 | arm
+// -d / --debug
+// -a / --assemble 
+// -o / --output output_filename
+
+int main(int argc, const char **argv) {
+
+	string program = ""; 
+	string output_filename = "";
+	TargetArchi archi = amd64;
+	bool debug = false;
+	bool assemble = false;
+	int current_arg = 1;
+
+	while (current_arg < argc) {
+		string arg = argv[current_arg];
+		if (arg == "-h" or arg == "--help") {
+			cout << "usage: ifcc path/to/file.c [options]" << endl;
+			cout << "options :" << endl;
+			cout << "-h / --help " << endl;
+			cout << "-t / --target x86 | arm" << endl;
+			cout << "-d / --debug" << endl;
+			cout << "-a / --assemble " << endl;
+			exit(0);
+		}
+		else if (arg == "-t" or arg == "--target") {
+			++current_arg;
+			arg = argv[current_arg];
+			if (arg == "x86") archi = amd64;
+			else if (arg == "arm") archi = aarch64;
+			else {
+				cout << "Incorrect value for option -t / --target : must be 'x86' or 'arm'" << endl;
+				exit(-1);
+			}
+		}
+		else if (arg == "-o" or arg == "--output") {
+			++current_arg;
+			arg = argv[current_arg];
+			output_filename = arg;
+		}
+		else if (arg == "-d" or arg == "--debug") {
+			debug = true;
+		}
+		else if (arg == "-a" or arg == "--assemble") {
+			assemble = true;
+		}
+		else {
+			// argument specified without option means it is the program file
+			program = arg;
+		}
+		++current_arg;
 	}
-	else 
-	{
-		cerr << "Invalid target. Compilation targets are" << endl;
-		cerr << " - amd64" << endl;
-		cerr << " - aarch64" << endl;
-    	exit(1);
+
+	// check input sanity
+	if (program == "") {
+		cout << "usage: ifcc path/to/file.c [options]" << endl;
+		exit(-1);
 	}
-  }
 
-  ANTLRInputStream input(in.str());
+	clog << "ifcc " << program << " architecture " << archi << " debug " << debug << " assemble " << assemble << endl;
 
-  ifccLexer lexer(&input);
-  CommonTokenStream tokens(&lexer);
+	stringstream in;
+	ifstream lecture(argv[1]);
+	if (!lecture.good()) {
+		cerr << "error: cannot read file: " << argv[1] << endl;
+		exit(1);
+	}
+	in << lecture.rdbuf();
 
-  tokens.fill();
+	ANTLRInputStream input(in.str());
 
-  ifccParser parser(&tokens);
-  tree::ParseTree *tree = parser.axiom();
+	ifccLexer lexer(&input);
+	CommonTokenStream tokens(&lexer);
 
-  if (parser.getNumberOfSyntaxErrors() != 0) {
-    cerr << "\e[31mError: syntax error during parsing\e[39m" << endl;
-    exit(1);
-  }
+	tokens.fill();
 
-  // clog << "Analyse des variables : " << endl;
+	ifccParser parser(&tokens);
+	tree::ParseTree *tree = parser.axiom();
+
+	if (parser.getNumberOfSyntaxErrors() != 0) {
+		cerr << "\e[31mError: syntax error during parsing\e[39m" << endl;
+		exit(1);
+	}
 
 	VariableVisitor vv;
 	vv.visit(tree);
@@ -72,34 +110,49 @@ int main(int argn, const char **argv) {
 		exit(1);
 	}
 
-  // clog << endl << "Sortie : " << endl;
+	IRVisitor irVisitor(tree);
+	irVisitor.visit(tree);
 
-  IRVisitor irVisitor(tree);
-  irVisitor.visit(tree);
+	// cfg debugging
+	if (debug) {
+		ofstream debug_ofs("debug.ir");
+		debug_ofs << *(irVisitor.cfg) << endl;
+		ofstream dot_ofs("cfg.dot");
+		irVisitor.cfg->toDot(dot_ofs);
+		popen("dot -Tpng cfg.dot -o cfg.dot.png", "w");
+	}
 
-  // cfg debugging
-  ofstream debug_ofs("debug.ir");
-  debug_ofs << *(irVisitor.cfg) << endl;
-  ofstream dot_ofs("cfg.dot");
-  irVisitor.cfg->toDot(dot_ofs);
+	// asm output
+	ofstream ofs;
+	if (output_filename == "" or assemble) {
+		ofs = ofstream("output.s");
+	}
+	else {
+		ofs = ofstream(output_filename);
+	}
 
-
-  // asm output
-  ofstream ofs("output.s");
-  switch (archi)
-  {
-  case amd64:
-  	irVisitor.cfg->gen_asm_amd64(ofs);
-  	irVisitor.cfg->gen_asm_amd64(cout);
+	switch (archi)
+	{
+	case amd64:
+		irVisitor.cfg->gen_asm_amd64(ofs);
+		irVisitor.cfg->gen_asm_amd64(cout);
 	break;
-  case aarch64:
-  	irVisitor.cfg->gen_asm_aarch64(ofs);
-  	irVisitor.cfg->gen_asm_aarch64(cout);
+	case aarch64:
+		irVisitor.cfg->gen_asm_aarch64(ofs);
+		irVisitor.cfg->gen_asm_aarch64(cout);
 	break;
-  
-  default:
+	
+	default:
 	break;
-  }
+	}
 
-  return 0;
+	if (output_filename == "") output_filename = "a.out";
+
+	if (assemble) {
+		stringstream command;
+		command << "gcc output.s -o " << output_filename;
+		popen(command.str().c_str(), "w");
+	}
+
+	return 0;
 }
