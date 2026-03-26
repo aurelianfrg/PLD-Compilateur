@@ -37,11 +37,11 @@ void Block::gen_block_linking_asm_aarch64(ostream &os, IRInstr *lastInstr) {
         } else {
             // generate function epilogue
 			// generate block prologue
-			os << "LDP SYMBOLSTABLE" << endl;
-			os << &(this->symbolsTable) << endl;
-			int local_stack_size = this->symbolsTable.getLocalSize()+16;
+    		Function & currentFunction = cfg->functionsTable.access(cfg->currentFunctionName);
+			int local_stack_size = currentFunction.getLocalSize()+16;
 			string local_stack_size_string = to_string(local_stack_size);
 			os << "    ldp     x29, x30, [sp], " << local_stack_size_string << endl;
+			os << "    ret" << endl;
             os << endl; // make function ending more visible
         }
 	}
@@ -65,18 +65,19 @@ void BasicBlock::gen_asm_aarch64(ostream &os)
 }
 
 void FunctionBlock::gen_asm_aarch64(ostream &os) {
+	this->cfg->currentFunctionName = this->label;
+
 	// get the local size to move return stack pointer accordingly 
 	Function & currentFunction = cfg->functionsTable.access(this->label);
-	int local_stack_size = currentFunction.getLocalSize();
-	string local_stack_size_string = string("#") + to_string(local_stack_size);
+	int local_stack_size = currentFunction.getLocalSize()+16;
+	string local_stack_size_string = to_string(local_stack_size);
 
 	os << ".global  " << label << endl;
 	os << ".type    " << label << ", %function" << endl;
 	os << this->label << ":" << endl;
 
+
 	// generate block prologue
-	os << "STP SYMBOLSTABLE" << endl;
-	os << &(this->symbolsTable) << endl;
 	os << "    stp     x29, x30, [sp, -" << local_stack_size_string << "]!" << endl;
 	os << "    mov     x29, sp" << endl;
 
@@ -204,9 +205,8 @@ void IRInstr::gen_asm_ret_aarch64(ostream &os)
 	Symbol &tempVar = block->symbolsTable.access(tempVarName);
 	os << "    ldr     w0, " << tempVar.getAdressAarch64() << endl;
 
-	os << "LDP SYMBOLSTABLE" << endl;
-	os << &(block->symbolsTable) << endl;
-	int local_stack_size = block->symbolsTable.getLocalSize()+16;
+	Function & currentFunction = block->cfg->functionsTable.access(this->block->cfg->currentFunctionName);
+	int local_stack_size = currentFunction.getLocalSize()+16;
 	string local_stack_size_string = to_string(local_stack_size);
 	os << "    ldp     x29, x30, [sp], " << local_stack_size_string << endl;
 	os << "    ret" << endl;
@@ -436,7 +436,7 @@ void IRInstr::gen_asm_or_aarch64(ostream &os)
 void IRInstr::gen_asm_call_aarch64(ostream &os) {
 	string functionName = params.at(0);
 	string destVarName = params.at(1);
-	Function & function = this->block->cfg->functionsTable.access(functionName);
+	Function & function = this->block->cfg->functionsTable.access(this->block->cfg->currentFunctionName);
 	Symbol & destVar = this->block->symbolsTable.access(destVarName);
 	
 	// max 6 arguments for now
@@ -499,13 +499,17 @@ void IRInstr::gen_asm_shr_aarch64(ostream &os) {
 void IRInstr::gen_asm_incr_prefix_aarch64(ostream &os) {
     string varName = params.at(0);
     Symbol &var = block->symbolsTable.access(varName);
-    os << "    ldadd   wzr, #1, " << var.getAdressAarch64() << endl;
+	os << "    ldr     w0, " << var.getAdressAarch64() << endl;
+	os << "    add     w0, w0, #1" << endl;
+	os << "    str     w0, " << var.getAdressAarch64() << endl;
 }
 
 void IRInstr::gen_asm_decr_prefix_aarch64(ostream &os) {
     string varName = params.at(0);
     Symbol &var = block->symbolsTable.access(varName);
-    os << "    ldadd   wzr, #-1, " << var.getAdressAarch64() << endl;
+	os << "    ldr     w0, " << var.getAdressAarch64() << endl;
+	os << "    sub     w0, w0, #1" << endl;
+	os << "    str     w0, " << var.getAdressAarch64() << endl;
 }
 
 void IRInstr::gen_asm_incr_postfix_aarch64(ostream &os) {
@@ -516,7 +520,8 @@ void IRInstr::gen_asm_incr_postfix_aarch64(ostream &os) {
 
     os << "    ldr    w0, " << srcVar.getAdressAarch64() << endl;
     os << "    str    w0, " << destVar.getAdressAarch64() << endl;
-    os << "    ldadd   wzr, #1, " << srcVar.getAdressAarch64() << endl;
+	os << "    add     w0, w0, #1" << endl;
+	os << "    str     w0, " << srcVar.getAdressAarch64() << endl;
 }
 
 void IRInstr::gen_asm_decr_postfix_aarch64(ostream &os) {
@@ -527,7 +532,8 @@ void IRInstr::gen_asm_decr_postfix_aarch64(ostream &os) {
 
     os << "    ldr    w0, " << srcVar.getAdressAarch64() << endl;
     os << "    str    w0, " << destVar.getAdressAarch64() << endl;
-    os << "    ldadd   wzr, #-1, " << srcVar.getAdressAarch64() << endl;
+	os << "    sub     w0, w0, #1" << endl;
+	os << "    str     w0, " << srcVar.getAdressAarch64() << endl;
 }
 
 void IRInstr::gen_asm_bit_not_aarch64(ostream &os) {
