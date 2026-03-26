@@ -41,6 +41,7 @@ int main(int argc, const char **argv) {
 			cout << "-t / --target x86 | arm" << endl;
 			cout << "-d / --debug" << endl;
 			cout << "-a / --assemble " << endl;
+			cout << "-o / --output output_filename" << endl;
 			exit(0);
 		}
 		else if (arg == "-t" or arg == "--target") {

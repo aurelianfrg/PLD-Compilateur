@@ -27,7 +27,25 @@ ANTLRLIB=/home/$USER/antlr4-install/lib/libantlr4-runtime.a
 EOF
 ```
 
+## Usage
+
+```
+cd compiler
+./ifcc path/to/file.c [options]
+```
+
+### Compiler options
+
+| Option | Value | Usage |
+|--------|-------|-------| 
+| -h / --help | | Print help info |
+| -t / --target | x86 / arm | Specify target architecture (default x86) |
+| -d / --debug |       | Output compiler debug info, cfg graph representation included |
+| -a / --assemble | | Generate the executable binary using gcc as the assembler | 
+| -o / --output | output filename | Specify a filename for the output, either for the assembly or the executable if -a was specified
+
 ### Execute tests
+
 ```
 make test
 ```
@@ -35,6 +53,8 @@ To verbose :
 ```
 make testv
 ```
+
+## Developper info
 
 ### Formatter le code
 
