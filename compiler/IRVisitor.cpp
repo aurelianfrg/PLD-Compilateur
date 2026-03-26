@@ -2,7 +2,7 @@
 
 using namespace std;
 
-IRVisitor::IRVisitor(tree::ParseTree *parseTree) { cfg = new CFG(parseTree); }
+IRVisitor::IRVisitor(tree::ParseTree *parseTree) { cfg = new CFG(parseTree);}
 
 IRVisitor::~IRVisitor() { delete cfg; }
 
@@ -27,7 +27,9 @@ std::any IRVisitor::visitFunction_def(ifccParser::Function_defContext *ctx) {
 
     // add the newly declared functions to the function table
     cfg->functionsTable.add(
-        Function(function_name, typeFromString.at(return_type), paramsType, paramsName));
+        Function(function_name, typeFromString.at(return_type), paramsType, paramsName)
+    );
+    cfg->currentFunctionName = function_name;
 
     // create the first block for this function and start filling it with intructions from its
     // content
@@ -436,21 +438,17 @@ std::any IRVisitor::visitWhile_stmt(ifccParser::While_stmtContext *ctx) {
     BasicBlock *while_bb = cfg->createChildBasicBlock(test_bb);
     test_bb->exit_true = while_bb;
     test_bb->exit_false = end_bb;
-    while_bb->exit_true = test_bb;
-    cfg->current_block = while_bb;
-    // cout << "end bb :" << end_bb << " with label " << end_bb->label << endl;
-    // cout << "while bb :" << while_bb << " with label " << while_bb->label << endl;
+
     // add while test blocks to stacks of blocks we can "continue" or "break" to
     cfg->pushBreakBlock(end_bb);
     cfg->pushContinueBlock(test_bb);
 
+    // fill while scope
+    cfg->current_block = while_bb;
     this->visit(ctx->bloc());
 
-    // cout << "current_block after visiting : " << cfg->current_block << " with label " <<
-    // cfg->current_block->label << endl;
-    if (cfg->current_block->exit_true == nullptr) {
-        cfg->current_block->exit_true = test_bb;
-    }
+    // link its last block back to the while
+    cfg->current_block->exit_true = test_bb;
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"
@@ -471,20 +469,20 @@ std::any IRVisitor::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) {
     BasicBlock *test_bb = cfg->createSiblingBasicBlock(dowhile_bb, "dowhile");
 
     start_bb->exit_true = dowhile_bb;
-    dowhile_bb->exit_true = test_bb;
-    test_bb->exit_true = dowhile_bb;
-    test_bb->exit_false = end_bb;
 
     cfg->current_block = dowhile_bb;
 
     cfg->pushBreakBlock(end_bb);
     cfg->pushContinueBlock(test_bb);
     this->visit(ctx->bloc());
+    this->cfg->current_block->exit_true = test_bb;
 
     cfg->current_block = test_bb;
 
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
     test_bb->test_var_name = condVarName;
+    test_bb->exit_true = dowhile_bb;
+    test_bb->exit_false = end_bb;
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"
@@ -500,38 +498,41 @@ std::any IRVisitor::visitDowhile_stmt(ifccParser::Dowhile_stmtContext *ctx) {
 std::any IRVisitor::visitFor_stmt(ifccParser::For_stmtContext *ctx) {
 
     Block *start_bb = cfg->current_block;
+    BasicBlock *decl_bb = cfg->createChildBasicBlock(start_bb);
 
+    cfg->current_block = decl_bb;
     if (ctx->for_init() != nullptr) {
         this->visit(ctx->for_init()); // handle initialization expression before entering the loop
     }
 
-    BasicBlock *test_bb = cfg->createSiblingBasicBlock(start_bb, "for");
-    BasicBlock *for_bb = cfg->createChildBasicBlock(test_bb);
+    BasicBlock *test_bb = cfg->createSiblingBasicBlock(decl_bb, "for");
+    BasicBlock *for_bb = cfg->createSiblingBasicBlock(test_bb);
     BasicBlock *inc_bb = cfg->createSiblingBasicBlock(for_bb);
     BasicBlock *end_bb = cfg->createSiblingBasicBlock(start_bb);
 
-    start_bb->exit_true = test_bb;
-    test_bb->exit_true = for_bb;
-    test_bb->exit_false = end_bb;
-    for_bb->exit_true = inc_bb;
-    inc_bb->exit_true = test_bb;
+    start_bb->exit_true = decl_bb;
+    decl_bb->exit_true = test_bb;
 
     cfg->current_block = test_bb;
     if (ctx->COND != nullptr) {
         string condVarName = any_cast<string>(this->visit(ctx->COND));
         test_bb->test_var_name = condVarName;
     }
+    test_bb->exit_true = for_bb;
+    test_bb->exit_false = end_bb;
 
     cfg->pushBreakBlock(end_bb);
     cfg->pushContinueBlock(inc_bb);
 
     cfg->current_block = for_bb;
     this->visit(ctx->bloc());
+    this->cfg->current_block->exit_true = inc_bb;
 
     cfg->current_block = inc_bb;
     if (ctx->POST != nullptr) {
         this->visit(ctx->POST); // update expression
     }
+    inc_bb->exit_true = test_bb;
 
     // when leaving the inside of the while block, remove the possibility to "continue" or "break"
     // from this "while"
@@ -549,7 +550,6 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     bool has_default = ctx->case_default() != nullptr;
 
     Block *start_block = cfg->current_block;
-    Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
 
     // evaluate source expr
     string condVarName = any_cast<string>(this->visit(ctx->expr()));
@@ -577,26 +577,52 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
         }
         caseValueLow = ctx->case_item(i)->LOW_VALUE->getText();
         cfg->current_block = test_bbs.at(i);
-        test_bbs.at(i)->test_var_name = condVarName;
+
+        Symbol &tempVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+        test_bbs.at(i)->test_var_name = tempVar.getName();
 
         // load the case constant into a temporary variable first
         Symbol &caseConstVarLow = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
         cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
                                         {caseValueLow, caseConstVarLow.getName()});
 
-        // compare the condition variable with the case constant variable
-        cfg->current_block->add_IRInstr(
-            IRInstr::cmp_eq, Type::INT,
-            {tempVar.getName(), condVarName, caseConstVarLow.getName()});
-
         if (has_range) {
-            Symbol &caseConstVarHigh =
-                cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            // Check: caseValueLow <= condVar
+            Symbol &lowBound = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
             cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
-                                            {caseValueHigh, caseConstVarHigh.getName()});
+                                            {caseValueLow, lowBound.getName()});
+            Symbol &checkLow = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::cmp_le, Type::INT,
+                                            {checkLow.getName(), lowBound.getName(), condVarName});
+            //  low <= condVar
+
+            // Check: condVar <= caseValueHigh
+            Symbol &highBound = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT,
+                                            {caseValueHigh, highBound.getName()});
+            Symbol &checkHigh = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
             cfg->current_block->add_IRInstr(
                 IRInstr::cmp_le, Type::INT,
-                {tempVar.getName(), condVarName, caseConstVarHigh.getName()});
+                {checkHigh.getName(), condVarName, highBound.getName()});
+            //  condVar <= high
+
+            // checkLow + checkHigh -> sum (equals 2 only if both true)
+            Symbol &andVar = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(
+                IRInstr::bit_and, Type::INT,
+                {andVar.getName(), checkLow.getName(), checkHigh.getName()});
+
+            // load constant 1
+            Symbol &one = cfg->current_block->symbolsTable.create_new_tempvar(Type::INT);
+            cfg->current_block->add_IRInstr(IRInstr::ldconst, Type::INT, {"1", one.getName()});
+
+            // tempVar = (and == 1)
+            cfg->current_block->add_IRInstr(IRInstr::cmp_eq, Type::INT,
+                                            {tempVar.getName(), andVar.getName(), one.getName()});
+        } else {
+            cfg->current_block->add_IRInstr(
+                IRInstr::cmp_eq, Type::INT,
+                {tempVar.getName(), condVarName, caseConstVarLow.getName()});
         }
         test_bbs.at(i)->exit_true = code_bbs.at(i);
         test_bbs.at(i)->exit_false = (i < case_count - 1) ? test_bbs.at(i + 1) : default_bb;
@@ -604,14 +630,15 @@ std::any IRVisitor::visitSwitch_stmt(ifccParser::Switch_stmtContext *ctx) {
     // wire code chain
     for (int i = 0; i < case_count; i++) {
         cfg->current_block = code_bbs.at(i);
-        code_bbs.at(i)->exit_true = (i < case_count - 1) ? code_bbs.at(i + 1) : default_bb;
         this->visit(ctx->case_item(i));
+        this->cfg->current_block->exit_true =
+            (i < case_count - 1) ? code_bbs.at(i + 1) : default_bb;
     }
     // wire default block
     if (has_default) {
         cfg->current_block = default_bb;
-        default_bb->exit_true = end_bb;
         this->visit(ctx->case_default());
+        this->cfg->current_block->exit_true = end_bb;
     }
     cfg->current_block = end_bb;
 

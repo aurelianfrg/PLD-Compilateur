@@ -107,7 +107,7 @@ FunctionBlock::FunctionBlock(CFG *cfg, string label, vector<Type> paramsType,
     this->cfg = cfg;
 
     // initialize with a new SymbolsTable containing the parameters
-    this->symbolsTable = SymbolsTable();
+    this->symbolsTable = SymbolsTable(this);
     for (int i = 0; i < paramsType.size(); ++i) {
         symbolsTable.create_new_var(paramsType.at(i), paramsName.at(i));
     }
@@ -164,12 +164,13 @@ void BasicBlock::gen_asm_amd64(ostream &os)
 		lastInstr = instr;
 	}
 
-	gen_block_linking_asm_amd64(os, lastInstr);
+	this->gen_block_linking_asm_amd64(os, lastInstr);
 }
 
 void FunctionBlock::gen_asm_amd64(ostream &os) {
 	// get the local size to move return stack pointer accordingly 
-	int local_stack_size = this->symbolsTable.getLocalSize();
+    Function & currentFunction = cfg->functionsTable.access(this->label);
+	int local_stack_size = currentFunction.getLocalSize();
 	string local_stack_size_string = string("$") + to_string(local_stack_size);
 
     os << ".globl  " << label << endl;
@@ -198,7 +199,7 @@ void FunctionBlock::gen_asm_amd64(ostream &os) {
         lastInstr = instr;
 	}
 
-	gen_block_linking_asm_amd64(os, lastInstr);
+	this->gen_block_linking_asm_amd64(os, lastInstr);
 }
 
 void Block::add_IRInstr(IRInstr::Operation op, Type t, vector<string> params) {

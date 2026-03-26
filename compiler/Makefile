@@ -17,12 +17,13 @@ OBJECTS=build/ifccBaseVisitor.o \
 	build/ifccLexer.o \
 	build/ifccVisitor.o \
 	build/ifccParser.o \
-	build/VariableVisitorV2.o \
+	build/VariableVisitor.o \
 	build/VariablesTable.o \
+	build/SymbolsTable.o \
 	build/IR.o \
 	build/IR_aarch64.o \
 	build/IRVisitor.o \
-	build/main.o
+	build/main.o 
 
 
 
@@ -92,5 +93,11 @@ test:
 	python3 ../ifcc-test.py ../testfiles
 testv:
 	python3 ../ifcc-test.py ../testfiles --verbose
+testarm:
+	@echo "python3 ../ifcc-test-arm.py ../testfiles -ip IP -u USER -p PASSWORD -dir DIRECTORY"
+	@python3 ../ifcc-test-arm.py ../testfiles -ip ${IP} -u ${USER} -p ${PASSWORD} -dir ${DIRECTORY}
+testarmv:
+	@echo "python3 ../ifcc-test-arm.py ../testfiles --verbose -ip IP -u USER -p PASSWORD -dir DIRECTORY"
+	@python3 ../ifcc-test-arm.py ../testfiles --verbose -ip ${IP} -u ${USER} -p ${PASSWORD} -dir ${DIRECTORY}
 dot:
 	dot -Tpng cfg.dot -O

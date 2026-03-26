@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 #include "Type.h"
 
 using namespace std;
@@ -31,7 +32,7 @@ public:
 
   string getAdressAarch64() const
   {
-    return "[sp, "+to_string(offset)+"]";
+    return "[sp, "+to_string(-offset + 16)+"]";
   }
 
   friend ostream &operator<<(ostream &ofs, const Symbol &s)

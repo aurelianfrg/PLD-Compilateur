@@ -20,7 +20,6 @@ class FunctionBlock;
 class CFG;
 class IRInstr;
 
-// Declarations from the parser -- replace with your own
 #include "FunctionsTable.h"
 #include "Symbol.h"
 #include "SymbolsTable.h"
@@ -187,7 +186,7 @@ public:
     void toDot(ostream &os); // generate graph in dot format
 
     string label;             /**< label of the BB, also will be the label in the generated code */
-    CFG *cfg;                 /** < the CFG where this block belongs */
+    CFG *cfg = nullptr;                 /** < the CFG where this block belongs */
     vector<IRInstr *> instrs; /** < the instructions themselves. */
     SymbolsTable symbolsTable;
     BasicBlock *exit_true = nullptr; /**< pointer to the next basic block, true branch. If nullptr,
@@ -234,20 +233,10 @@ class CFG {
     CFG(tree::ParseTree *ast);
     virtual ~CFG();
 
-    tree::ParseTree *ast; /**< The AST this CFG comes from */
-
     void add_block(Block *b);
-    BasicBlock *
-    createChildBasicBlock(Block *parentBlock,
-                          string namePrefix = "block"); // create a new basicblock that inherits its
-                                                        // parents Symbols and has a new local table
-    BasicBlock *createSiblingBasicBlock(
-        Block *siblingBlock,
-        string namePrefix = "block"); // create a new basicblock that copies its siblings symbols
-    FunctionBlock *createFunctionBlock(
-        string label, vector<Type> paramsType,
-        vector<string> paramsName); // create a new function block, with a completely new
-                                    // symbolsTable initialized with its parameters
+    BasicBlock *createChildBasicBlock(Block *parentBlock, string namePrefix = "block"); // create a new basicblock that inherits its parents Symbols and has a new local table
+    BasicBlock *createSiblingBasicBlock(Block *siblingBlock, string namePrefix = "block"); // create a new basicblock that copies its siblings symbols
+    FunctionBlock *createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName); // create a new function block, with a completely new symbolsTable initialized with its parameters
 
 	// x86 code generation: could be encapsulated in a processor class in a
 	// retargetable compiler
@@ -256,8 +245,6 @@ class CFG {
 
     // block management
     string new_BB_name(string prefix = "block") { return prefix + "_" + to_string(nextBBnumber); }
-    Block *current_block;
-    FunctionsTable functionsTable;
 
     friend ostream &operator<<(ostream &os, const CFG &cfg);
     void toDot(ostream &os); // generate graph in dot format
@@ -279,12 +266,16 @@ class CFG {
     size_t getContinueBlocksSize() { return continueBlocks.size(); }
     size_t getBreakBlocksSize() { return breakBlocks.size(); }
 
+
+    tree::ParseTree *ast; /**< The AST this CFG comes from */
+    Block *current_block;
+    FunctionsTable functionsTable;
+    string currentFunctionName;
+
   protected:
     int nextBBnumber; /**< just for naming */
 
     vector<Block *> blocks; /**< all the basic blocks of this CFG*/
-    stack<Block *>
-        continueBlocks; // stack of Block to jump to when a "continue" statement is encountered;
-    stack<Block *>
-        breakBlocks; // stack of Block to jump to when a "break" statement is encountered;
+    stack<Block *> continueBlocks; // stack of Block to jump to when a "continue" statement is encountered;
+    stack<Block *> breakBlocks; // stack of Block to jump to when a "break" statement is encountered;
 };
