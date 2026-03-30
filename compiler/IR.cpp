@@ -567,7 +567,7 @@ void IRInstr::gen_asm_div_amd64(ostream &os)
     string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
     os << "    movl    " << v1Address << ", " << "%eax" << endl;
     os << "    cltd" << endl; // Extend %eax into %edx:%eax for division
-    os << "    idivl    " << v2Address << endl;
+    os << "    idivl   " << v2Address << endl;
     os << "    movl    " << "%eax" << ", " << destAddress << endl; // quotient is in %eax
 }
 
@@ -586,7 +586,7 @@ void IRInstr::gen_asm_mod_amd64(ostream &os)
     string v2Address = to_string(v2Var.getOffset()) + "(%rbp)";
     os << "    movl    " << v1Address << ", " << "%eax" << endl;
     os << "    cltd" << endl; // Extend %eax into %edx:%eax for division
-    os << "    idivl    " << v2Address << endl;
+    os << "    idivl   " << v2Address << endl;
     os << "    movl    " << "%edx" << ", " << destAddress << endl; // Remainder is in %edx
 }
 

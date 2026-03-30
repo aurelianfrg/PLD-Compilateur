@@ -1,0 +1,327 @@
+@startuml
+
+
+
+
+
+/' Objects '/
+
+class BasicBlock {
+	+BasicBlock(CFG* cfg, string label, SymbolsTable currentSymbolsTable, bool isAChild)
+	+gen_asm_aarch64(ostream& os) : void
+	+gen_asm_amd64(ostream& os) : void
+	+print(ostream& os) : void {query}
+}
+
+
+abstract class Block {
+	+~Block()
+	+exit_false : BasicBlock*
+	+exit_true : BasicBlock*
+	+cfg : CFG*
+	+symbolsTable : SymbolsTable
+	+operator<<(ostream& os, const Block& b) : ostream&
+	+label : string
+	+test_var_name : string
+	+instrs : vector<IRInstr*>
+	+add_IRInstr(IRInstr::Operation op, Type t, vector<string> params) : void
+	+{abstract} gen_asm_aarch64(ostream& os) : void
+	+{abstract} gen_asm_amd64(ostream& os) : void
+	+gen_block_linking_asm_aarch64(ostream& os, IRInstr* lastInstr) : void
+	+gen_block_linking_asm_amd64(ostream& os, IRInstr* lastInstr) : void
+	+{abstract} print(ostream& os) : void {query}
+	+toDot(ostream& os) : void
+}
+
+
+class CFG {
+	+CFG(tree::ParseTree* ast)
+	+~CFG()
+	+createChildBasicBlock(Block* parentBlock, string namePrefix) : BasicBlock*
+	+createSiblingBasicBlock(Block* siblingBlock, string namePrefix) : BasicBlock*
+	+current_block : Block*
+	+popBreakBlock() : Block*
+	+popContinueBlock() : Block*
+	+topBreakBlock() : Block*
+	+topContinueBlock() : Block*
+	+createFunctionBlock(string label, vector<Type> paramsType, vector<string> paramsName) : FunctionBlock*
+	+functionsTable : FunctionsTable
+	#nextBBnumber : int
+	+operator<<(ostream& os, const CFG& cfg) : ostream&
+	+getBreakBlocksSize() : size_t
+	+getContinueBlocksSize() : size_t
+	#breakBlocks : stack<Block*>
+	#continueBlocks : stack<Block*>
+	+currentFunctionName : string
+	+new_BB_name(string prefix) : string
+	+ast : tree::ParseTree*
+	#blocks : vector<Block*>
+	+add_block(Block* b) : void
+	+gen_asm_aarch64(ostream& os) : void
+	+gen_asm_amd64(ostream& os) : void
+	+pushBreakBlock(Block* block) : void
+	+pushContinueBlock(Block* block) : void
+	+toDot(ostream& os) : void
+}
+
+
+class Function {
+	+Function(string name, Type returnType, vector<Type> paramsType, vector<string> paramsName)
+	+getType() : Type
+	#returnType : Type
+	+operator<<(ostream& os, const Function& f) : ostream&
+	+getName() : string
+	#name : string
+	+getLocalSize() : unsigned int
+	#localSize : unsigned int
+	+getParamsType() : vector<Type>
+	#paramsType : vector<Type>
+	+getParamsName() : vector<string>
+	#paramsName : vector<string>
+	+addToLocalSize(Type type) : void
+}
+
+
+class FunctionBlock {
+	+FunctionBlock(CFG* cfg, string label, vector<Type> paramsType, vector<string> paramsName)
+	+gen_asm_aarch64(ostream& os) : void
+	+gen_asm_amd64(ostream& os) : void
+	+print(ostream& os) : void {query}
+}
+
+
+class FunctionsTable {
+	+FunctionsTable()
+	+access(const string& name) : Function&
+	+contains(const string& name) : bool
+	+operator<<(ostream& os, const FunctionsTable& ft) : ostream&
+	#functions : unordered_map<string, Function>
+	+add(Function f) : void
+}
+
+
+class IRInstr {
+	+IRInstr(Block* b, Operation op, Type t, vector<string> params)
+	-block : Block*
+	-op : Operation
+	-t : Type
+	+getOp() : int
+	+operator<<(ostream& os, const IRInstr& irInstr) : ostream&
+	-params : vector<string>
+	+gen_asm_aarch64(ostream& os) : void
+	+gen_asm_add_aarch64(ostream& os) : void
+	+gen_asm_add_amd64(ostream& os) : void
+	+gen_asm_amd64(ostream& os) : void
+	+gen_asm_and_aarch64(ostream& os) : void
+	+gen_asm_and_amd64(ostream& os) : void
+	+gen_asm_bit_not_aarch64(ostream& os) : void
+	+gen_asm_bit_not_amd64(ostream& os) : void
+	+gen_asm_call_aarch64(ostream& os) : void
+	+gen_asm_call_amd64(ostream& os) : void
+	+gen_asm_copy_aarch64(ostream& os) : void
+	+gen_asm_copy_amd64(ostream& os) : void
+	+gen_asm_decr_postfix_aarch64(ostream& os) : void
+	+gen_asm_decr_postfix_amd64(ostream& os) : void
+	+gen_asm_decr_prefix_aarch64(ostream& os) : void
+	+gen_asm_decr_prefix_amd64(ostream& os) : void
+	+gen_asm_diff_aarch64(ostream& os) : void
+	+gen_asm_diff_amd64(ostream& os) : void
+	+gen_asm_div_aarch64(ostream& os) : void
+	+gen_asm_div_amd64(ostream& os) : void
+	+gen_asm_eq_aarch64(ostream& os) : void
+	+gen_asm_eq_amd64(ostream& os) : void
+	+gen_asm_incr_postfix_aarch64(ostream& os) : void
+	+gen_asm_incr_postfix_amd64(ostream& os) : void
+	+gen_asm_incr_prefix_aarch64(ostream& os) : void
+	+gen_asm_incr_prefix_amd64(ostream& os) : void
+	+gen_asm_ldchar_aarch64(ostream& os) : void
+	+gen_asm_ldchar_amd64(ostream& os) : void
+	+gen_asm_ldconst_aarch64(ostream& os) : void
+	+gen_asm_ldconst_amd64(ostream& os) : void
+	+gen_asm_le_aarch64(ostream& os) : void
+	+gen_asm_le_amd64(ostream& os) : void
+	+gen_asm_lt_aarch64(ostream& os) : void
+	+gen_asm_lt_amd64(ostream& os) : void
+	+gen_asm_mod_aarch64(ostream& os) : void
+	+gen_asm_mod_amd64(ostream& os) : void
+	+gen_asm_mul_aarch64(ostream& os) : void
+	+gen_asm_mul_amd64(ostream& os) : void
+	+gen_asm_neg_aarch64(ostream& os) : void
+	+gen_asm_neg_amd64(ostream& os) : void
+	+gen_asm_not_aarch64(ostream& os) : void
+	+gen_asm_not_amd64(ostream& os) : void
+	+gen_asm_or_aarch64(ostream& os) : void
+	+gen_asm_or_amd64(ostream& os) : void
+	+gen_asm_ret_aarch64(ostream& os) : void
+	+gen_asm_ret_amd64(ostream& os) : void
+	+gen_asm_shl_aarch64(ostream& os) : void
+	+gen_asm_shl_amd64(ostream& os) : void
+	+gen_asm_shr_aarch64(ostream& os) : void
+	+gen_asm_shr_amd64(ostream& os) : void
+	+gen_asm_sub_aarch64(ostream& os) : void
+	+gen_asm_sub_amd64(ostream& os) : void
+	+gen_asm_xor_aarch64(ostream& os) : void
+	+gen_asm_xor_amd64(ostream& os) : void
+	+toDot(ostream& os) : void
+}
+
+
+class Symbol {
+	+Symbol(Type type, string name, int offset)
+	+getType() : Type {query}
+	#type : Type
+	#_affected : bool
+	#_used : bool
+	+affected() : bool {query}
+	+used() : bool {query}
+	+getOffset() : int {query}
+	#offset : int
+	+operator<<(ostream& ofs, const Symbol& s) : ostream&
+	+getAdressAarch64() : string {query}
+	+getAdressx86() : string {query}
+	+getName() : string {query}
+	#name : string
+	+affect() : void
+	+use() : void
+}
+
+
+class SymbolsTable {
+	+SymbolsTable()
+	+SymbolsTable(Block* block)
+	+SymbolsTable(const SymbolsTable& st)
+	#block : Block*
+	+access(const string& name) : Symbol&
+	+create_new_tempvar(Type t) : Symbol&
+	+create_new_var(Type t, string varName) : Symbol&
+	+contains(const string& name) : bool
+	#currentOffset : int
+	+getCurrentOffset() : int
+	+getTemporaryVarCount() : int
+	+newVarOffset(Type type) : int
+	#temporaryVarCount : int
+	+getSymbols() : unordered_map<string , Symbol>
+	+getInheritedSymbols() : unordered_map<string , Symbol>&
+	+getLocalSymbols() : unordered_map<string , Symbol>&
+	#inheritedSymbols : unordered_map<string, Symbol>
+	#localSymbols : unordered_map<string, Symbol>
+	+add(Symbol s) : void
+	+setBlock(Block* block) : void
+	+setCurrentOffset(int currentOffset) : void
+	+setInheritedSymbols(unordered_map<string, Symbol> inheritedSymbols) : void
+	+setLocalSymbols(unordered_map<string, Symbol> localSymbols) : void
+	+setTemporaryVarCount(int temporaryVarCount) : void
+}
+
+
+enum IRInstr::Operation {
+	add
+	bit_and
+	bit_not
+	bit_or
+	bit_xor
+	call
+	cmp_diff
+	cmp_eq
+	cmp_le
+	cmp_lt
+	copy
+	decr_postfix
+	decr_prefix
+	div
+	incr_postfix
+	incr_prefix
+	ldchar
+	ldconst
+	mod
+	mul
+	neg
+	not_
+	ret
+	rmem
+	shl
+	shr
+	sub
+	wmem
+}
+
+
+enum TargetArchi {
+	aarch64
+	amd64
+}
+
+
+enum Type {
+	INT
+	VOID
+}
+
+
+
+
+
+/' Inheritance relationships '/
+
+Block <|-- BasicBlock
+
+
+Block <|-- FunctionBlock
+
+
+
+
+
+/' Aggregation relationships '/
+
+Block "2" o-- BasicBlock
+
+
+Block o-- CFG
+
+
+Block o-- IRInstr
+
+
+Block *-- SymbolsTable
+
+
+CFG "4" o-- Block
+
+
+CFG *-- FunctionsTable
+
+
+Function "2" *-- Type
+
+
+FunctionsTable *-- Function
+
+
+IRInstr o-- Block
+
+
+IRInstr *-- Type
+
+
+Symbol *-- Type
+
+
+SymbolsTable o-- Block
+
+
+SymbolsTable "2" *-- Symbol
+
+
+
+
+
+
+/' Nested objects '/
+
+IRInstr +-- IRInstr::Operation
+
+
+
+
+@enduml

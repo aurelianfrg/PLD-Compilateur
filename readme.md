@@ -84,3 +84,10 @@ pre-commit run --all-files
 # bypassing pre-commit check when committing
 git commit -m <commit_msg> --no-verify
 ```
+
+### Generate UML Diagram
+```
+sudo apt install plantuml
+pip install hpp2plantuml
+./uml-diagram.sh
+```
