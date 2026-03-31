@@ -291,7 +291,7 @@ for jobname in jobs:
 
     ## IFCC compiler
     ifccstatus = run_command(
-        f"{pld_base_dir}/compiler/ifcc input.c aarch64 > asm-ifcc.s", "ifcc-compile.txt"
+        f"{pld_base_dir}/compiler/ifcc input.c -t arm > asm-ifcc.s", "ifcc-compile.txt"
     )
 
     if gccstatus != 0 and ifccstatus != 0:
